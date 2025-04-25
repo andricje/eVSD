@@ -8,29 +8,31 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Wallet, AlertTriangle, Loader2, Info, Laptop } from "lucide-react"
 import { WalletConnectButton } from "@/components/wallet-connect-button"
 import { useWallet } from "@/context/wallet-context"
+import { ethers } from "ethers"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { wallet, connectionStatus, authorizedWallet } = useWallet()
   const [status, setStatus] = useState<"idle" | "checking" | "error" | "success">("idle")
   const [errorMessage, setErrorMessage] = useState("")
   const [isDemoMode, setIsDemoMode] = useState(false)
 
-  // Pratimo promene u statusu povezivanja novčanika
-  useEffect(() => {
-    if (connectionStatus === "connected" && authorizedWallet) {
-      setStatus("checking")
-
-      // Simulacija provere
-      setTimeout(() => {
-        setStatus("success")
-        setTimeout(() => router.push("/dashboard"), 1000)
-      }, 1500)
-    } else if (connectionStatus === "error") {
-      setStatus("error")
-      setErrorMessage("Vaš novčanik nije autorizovan za pristup sistemu. Molimo koristite registrovani novčanik.")
+  const [signerAddress, setSignerAddress] = useState<string>();
+  const [provider, setProvider] = useState<ethers.BrowserProvider>();
+  const [signer, setSigner] = useState<ethers.Signer>();
+  const connectWallet = async () => {
+    const { ethereum } = window;
+    if (ethereum) {
+      const provider = new ethers.BrowserProvider(ethereum);
+      const signer = await provider.getSigner();
+      setProvider(provider);
+      setSigner(signer);
+      setSignerAddress(await signer.getAddress());
+    } else {
+      setStatus("error");
+      console.error("No Ethereum provider found");
     }
-  }, [connectionStatus, authorizedWallet, router])
+  };
+
 
   const checkWallet = () => {
     setStatus("checking")
@@ -84,16 +86,18 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          {wallet && authorizedWallet && (
+          {provider && signer && (
             <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
               <h3 className="font-medium mb-2">Povezani novčanik</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-blue-500" />
                   <div>
-                    <div className="font-medium">{authorizedWallet.faculty}</div>
+                    {/* <div className="font-medium">{authorizedWallet.faculty}</div> */}
+                    Test Fakultet
                     <div className="text-xs text-muted-foreground">
-                      {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                      {/* {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)} */}
+                      {signerAddress}
                     </div>
                   </div>
                 </div>
@@ -110,14 +114,12 @@ export default function LoginPage() {
               <span className="text-sm font-medium">Demo režim</span>
               <button
                 onClick={() => setIsDemoMode(!isDemoMode)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isDemoMode ? "bg-green-500" : "bg-gray-200"
-                }`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isDemoMode ? "bg-green-500" : "bg-gray-200"
+                  }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isDemoMode ? "translate-x-6" : "translate-x-1"
-                  }`}
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isDemoMode ? "translate-x-6" : "translate-x-1"
+                    }`}
                 />
               </button>
             </div>
@@ -127,14 +129,17 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter>
-          {!wallet ? (
+          {!provider || !signer ? (
             isDemoMode ? (
               <Button className="w-full" onClick={checkWallet} disabled={status === "checking" || status === "success"}>
                 {status === "checking" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {status === "checking" ? "Provera..." : "Demo prijava"}
               </Button>
             ) : (
-              <WalletConnectButton />
+              <Button onClick={async () => await connectWallet()}>
+                <Wallet className="h-4 w-4 mr-2" />
+                Poveži novčanik
+              </Button>
             )
           ) : (
             <Button className="w-full" onClick={() => router.push("/dashboard")}>
