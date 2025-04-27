@@ -4,7 +4,7 @@ import { DialogTrigger } from "@/components/ui/dialog"
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -40,270 +40,9 @@ import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useWallet } from "@/context/wallet-context"
 import { WalletInfo } from "@/components/wallet-info"
-
-// Simulirani podaci za predloge
-const proposals = [
-  {
-    id: 1,
-    title: "Усвајање буџета за 2025. годину",
-    dateAdded: "2025-04-05T10:00:00",
-    description: "Гласање о предлогу буџета ВСД за 2025. годину",
-    author: "Економски факултет",
-    urgent: false,
-    result: {
-      for: 15,
-      against: 3,
-      abstain: 2,
-    },
-    yourVote: "for",
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-04-06T11:30:00",
-    },
-    status: "closed", // заворен предлог
-    closedAt: "2025-04-07T15:30:00",
-    allVoted: true,
-  },
-  {
-    id: 2,
-    title: "Измене правилника о раду ВСД",
-    dateAdded: "2025-04-05T11:00:00",
-    description: "Гласање о предложеним изменама правилника о раду ВСД",
-    author: "Правни факултет",
-    urgent: false,
-    result: {
-      for: 18,
-      against: 0,
-      abstain: 2,
-    },
-    yourVote: "for",
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-04-06T09:15:00",
-    },
-    status: "closed", // заворен предлог
-    closedAt: "2025-04-08T12:15:00",
-    allVoted: true,
-  },
-  {
-    id: 3,
-    title: "Избор новог председника ВСД",
-    dateAdded: "2025-04-10T14:00:00",
-    description: "Гласање за новог председника ВСД за мандатни период 2025-2026",
-    author: "Факултет техничких наука",
-    urgent: true,
-    result: {
-      for: 6,
-      against: 1,
-      abstain: 1,
-    },
-    quorum: {
-      required: 12,
-      current: 15,
-      reached: true,
-      reachedAt: "2025-04-11T09:30:00",
-    },
-    status: "expiring", // квору достигнут, истиче ускоро
-    expiresAt: "2025-04-12T14:00:00", // 48h након достизања кворума
-    allVoted: false,
-  },
-  {
-    id: 4,
-    title: "Измене правилника о студентским домовима",
-    dateAdded: "2025-04-12T09:30:00",
-    description: "Предлог измена правилника о студентским домовима",
-    author: "Факултет спорта и физичког васпитања",
-    urgent: false,
-    result: {
-      for: 3,
-      against: 1,
-      abstain: 1,
-    },
-    quorum: {
-      required: 12,
-      current: 5,
-      reached: false,
-    },
-    status: "active", // активан предлог
-    allVoted: false,
-  },
-  {
-    id: 5,
-    title: "Usvajanje izveštaja o radu za 2024. godinu",
-    dateAdded: "2025-04-05T10:00:00",
-    description: "Glasanje o izveštaju o radu VSD za 2024. godinu.",
-    author: "Medicinski fakultet",
-    urgent: false,
-    result: {
-      for: 4,
-      against: 2,
-      abstain: 1,
-    },
-    quorum: {
-      required: 10,
-      current: 7,
-      reached: false,
-    },
-    status: "active", // aktivan predlog
-    allVoted: false,
-    yourVote: "for", // Korisnik je već glasao za ovaj predlog
-  },
-  {
-    id: 6,
-    title: "Predlog za izmenu statuta studentskih organizacija",
-    dateAdded: "2025-04-15T15:00:00",
-    description: "Predlog za izmenu statuta studentskih organizacija.",
-    author: "Filozofski fakultet",
-    urgent: false,
-    result: {
-      for: 10,
-      against: 0,
-      abstain: 0,
-    },
-    yourVote: "for",
-    quorum: {
-      required: 10,
-      current: 10,
-      reached: true,
-      reachedAt: "2025-04-15T21:45:00",
-    },
-    status: "expiring", // aktivno, korisnik glasao, kvorum dostignut
-    expiresAt: "2025-04-17T21:45:00", // 48h nakon dostizanja kvoruma
-    allVoted: false,
-  },
-  {
-    id: 7,
-    title: "Usvajanje plana rada za letnji semestar",
-    dateAdded: "2025-03-15T09:00:00",
-    description: "Glasanje o planu rada VSD za letnji semestar 2025. godine",
-    author: "Fakultet organizacionih nauka",
-    urgent: true,
-    result: {
-      for: 16,
-      against: 1,
-      abstain: 3,
-    },
-    quorum: {
-      required: 10,
-      current: 12,
-      reached: true,
-      reachedAt: "2025-03-15T16:20:00",
-    },
-    status: "expiring", // hitno, kvorum dostignut, ali korisnik nije glasao
-    expiresAt: "2025-04-22T16:20:00",
-    allVoted: false,
-  },
-  {
-    id: 8,
-    title: "Izbor predstavnika za Studentski parlament",
-    dateAdded: "2025-02-20T13:30:00",
-    description: "Glasanje za predstavnike VSD u Studentskom parlamentu",
-    author: "Fakultet političkih nauka",
-    urgent: true,
-    result: {
-      for: 14,
-      against: 2,
-      abstain: 4,
-    },
-    yourVote: "against",
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-02-21T10:15:00",
-    },
-    status: "expired", // kvorum dostignut, vreme isteklo
-    expiresAt: "2025-02-25T16:20:00", // 48h nakon dostizanja kvoruma (već isteklo)
-    allVoted: false,
-  },
-  {
-    id: 9,
-    title: "Predlog za organizaciju studentske konferencije",
-    dateAdded: "2025-04-01T08:00:00",
-    description: "Glasanje o predlogu za organizaciju međunarodne studentske konferencije",
-    author: "Fakultet organizacionih nauka",
-    urgent: false,
-    result: {
-      for: 12,
-      against: 0,
-      abstain: 0,
-    },
-    quorum: {
-      required: 10,
-      current: 12,
-      reached: true,
-      reachedAt: "2025-04-02T14:30:00",
-    },
-    status: "expired", // kvorum dostignut, vreme isteklo
-    expiresAt: "2025-04-03T08:00:00", // 48h nakon dostizanja kvoruma (već isteklo)
-    allVoted: false,
-  },
-  {
-    id: 10,
-    title: "Regulisanje dodatnih studentskih aktivnosti",
-    dateAdded: "2025-04-16T11:30:00",
-    description: "Predlog za regulisanje dodatnih studentskih aktivnosti u okviru univerziteta",
-    author: "Fakultet sporta i fizičkog vaspitanja",
-    urgent: false,
-    result: {
-      for: 2,
-      against: 0,
-      abstain: 1,
-    },
-    quorum: {
-      required: 10,
-      current: 3,
-      reached: false,
-    },
-    status: "active", // aktivan predlog bez kvoruma
-    allVoted: false,
-  },
-  {
-    id: 11,
-    title: "Hitno glasanje o finansiranju studentskih projekata",
-    dateAdded: "2025-04-15T08:00:00",
-    description: "Hitno glasanje o odobravanju sredstava za studentske projekte u tekućem semestru",
-    author: "Ekonomski fakultet",
-    urgent: true,
-    result: {
-      for: 8,
-      against: 1,
-      abstain: 0,
-    },
-    quorum: {
-      required: 12,
-      current: 9,
-      reached: false,
-    },
-    status: "active", // hitno, nema kvoruma
-    allVoted: false,
-  },
-  {
-    id: 12,
-    title: "Definisanje postupka prijavljivanja ispita",
-    dateAdded: "2025-04-14T10:15:00",
-    description: "Predlog za definisanje standardizovanog postupka prijavljivanja ispita",
-    author: "Fakultet organizacionih nauka",
-    urgent: false,
-    result: {
-      for: 5,
-      against: 0,
-      abstain: 0,
-    },
-    yourVote: "for",
-    quorum: {
-      required: 12,
-      current: 5,
-      reached: false,
-    },
-    status: "active", // korisnik glasao, nema kvoruma
-    allVoted: false,
-  },
-]
+import { Proposal } from "@/types/proposal"
+import { useProposals } from "@/hooks/use-proposals"
+import { getRemainingTime, hasVotingTimeExpired, isVotingComplete, formatDate, groupProposalsByDate, isQuorumReached, countTotalVotes, QUORUM } from "@/lib/utils"
 
 // Simulirani podaci za istoriju logovanja
 const loginHistory = [
@@ -381,53 +120,8 @@ const voteHistory = [
   },
 ]
 
-// Formatiranje datuma
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat("sr-RS", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date)
-}
-
-// Funkcija za računanje preostalog vremena
-const getRemainingTime = (expiresAt: string) => {
-  const now = new Date()
-  const expiration = new Date(expiresAt)
-  const diffMs = expiration.getTime() - now.getTime()
-
-  if (diffMs <= 0) return "Isteklo"
-
-  const diffHrs = Math.floor(diffMs / (1000 * 60 * 60))
-  const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
-
-  return `${diffHrs}h ${diffMins}m`
-}
-
-// Funkcija koja proverava da li je vreme za glasanje isteklo
-const hasVotingTimeExpired = (proposal: any) => {
-  if (!proposal.expiresAt) return false
-
-  const now = new Date()
-  const expirationDate = new Date(proposal.expiresAt)
-
-  return now > expirationDate
-}
-
-// Funkcija koja proverava da li je glasanje završeno
-const isVotingComplete = (proposal: any) => {
-  return proposal.status === "closed" || proposal.status === "expired"
-}
-
 // Status badge
-const StatusBadge = ({ status, expiresAt, urgent }: { status: string; expiresAt?: string; urgent?: boolean }) => {
-  if (urgent) {
-    return <Badge className="bg-red-500">Хитно</Badge>
-  }
-
+const StatusBadge = ({ status, expiresAt}: { status: string; expiresAt?: string;}) => {
   if (status === "closed") {
     return <Badge className="bg-green-500">Затворено</Badge>
   } else if (status === "expired") {
@@ -444,33 +138,19 @@ const StatusBadge = ({ status, expiresAt, urgent }: { status: string; expiresAt?
   }
 }
 
-// Funkcija za grupisanje predloga po datumu (za aktivne predloge)
-const groupProposalsByDate = (proposals: any[]) => {
-  const grouped: Record<string, any[]> = {}
-  
-  proposals.forEach(proposal => {
-    const date = new Date(proposal.dateAdded)
-    const dateString = date.toISOString().split('T')[0] // YYYY-MM-DD format
-    
-    if (!grouped[dateString]) {
-      grouped[dateString] = []
-    }
-    
-    grouped[dateString].push(proposal)
-  })
-  
-  // Sortiraj datume od najnovijeg
-  return Object.entries(grouped)
-    .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
-    .map(([date, props]) => ({
-      date,
-      proposals: props
-    }))
-}
+
 
 export default function Dashboard() {
   const { wallet, authorizedWallet } = useWallet()
   const [activeTab, setActiveTab] = useState("glasanje")
+  const proposals = useProposals();
+  const [expiringProposals,setExpiringProposals] = useState<Proposal[]>([]);
+  const [activeProposalsToVote,setActiveProposalsToVote] = useState<Proposal[]>([]);
+  const [votedActiveProposals,setVotedActiveProposals] = useState<Proposal[]>([]);
+  const [votedCompletedProposals,setVotedCompletedProposa] = useState<Proposal[]>([]);
+  const [votedProposals,setVotedProposals] = useState<Proposal[]>([]);
+  const [proposalsWithQuorum,setProposalsWithQuorum] = useState<Proposal[]>([]);
+  const [proposalsWithoutQuorum,setProposalsWithoutQuorum] = useState<Proposal[]>([]);
 
   // Vote badge
   const VoteBadge = ({ vote }: { vote: string }) => {
@@ -517,45 +197,47 @@ export default function Dashboard() {
     }, 3000)
   }
 
-  // Predlozi koji ističu uskoro (kvorum dostignut, ali vreme nije isteklo)
-  const expiringProposals = proposals.filter(
-    (proposal) => proposal.status === "expiring" && !proposal.yourVote && !hasVotingTimeExpired(proposal),
-  )
+  useEffect(()=>{
+    // Predlozi koji ističu uskoro (kvorum dostignut, ali vreme nije isteklo)
+    // setExpiringProposals(
+    // proposals?.filter(
+    //   (proposal) => proposal.status === "expiring" && !proposal.yourVote && !hasVotingTimeExpired(proposal),
+    // ));
 
-  // Aktivni predlozi za koje korisnik NIJE glasao
-  const activeProposalsToVote = proposals.filter(
-    (proposal) =>
-      (proposal.status === "active" || proposal.status === "expiring") &&
-      !proposal.yourVote &&
-      !(proposal.status === "expiring" && hasVotingTimeExpired(proposal)),
-  )
+    // Aktivni predlozi za koje korisnik NIJE glasao
+    setActiveProposalsToVote(proposals?.filter(
+      (proposal) =>
+        (proposal.status === "open") && !hasVotingTimeExpired(proposal) && proposal.yourVote === 'didntVote'
+    ));
 
-  // Predlozi za koje je korisnik glasao i glasanje nije završeno
-  const votedActiveProposals = proposals.filter(
-    (proposal) => 
-      proposal.yourVote && 
-      (proposal.status === "active" || proposal.status === "expiring") &&
-      !isVotingComplete(proposal)
-  )
-  
-  // Predlozi za koje je korisnik glasao i glasanje je završeno
-  const votedCompletedProposals = proposals.filter(
-    (proposal) => 
-      proposal.yourVote && 
-      isVotingComplete(proposal)
-  )
+    // Predlozi za koje je korisnik glasao i glasanje nije završeno
+    // setVotedActiveProposals(proposals?.filter(
+    //   (proposal) => 
+    //     proposal.yourVote && 
+    //     (proposal.status === "active" || proposal.status === "expiring") &&
+    //     !isVotingComplete(proposal)
+    // ));
 
-  // Svi predlozi za koje je korisnik glasao (za kompatibilnost sa postojećim kodom)
-  const votedProposals = proposals.filter((proposal) => proposal.yourVote)
+    // Predlozi za koje je korisnik glasao i glasanje je završeno
+    const votedCompletedProposals = proposals.filter(
+      (proposal) => 
+        proposal.yourVote !== 'didntVote' && 
+        isVotingComplete(proposal)
+    )
 
-  // Predlozi gde korisnik treba da glasa, sa dostupnim kvorumom
-  const proposalsWithQuorum = activeProposalsToVote.filter(p => p.quorum.reached)
-  
-  // Predlozi gde korisnik treba da glasa, bez kvoruma
-  const proposalsWithoutQuorum = activeProposalsToVote.filter(p => !p.quorum.reached)
+    // Svi predlozi za koje je korisnik glasao (za kompatibilnost sa postojećim kodom)
+    const votedProposals = proposals.filter((proposal) => proposal.yourVote)
 
-  // Grupiši aktivne predloge po datumu
-  const groupedActiveProposals = groupProposalsByDate(activeProposalsToVote)
+  },[proposals]);
+
+  useEffect(() => {
+    // Predlozi gde korisnik treba da glasa, sa dostupnim kvorumom
+    setProposalsWithQuorum(activeProposalsToVote.filter(isQuorumReached));
+
+    // Predlozi gde korisnik treba da glasa, bez kvoruma
+    setProposalsWithoutQuorum(activeProposalsToVote.filter(p => !isQuorumReached(p)));
+
+  }, [activeProposalsToVote])
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -730,7 +412,7 @@ export default function Dashboard() {
                       </h3>
                       <div className="space-y-4">
                         {proposalsWithQuorum.map((proposal) => (
-                          <Card key={proposal.id} className={proposal.urgent ? "border-red-200" : "border-green-200"}>
+                          <Card key={proposal.id} className={"border-green-200"}>
                             <CardHeader className="pb-2">
                               <div className="flex justify-between items-start">
                                 <div>
@@ -747,8 +429,7 @@ export default function Dashboard() {
                                 </div>
                                 <StatusBadge
                                   status={proposal.status}
-                                  expiresAt={proposal.expiresAt}
-                                  urgent={proposal.urgent}
+                                  expiresAt={proposal.closesAt}
                                 />
                               </div>
                             </CardHeader>
@@ -759,20 +440,18 @@ export default function Dashboard() {
                                 <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
                                 <div>
                                   <div className="font-medium text-sm">Кворум је достигнут</div>
-                                  {proposal.quorum.reachedAt && (
-                                    <div className="text-xs">Достигнут: {formatDate(proposal.quorum.reachedAt)}</div>
-                                  )}
-                                  {proposal.expiresAt && (
+                                  
+                                  {proposal.closesAt && (
                                     <div className="text-xs mt-1">
-                                      Гласање активно још {getRemainingTime(proposal.expiresAt)}
-                                      {!proposal.allVoted && " или док сви не гласају"}
+                                      Гласање активно још {getRemainingTime(proposal.closesAt)}
+                                      {/* {!proposal.allVoted && " или док сви не гласају"} */}
                                     </div>
                                   )}
                                 </div>
                               </div>
                             </CardContent>
                             <CardFooter>
-                              <Button asChild className={proposal.urgent ? "bg-red-600 hover:bg-red-700" : ""}>
+                              <Button asChild >
                                 <Link href={`/votes/${proposal.id}`}>Гласај</Link>
                               </Button>
                             </CardFooter>
@@ -790,7 +469,7 @@ export default function Dashboard() {
                       </h3>
                       <div className="space-y-4">
                         {proposalsWithoutQuorum.map((proposal) => (
-                          <Card key={proposal.id} className={proposal.urgent ? "border-amber-200" : ""}>
+                          <Card key={proposal.id}>
                             <CardHeader className="pb-2">
                               <div className="flex justify-between items-start">
                                 <div>
@@ -807,8 +486,7 @@ export default function Dashboard() {
                                 </div>
                                 <StatusBadge
                                   status={proposal.status}
-                                  expiresAt={proposal.expiresAt}
-                                  urgent={proposal.urgent}
+                                  expiresAt={proposal.closesAt}
                                 />
                               </div>
                             </CardHeader>
@@ -818,18 +496,18 @@ export default function Dashboard() {
                               <div className="mt-3">
                                 <div className="flex items-center justify-between mb-1">
                                   <span className="text-sm">
-                                    Кворум: {proposal.quorum.current}/{proposal.quorum.required}
+                                    Кворум: {countTotalVotes(proposal)}/{QUORUM}
                                   </span>
                                   <span className="text-xs text-muted-foreground">
-                                    {Math.round((proposal.quorum.current / proposal.quorum.required) * 100)}%
+                                    {Math.round((Number(countTotalVotes(proposal)) / QUORUM) * 100)}%
                                   </span>
                                 </div>
                                 <Progress
-                                  value={(proposal.quorum.current / proposal.quorum.required) * 100}
+                                  value={(Number(countTotalVotes(proposal)) / QUORUM) * 100}
                                   className="h-2 mb-2"
                                 />
                                 <p className="text-xs text-amber-600">
-                                  Потребно још {proposal.quorum.required - proposal.quorum.current} гласова за достизање кворума
+                                  Потребно још {QUORUM - Number(countTotalVotes(proposal))} гласова за достизање кворума
                                 </p>
                               </div>
                             </CardContent>
@@ -869,12 +547,12 @@ export default function Dashboard() {
                           <h3 className="text-md font-medium mb-3">Активна гласања где сте гласали</h3>
                           <div className="space-y-4">
                             {/* Прво прикажи оне са кворумом */}
-                            {votedActiveProposals.filter(p => p.quorum.reached).length > 0 && (
+                            {votedActiveProposals.filter(isQuorumReached).length > 0 && (
                               <div className="mb-3">
                                 <h4 className="text-sm font-medium text-green-600 mb-2">Са доступним кворумом</h4>
                                 <div className="space-y-3">
                                   {votedActiveProposals
-                                    .filter(p => p.quorum.reached)
+                                    .filter(isQuorumReached)
                                     .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
                                     .map((proposal) => (
                                       <div key={proposal.id} className="flex justify-between items-center p-3 border border-green-100 rounded-md bg-green-50">
@@ -890,8 +568,7 @@ export default function Dashboard() {
                                           <div className="text-xs mt-1 text-green-600 flex items-center gap-1">
                                             <CheckCircle2 className="h-3 w-3" />
                                             <span>
-                                              Кворум достигнут: {proposal.quorum.reachedAt && formatDate(proposal.quorum.reachedAt)}
-                                              {proposal.expiresAt && ` - Активно још ${getRemainingTime(proposal.expiresAt)}`}
+                                              {proposal.closesAt && ` - Активно још ${getRemainingTime(proposal.closesAt)}`}
                                             </span>
                                           </div>
                                         </div>
@@ -906,12 +583,12 @@ export default function Dashboard() {
                             )}
 
                             {/* Затим прикажи оне без кворума */}
-                            {votedActiveProposals.filter(p => !p.quorum.reached).length > 0 && (
+                            {votedActiveProposals.filter(isQuorumReached).length > 0 && (
                               <div>
                                 <h4 className="text-sm font-medium text-amber-600 mb-2">У току прикупљања кворума</h4>
                                 <div className="space-y-3">
                                   {votedActiveProposals
-                                    .filter(p => !p.quorum.reached)
+                                    .filter(isQuorumReached)
                                     .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
                                     .map((proposal) => (
                                       <div key={proposal.id} className="flex justify-between items-center p-3 border border-amber-100 rounded-md bg-amber-50">
@@ -927,8 +604,8 @@ export default function Dashboard() {
                                           <div className="text-xs mt-1 text-amber-600 flex items-center gap-1">
                                             <Timer className="h-3 w-3" />
                                             <span>
-                                              Прикупљање кворума: {proposal.quorum.current}/{proposal.quorum.required} 
-                                              (потребно још {proposal.quorum.required - proposal.quorum.current})
+                                              Прикупљање кворума: {countTotalVotes(proposal)}/{QUORUM} 
+                                              (потребно још {QUORUM - Number(countTotalVotes(proposal))})
                                             </span>
                                           </div>
                                         </div>
@@ -961,7 +638,7 @@ export default function Dashboard() {
                                       <VoteBadge vote={proposal.yourVote || "for"} />
                                     </div>
                                     <div className="text-xs mt-1">
-                                      <span>Затворено: {proposal.closedAt ? formatDate(proposal.closedAt) : 'N/A'}</span>
+                                      <span>Затворено: {proposal.closesAt ? formatDate(proposal.closesAt) : 'N/A'}</span>
                                     </div>
                                     <div className="text-xs text-green-600 mt-1 flex items-center gap-1">
                                       <CheckCircle2 className="h-3 w-3" />

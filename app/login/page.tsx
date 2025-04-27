@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Wallet, AlertTriangle, Loader2, Info, Laptop } from "lucide-react"
-import { WalletConnectButton } from "@/components/wallet-connect-button"
-import { useWallet } from "@/context/wallet-context"
 import { ethers } from "ethers"
 
 export default function LoginPage() {
