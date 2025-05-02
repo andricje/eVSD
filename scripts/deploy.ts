@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { AddressLike, BaseContract, Contract, Signer, Wallet } from "ethers";
+import { AddressLike, BaseContract, Signer } from "ethers";
 import { EvsdGovernor, EvsdToken } from "../typechain-types";
 import fs from "fs";
 

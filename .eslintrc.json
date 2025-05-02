@@ -1,6 +1,14 @@
 {
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
   "extends": [
     "next/core-web-vitals",
-    "next/typescript"
-  ]
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "rules": {
+    "curly": ["error", "all"],
+    "semi": ["error", "always"]
+  }
 }

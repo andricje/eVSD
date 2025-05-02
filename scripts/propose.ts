@@ -2,28 +2,12 @@ import { ethers } from "hardhat";
 import governorArtifacts from "../contracts/evsd-governor.json";
 import tokenArtifacts from "../contracts/evsd-token.json";
 import {
-  EvsdGovernor,
   EvsdGovernor__factory,
   EvsdToken,
   EvsdToken__factory,
 } from "../typechain-types";
 import { Signer } from "ethers";
-
-export async function createProposalDoNothing(
-  proposer: Signer,
-  governor: EvsdGovernor,
-  proposalDescription: string
-) {
-  governor = governor.connect(proposer);
-  const tokenAddress = await governor.token();
-  const doNothingCalldata = governor.interface.encodeFunctionData("doNothing");
-  await governor.propose(
-    [tokenAddress],
-    [0],
-    [doNothingCalldata],
-    proposalDescription
-  );
-}
+import { createProposalDoNothing } from "../lib/utils";
 
 async function delegateVoteToSelf(evsdToken: EvsdToken, voter: Signer) {
   await evsdToken.delegate(await voter.getAddress());

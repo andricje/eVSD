@@ -3,13 +3,14 @@ import {
   EvsdGovernor__factory,
   EvsdToken,
   EvsdToken__factory,
-} from "@/typechain-types";
+} from "../typechain-types";
 import { clsx, type ClassValue } from "clsx";
 import { Signer } from "ethers";
 import { twMerge } from "tailwind-merge";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
-import { Proposal } from "@/types/proposal";
+import { Proposal } from "../types/proposal";
+import { addressNameMap } from "./address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -18,6 +19,12 @@ export function cn(...inputs: ClassValue[]) {
 export interface DeployedContracts {
   governor: EvsdGovernor;
   token: EvsdToken;
+}
+
+export function convertAddressToName(address: string): string {
+  return address in addressNameMap
+    ? (addressNameMap[address] as string)
+    : "Nepoznato";
 }
 
 export async function getProposals(
@@ -34,8 +41,8 @@ export async function getProposals(
         id: proposalId,
         title: "Test Proposal",
         dateAdded: "1/1/2000",
-        description: "Test Description",
-        author: "Test author",
+        description: event.args.description,
+        author: convertAddressToName(event.args.proposer),
         votesFor: countedVotes.forVotes,
         votesAgainst: countedVotes.againstVotes,
         votesAbstain: countedVotes.abstainVotes,
@@ -74,7 +81,9 @@ export const getRemainingTime = (expiresAt: string) => {
   const expiration = new Date(expiresAt);
   const diffMs = expiration.getTime() - now.getTime();
 
-  if (diffMs <= 0) return "Isteklo";
+  if (diffMs <= 0) {
+    return "Isteklo";
+  }
 
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
   const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -126,4 +135,20 @@ export function isQuorumReached(proposal: Proposal) {
 
 export function countTotalVotes(proposal: Proposal) {
   return proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain;
+}
+export async function createProposalDoNothing(
+  proposer: Signer,
+  governor: EvsdGovernor,
+  proposalDescription: string
+) {
+  console.log("Creating a 'do nothing' proposal...");
+  governor = governor.connect(proposer);
+  const tokenAddress = await governor.token();
+  const doNothingCalldata = governor.interface.encodeFunctionData("doNothing");
+  await governor.propose(
+    [tokenAddress],
+    [0],
+    [doNothingCalldata],
+    proposalDescription
+  );
 }

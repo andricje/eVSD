@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -67,11 +68,13 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "9.25.1",
+    "eslint": "^8.57.1",
     "eslint-config-next": "15.3.1",
+    "eslint-config-prettier": "^10.1.2",
     "forge-std": "github:foundry-rs/forge-std#v1.9.4",
     "hardhat": "^2.23.0",
     "postcss": "^8",
+    "prettier": "^3.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   }
