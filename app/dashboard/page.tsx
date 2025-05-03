@@ -286,7 +286,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
                                       <div className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        {formatDateString(proposal.dateAdded)}
+                                        {formatDate(proposal.dateAdded)}
                                       </div>
                                       <div>Предложио: {proposal.author}</div>
                                     </div>
@@ -348,7 +348,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
                                       <div className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        {formatDateString(proposal.dateAdded)}
+                                        {formatDate(proposal.dateAdded)}
                                       </div>
                                       <div>Предложио: {proposal.author}</div>
                                     </div>
@@ -462,9 +462,7 @@ export default function Dashboard() {
                                           <div className="text-sm text-muted-foreground flex items-center gap-2">
                                             <span>
                                               Гласали сте:{" "}
-                                              {formatDateString(
-                                                proposal.dateAdded
-                                              )}
+                                              {formatDate(proposal.dateAdded)}
                                             </span>
                                             <VoteBadge
                                               vote={proposal.yourVote || "for"}
@@ -530,9 +528,7 @@ export default function Dashboard() {
                                           <div className="text-sm text-muted-foreground flex items-center gap-2">
                                             <span>
                                               Гласали сте:{" "}
-                                              {formatDateString(
-                                                proposal.dateAdded
-                                              )}
+                                              {formatDate(proposal.dateAdded)}
                                             </span>
                                             <VoteBadge
                                               vote={proposal.yourVote || "for"}
@@ -599,7 +595,7 @@ export default function Dashboard() {
                                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                                       <span>
                                         Гласали сте:{" "}
-                                        {formatDateString(proposal.dateAdded)}
+                                        {formatDate(proposal.dateAdded)}
                                       </span>
                                       <VoteBadge
                                         vote={proposal.yourVote || "for"}

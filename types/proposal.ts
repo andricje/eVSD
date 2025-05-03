@@ -1,7 +1,7 @@
 export interface Proposal {
   id: bigint;
   title: string;
-  dateAdded: string;
+  dateAdded: Date;
   description: string;
   author: string;
   votesFor: number;

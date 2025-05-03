@@ -106,20 +106,22 @@ export async function getProposals(
       const yourVote =
         signerAddress in allVotes ? allVotes[signerAddress] : "notEligible";
       const deadline = await governor.proposalDeadline(proposalId);
+      const closesAt = new Date(Number(deadline) * 1000);
+      const voteStart = new Date(Number(event.args.voteStart) * 1000);
 
       // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
       // TODO: Remove all placeholder data
       const proposal: Proposal = {
         id: proposalId,
         title: "Test Proposal",
-        dateAdded: "1/1/2000",
+        dateAdded: voteStart,
         description: event.args.description,
         author: convertAddressToName(event.args.proposer),
         votesFor: Number(countedVotes.forVotes / oneToken),
         votesAgainst: Number(countedVotes.againstVotes / oneToken),
         votesAbstain: Number(countedVotes.abstainVotes / oneToken),
         status: "open",
-        closesAt: new Date(Number(deadline) * 1000),
+        closesAt: closesAt,
         yourVote: yourVote,
         votesForAddress: allVotes,
       };
