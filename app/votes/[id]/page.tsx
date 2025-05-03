@@ -26,9 +26,9 @@ import {
   castVote,
   convertAddressToName,
   convertVoteOptionToGovernor,
+  convertVoteOptionToString,
   countTotalVotes,
   formatDate,
-  formatDateString,
   getDeployedContracts,
   getRemainingTime,
   isQuorumReached,
@@ -42,6 +42,8 @@ import { StatusBadge, VoteIcon } from "@/components/badges";
 import { VoteOption } from "@/types/proposal";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { VoteCounter } from "@/components/vote-counter";
+import { useToast } from "@/hooks/use-toast";
+import { ConfirmVoteDialog } from "@/components/confirm-vote-dialog";
 
 export default function VoteDetailPage() {
   const { signer } = useBrowserSigner();
@@ -52,15 +54,21 @@ export default function VoteDetailPage() {
   const allProposals = useProposals();
 
   const [selectedVote, setSelectedVote] = useState<VoteOption>("didntVote");
-  const [voteSubmitted, setVoteSubmitted] = useState(false);
+  const [voteConfirmed, setVoteConfirmed] = useState(false);
   const [voteRegistered, setVoteRegistered] = useState(false);
+  const { toast } = useToast();
 
   const selectedProposal = allProposals.find(
     (proposal) => proposal.id === proposalId
   );
 
   useEffect(() => {
-    if (selectedVote !== "didntVote" && signer && selectedProposal) {
+    if (
+      selectedVote !== "didntVote" &&
+      signer &&
+      selectedProposal &&
+      voteConfirmed
+    ) {
       const deployedContracts = getDeployedContracts(signer);
       castVote(
         signer,
@@ -71,17 +79,19 @@ export default function VoteDetailPage() {
         setVoteRegistered(true);
       });
     }
-  }, [signer, selectedVote, selectedProposal]);
+  }, [signer, selectedVote, selectedProposal, voteConfirmed]);
+
+  useEffect(() => {
+    if (voteRegistered) {
+      toast({
+        title: "Успешно забележен глас",
+        description: `Успешно сте гласали: ${convertVoteOptionToString(selectedVote)}`,
+      });
+    }
+  }, [voteRegistered, selectedVote, toast]);
 
   const handleVote = (vote: VoteOption) => {
     setSelectedVote(vote);
-  };
-
-  // Dodajemo funkciju za potvrđivanje glasa
-  const handleSubmitVote = () => {
-    if (selectedVote !== "didntVote") {
-      setVoteSubmitted(true);
-    }
   };
 
   return (
@@ -108,7 +118,7 @@ export default function VoteDetailPage() {
                   </h1>
                   <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4" />
-                    Dodato: {formatDateString(selectedProposal.dateAdded)}
+                    Dodato: {formatDate(selectedProposal.dateAdded)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -360,7 +370,7 @@ export default function VoteDetailPage() {
                           </div>
 
                           {selectedVote ? (
-                            voteSubmitted ? (
+                            voteConfirmed ? (
                               <div className="space-y-4">
                                 {voteRegistered ? (
                                   <div className="bg-green-50 border border-green-200 rounded-md p-3 text-green-600 flex items-center gap-2">
@@ -382,12 +392,13 @@ export default function VoteDetailPage() {
                                 )}
                               </div>
                             ) : (
-                              <Button
-                                className="w-full bg-blue-600 hover:bg-blue-700"
-                                onClick={handleSubmitVote}
-                              >
-                                Потврди глас
-                              </Button>
+                              <ConfirmVoteDialog
+                                onConfirm={() => {
+                                  setVoteConfirmed(true);
+                                }}
+                                onCancel={() => {}}
+                                chosenVote={selectedVote}
+                              />
                             )
                           ) : (
                             <p className="text-xs text-muted-foreground text-center">

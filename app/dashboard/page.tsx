@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Wallet,
-  LogOut,
   Clock,
   CheckCircle2,
   XCircle,

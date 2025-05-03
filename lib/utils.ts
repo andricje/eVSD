@@ -43,6 +43,17 @@ export function convertAddressToName(address: string): string {
     : "Nepoznato";
 }
 
+export function convertVoteOptionToString(vote: VoteOption): string {
+  const voteOptionMap: Record<VoteOption, string> = {
+    for: "за",
+    against: "против",
+    abstain: "уздржан",
+    didntVote: "нисте гласали",
+    notEligible: "немате право гласа",
+  };
+  return voteOptionMap[vote];
+}
+
 export const QUORUM = 20;
 
 export function getVoteResult(
@@ -180,31 +191,6 @@ export const hasVotingTimeExpired = (proposal: Proposal) => {
 // Funkcija koja proverava da li je glasanje završeno
 export const isVotingComplete = (proposal: Proposal) => {
   return proposal.status === "closed";
-}; // Funkcija za grupisanje predloga po datumu (za aktivne predloge)
-export const groupProposalsByDate = (proposals: Proposal[]) => {
-  const grouped: Record<string, any[]> = {};
-
-  proposals.forEach((proposal) => {
-    const date = new Date(proposal.dateAdded);
-    const dateString = date.toISOString().split("T")[0]; // YYYY-MM-DD format
-
-    if (!grouped[dateString]) {
-      grouped[dateString] = [];
-    }
-
-    grouped[dateString].push(proposal);
-  });
-
-  // Sortiraj datume od najnovijeg
-  return Object.entries(grouped)
-    .sort(
-      ([dateA], [dateB]) =>
-        new Date(dateB).getTime() - new Date(dateA).getTime()
-    )
-    .map(([date, props]) => ({
-      date,
-      proposals: props,
-    }));
 };
 
 export function isQuorumReached(proposal: Proposal) {

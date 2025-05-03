@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useBrowserSigner } from "./use-browser-signer";
 
 export function useProposals() {
+  // TODO: Add listeners here: Listen for new votes, proposals etc.
   const { signer } = useBrowserSigner();
   const [proposals, setProposals] = useState<Proposal[]>([]);
   useEffect(() => {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Key, Calendar, Search, Filter } from "lucide-react";
+import { Calendar, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -21,275 +20,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Header } from "@/components/header";
-import { Proposal } from "@/types/proposal";
-import { countTotalVotes, QUORUM } from "@/lib/utils";
-
-// Симулирани подаци за изгласане предлоге
-const passedProposals: Proposal[] = [
-  {
-    id: 1n,
-    title: "Усвајање буџета за 2025. годину",
-    dateAdded: "2025-04-05T10:00:00",
-    datePassed: "2025-04-07T15:30:00",
-    description: "Гласање о предлогу буџета ВСД за 2025. годину",
-    author: "Економски факултет",
-    votesFor: 15n,
-    votesAgainst: 3n,
-    votesAbstain: 2n,
-    status: "closed",
-    closesAt: "2025-04-07T15:30:00",
-    yourVote: "for",
-    votesForAddress: [
-      { faculty: "Факултет техничких наука", vote: "for" },
-      { faculty: "Правни факултет", vote: "for" },
-      { faculty: "Економски факултет", vote: "for" },
-      { faculty: "Медицински факултет", vote: "against" },
-      { faculty: "Филозофски факултет", vote: "for" },
-      { faculty: "Факултет спорта и физичког васпитања", vote: "abstain" },
-      { faculty: "Природно-математички факултет", vote: "for" },
-      { faculty: "Пољопривредни факултет", vote: "for" },
-      { faculty: "Академија уметности", vote: "for" },
-      { faculty: "Факултет техничких наука у Чачку", vote: "for" },
-      { faculty: "Грађевински факултет", vote: "against" },
-      { faculty: "Електротехнички факултет", vote: "for" },
-      { faculty: "Машински факултет", vote: "for" },
-      { faculty: "Технолошки факултет", vote: "for" },
-      { faculty: "Факултет организационих наука", vote: "for" },
-      { faculty: "Факултет политичких наука", vote: "against" },
-      {
-        faculty: "Факултет за специјалну едукацију и рехабилитацију",
-        vote: "for",
-      },
-      { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
-      { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "for" },
-      { faculty: "Учитељски факултет", vote: "for" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Измене правилника о раду ВСД",
-    dateAdded: "2025-04-05T11:00:00",
-    datePassed: "2025-04-08T12:15:00",
-    description: "Гласање о предложеним изменама правилника о раду ВСД",
-    author: "Правни факултет",
-    priority: "medium",
-    urgent: false,
-    result: {
-      for: 18,
-      against: 0,
-      abstain: 2,
-    },
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-04-06T09:15:00",
-    },
-    status: "closed",
-    closedAt: "2025-04-08T12:15:00",
-    allVoted: true,
-    votes: [
-      { faculty: "Факултет техничких наука", vote: "for" },
-      { faculty: "Правни факултет", vote: "for" },
-      { faculty: "Економски факултет", vote: "for" },
-      { faculty: "Медицински факултет", vote: "for" },
-      { faculty: "Филозофски факултет", vote: "for" },
-      { faculty: "Факултет спорта и физичког васпитања", vote: "abstain" },
-      { faculty: "Природно-математички факултет", vote: "for" },
-      { faculty: "Пољопривредни факултет", vote: "for" },
-      { faculty: "Академија уметности", vote: "for" },
-      { faculty: "Факултет техничких наука у Чачку", vote: "for" },
-      { faculty: "Грађевински факултет", vote: "for" },
-      { faculty: "Електротехнички факултет", vote: "for" },
-      { faculty: "Машински факултет", vote: "for" },
-      { faculty: "Технолошки факултет", vote: "for" },
-      { faculty: "Факултет организационих наука", vote: "for" },
-      { faculty: "Факултет политичких наука", vote: "for" },
-      {
-        faculty: "Факултет за специјалну едукацију и рехабилитацију",
-        vote: "for",
-      },
-      { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
-      { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "for" },
-      { faculty: "Учитељски факултет", vote: "for" },
-    ],
-  },
-  {
-    id: 7,
-    title: "Усвајање плана рада за летњи семестар",
-    dateAdded: "2025-03-15T09:00:00",
-    datePassed: "2025-03-20T14:45:00",
-    description: "Гласање о плану рада ВСД за летњи семестар 2025. године",
-    author: "Факултет организационих наука",
-    priority: "medium",
-    urgent: true,
-    result: {
-      for: 16,
-      against: 1,
-      abstain: 3,
-    },
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-03-15T16:20:00",
-    },
-    status: "closed",
-    closedAt: "2025-03-20T14:45:00",
-    allVoted: false,
-    votes: [
-      { faculty: "Факултет техничких наука", vote: "for" },
-      { faculty: "Правни факултет", vote: "for" },
-      { faculty: "Економски факултет", vote: "for" },
-      { faculty: "Медицински факултет", vote: "for" },
-      { faculty: "Филозофски факултет", vote: "for" },
-      { faculty: "Факултет спорта и физичког васпитања", vote: "abstain" },
-      { faculty: "Природно-математички факултет", vote: "for" },
-      { faculty: "Пољопривредни факултет", vote: "for" },
-      { faculty: "Академија уметности", vote: "for" },
-      { faculty: "Факултет техничких наука у Чачку", vote: "for" },
-      { faculty: "Грађевински факултет", vote: "against" },
-      { faculty: "Електротехнички факултет", vote: "for" },
-      { faculty: "Машински факултет", vote: "for" },
-      { faculty: "Технолошки факултет", vote: "for" },
-      { faculty: "Факултет организационих наука", vote: "for" },
-      { faculty: "Факултет политичких наука", vote: "for" },
-      {
-        faculty: "Факултет за специјалну едукацију и рехабилитацију",
-        vote: "for",
-      },
-      { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
-      { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "for" },
-      { faculty: "Учитељски факултет", vote: "abstain" },
-    ],
-  },
-  {
-    id: 8,
-    title: "Избор представника за Студентски парламент",
-    dateAdded: "2025-02-20T13:30:00",
-    datePassed: "2025-02-25T16:20:00",
-    description: "Гласање за представнике ВСД у Студентском парламенту",
-    author: "Факултет политичких наука",
-    priority: "high",
-    urgent: true,
-    result: {
-      for: 14,
-      against: 2,
-      abstain: 4,
-    },
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-02-21T10:15:00",
-    },
-    status: "closed",
-    closedAt: "2025-02-25T16:20:00",
-    allVoted: false,
-    votes: [
-      { faculty: "Факултет техничких наука", vote: "for" },
-      { faculty: "Правни факултет", vote: "for" },
-      { faculty: "Економски факултет", vote: "for" },
-      { faculty: "Медицински факултет", vote: "against" },
-      { faculty: "Филозофски факултет", vote: "for" },
-      { faculty: "Факултет спорта и физичког васпитања", vote: "abstain" },
-      { faculty: "Природно-математички факултет", vote: "for" },
-      { faculty: "Пољопривредни факултет", vote: "for" },
-      { faculty: "Академија уметности", vote: "for" },
-      { faculty: "Факултет техничких наука у Чачку", vote: "for" },
-      { faculty: "Грађевински факултет", vote: "against" },
-      { faculty: "Електротехнички факултет", vote: "for" },
-      { faculty: "Машински факултет", vote: "for" },
-      { faculty: "Технолошки факултет", vote: "for" },
-      { faculty: "Факултет организационих наука", vote: "for" },
-      { faculty: "Факултет политичких наука", vote: "for" },
-      {
-        faculty: "Факултет за специјалну едукацију и рехабилитацију",
-        vote: "for",
-      },
-      { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
-      {
-        faculty: "Факултет спорта и физичког васпитања у Нишу",
-        vote: "abstain",
-      },
-      { faculty: "Учитељски факултет", vote: "abstain" },
-    ],
-  },
-  {
-    id: 9,
-    title: "Предлог за организацију студентске конференције",
-    dateAdded: "2025-04-01T08:00:00",
-    datePassed: "2025-04-03T08:00:00",
-    description:
-      "Гласање о предлогу за организацију међународне студентске конференције",
-    author: "Факултет организационих наука",
-    priority: "low",
-    urgent: false,
-    result: {
-      for: 12,
-      against: 0,
-      abstain: 0,
-    },
-    quorum: {
-      required: 10,
-      current: 12,
-      reached: true,
-      reachedAt: "2025-04-02T14:30:00",
-    },
-    status: "closed",
-    closedAt: "2025-04-03T08:00:00",
-    allVoted: false,
-    votes: [
-      { faculty: "Факултет техничких наука", vote: "for" },
-      { faculty: "Правни факултет", vote: "for" },
-      { faculty: "Економски факултет", vote: "for" },
-      { faculty: "Медицински факултет", vote: "for" },
-      { faculty: "Филозофски факултет", vote: "for" },
-      { faculty: "Факултет спорта и физичког васпитања", vote: "for" },
-      { faculty: "Природно-математички факултет", vote: "for" },
-      { faculty: "Пољопривредни факултет", vote: "for" },
-      { faculty: "Академија уметности", vote: "for" },
-      { faculty: "Факултет техничких наука у Чачку", vote: "for" },
-      { faculty: "Грађевински факултет", vote: "for" },
-      { faculty: "Електротехнички факултет", vote: "for" },
-    ],
-  },
-];
-
-// Форматирање датума
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("sr-RS", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
-};
-
-// Status badge
-const StatusBadge = ({ status }: { status: string }) => {
-  if (status === "closed") {
-    return <Badge className="bg-green-500">Завршено</Badge>;
-  } else if (status === "expiring") {
-    return <Badge className="bg-amber-500">Квор. достигнут</Badge>;
-  } else if (status === "expired") {
-    return <Badge className="bg-gray-500">Време истекло</Badge>;
-  } else if (status === "active") {
-    return <Badge variant="outline">Активно</Badge>;
-  }
-  return null;
-};
+import {
+  convertAddressToName,
+  countTotalVotes,
+  formatDate,
+  QUORUM,
+} from "@/lib/utils";
+import { useProposals } from "@/hooks/use-proposals";
+import { StatusBadge } from "@/components/badges";
 
 export default function RezultatiPage() {
+  const proposals = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterPriority, setFilterPriority] = useState("all");
   const [filterDate, setFilterDate] = useState("all");
-  const [expandedProposal, setExpandedProposal] = useState<number | null>(null);
+  const [expandedProposal, setExpandedProposal] = useState<bigint | null>(null);
 
   // Филтрирање предлога
-  const filteredProposals = passedProposals.filter((proposal) => {
+  const filteredProposals = proposals.filter((proposal) => {
     // Претрага по наслову или опису
     const matchesSearch =
       proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -302,18 +49,18 @@ export default function RezultatiPage() {
     if (filterDate === "month") {
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      matchesDate = new Date(proposal.datePassed) > oneMonthAgo;
+      matchesDate = proposal.closesAt > oneMonthAgo;
     } else if (filterDate === "quarter") {
       const threeMonthsAgo = new Date();
       threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      matchesDate = new Date(proposal.datePassed) > threeMonthsAgo;
+      matchesDate = proposal.closesAt > threeMonthsAgo;
     } else if (filterDate === "year") {
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      matchesDate = new Date(proposal.datePassed) > oneYearAgo;
+      matchesDate = proposal.closesAt > oneYearAgo;
     }
 
-    return matchesSearch && matchesPriority && matchesDate;
+    return matchesSearch && matchesDate;
   });
 
   // Vote badge
@@ -345,20 +92,6 @@ export default function RezultatiPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    <SelectValue placeholder="Филтер по приоритету" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Сви приоритети</SelectItem>
-                  <SelectItem value="high">Висок приоритет</SelectItem>
-                  <SelectItem value="medium">Средњи приоритет</SelectItem>
-                  <SelectItem value="low">Низак приоритет</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={filterDate} onValueChange={setFilterDate}>
                 <SelectTrigger className="w-full md:w-[180px]">
                   <div className="flex items-center gap-2">
@@ -388,7 +121,7 @@ export default function RezultatiPage() {
                         </CardTitle>
                         <CardDescription className="mt-1">
                           Предложио: {proposal.author} | Усвојено:{" "}
-                          {formatDate(proposal.datePassed)}
+                          {formatDate(proposal.closesAt)}
                         </CardDescription>
                       </div>
                     </div>
@@ -433,7 +166,7 @@ export default function RezultatiPage() {
                         <p className="text-sm font-medium mb-1">Статус</p>
                         <StatusBadge
                           status={proposal.status}
-                          urgent={proposal.urgent}
+                          expiresAt={proposal.closesAt}
                         />
                       </div>
                     </div>
@@ -461,15 +194,17 @@ export default function RezultatiPage() {
                             Детаљи гласања по факултетима
                           </h3>
                           <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
-                            {proposal.votes.map((vote, index) => (
-                              <div
-                                key={index}
-                                className="flex justify-between py-1 border-b text-sm"
-                              >
-                                <span>{vote.faculty}</span>
-                                <VoteBadge vote={vote.vote} />
-                              </div>
-                            ))}
+                            {Object.entries(proposal.votesForAddress).map(
+                              ([address, vote]) => (
+                                <div
+                                  key={address}
+                                  className="flex justify-between py-1 border-b text-sm"
+                                >
+                                  <span>{convertAddressToName(address)}</span>
+                                  <VoteBadge vote={vote} />
+                                </div>
+                              )
+                            )}
                           </div>
                         </div>
                       )}
