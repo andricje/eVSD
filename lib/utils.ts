@@ -16,11 +16,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export interface DeployedContracts {
-  governor: EvsdGovernor;
-  token: EvsdToken;
-}
-
 const governorVoteMap: Record<number, VoteOption> = {
   0: "against",
   1: "for",
@@ -71,16 +66,21 @@ async function getVotesForProposal(
   proposalId: bigint
 ): Promise<Record<string, VoteOption>> {
   const votes: Record<string, VoteOption> = {};
+  const filter = governor.filters.VoteCast();
+  const events = await governor.queryFilter(filter);
+  const eventsForProposal = events.filter(
+    (event) => event.args.proposalId === proposalId
+  );
   for (const address of Object.keys(addressNameMap)) {
-    /*const filter = governor.filters.VoteCast(address, proposalId);
-    const events = await governor.queryFilter(filter);
-    if (events.length == 0) {
+    const eventsForAddress = eventsForProposal.filter(
+      (event) => event.args.voter === address
+    );
+    if (eventsForAddress.length == 0) {
       votes[address] = "didntVote";
     } else {
-      const vote = Number(events[0].args.support);
+      const vote = Number(eventsForAddress[0].args.support);
       votes[address] = governorVoteMap[vote];
-    }*/
-    votes[address] = "didntVote";
+    }
   }
   return votes;
 }
@@ -115,7 +115,10 @@ export async function getProposals(
   );
   return results;
 }
-export function getDeployedContracts(signer: Signer): DeployedContracts {
+export function getDeployedContracts(signer: Signer): {
+  governor: EvsdGovernor;
+  token: EvsdToken;
+} {
   const governor = EvsdGovernor__factory.connect(
     evsdGovernorArtifacts.address,
     signer
@@ -199,10 +202,10 @@ export async function createProposalDoNothing(
 ) {
   console.log("Creating a 'do nothing' proposal...");
   governor = governor.connect(proposer);
-  const tokenAddress = await governor.token();
+  const governorAddress = await governor.getAddress();
   const doNothingCalldata = governor.interface.encodeFunctionData("doNothing");
   await governor.propose(
-    [tokenAddress],
+    [governorAddress],
     [0],
     [doNothingCalldata],
     proposalDescription

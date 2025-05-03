@@ -21,33 +21,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Header } from "@/components/header";
+import { Proposal } from "@/types/proposal";
+import { countTotalVotes, QUORUM } from "@/lib/utils";
 
 // Симулирани подаци за изгласане предлоге
-const passedProposals = [
+const passedProposals: Proposal[] = [
   {
-    id: 1,
+    id: 1n,
     title: "Усвајање буџета за 2025. годину",
     dateAdded: "2025-04-05T10:00:00",
     datePassed: "2025-04-07T15:30:00",
     description: "Гласање о предлогу буџета ВСД за 2025. годину",
     author: "Економски факултет",
-    priority: "high",
-    urgent: false,
-    result: {
-      for: 15,
-      against: 3,
-      abstain: 2,
-    },
-    quorum: {
-      required: 10,
-      current: 20,
-      reached: true,
-      reachedAt: "2025-04-06T11:30:00",
-    },
+    votesFor: 15n,
+    votesAgainst: 3n,
+    votesAbstain: 2n,
     status: "closed",
-    closedAt: "2025-04-07T15:30:00",
-    allVoted: true,
-    votes: [
+    closesAt: "2025-04-07T15:30:00",
+    yourVote: "for",
+    votesForAddress: [
       { faculty: "Факултет техничких наука", vote: "for" },
       { faculty: "Правни факултет", vote: "for" },
       { faculty: "Економски факултет", vote: "for" },
@@ -276,41 +268,16 @@ const formatDate = (dateString: string) => {
   }).format(date);
 };
 
-// Priority badge
-const PriorityBadge = ({ priority }: { priority: string }) => {
-  if (priority === "high") {
-    return <Badge className="bg-red-500">Висок приоритет</Badge>;
-  } else if (priority === "medium") {
-    return <Badge className="bg-amber-500">Средњи приоритет</Badge>;
-  } else {
-    return <Badge className="bg-blue-500">Низак приоритет</Badge>;
-  }
-};
-
 // Status badge
-const StatusBadge = ({
-  status,
-  urgent,
-}: {
-  status: string;
-  urgent: boolean;
-}) => {
+const StatusBadge = ({ status }: { status: string }) => {
   if (status === "closed") {
     return <Badge className="bg-green-500">Завршено</Badge>;
   } else if (status === "expiring") {
-    return urgent ? (
-      <Badge className="bg-red-500">Хитно - квор. достигнут</Badge>
-    ) : (
-      <Badge className="bg-amber-500">Квор. достигнут</Badge>
-    );
+    return <Badge className="bg-amber-500">Квор. достигнут</Badge>;
   } else if (status === "expired") {
     return <Badge className="bg-gray-500">Време истекло</Badge>;
   } else if (status === "active") {
-    return urgent ? (
-      <Badge className="bg-red-500">Хитно</Badge>
-    ) : (
-      <Badge variant="outline">Активно</Badge>
-    );
+    return <Badge variant="outline">Активно</Badge>;
   }
   return null;
 };
@@ -329,12 +296,9 @@ export default function RezultatiPage() {
       proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proposal.author.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Филтер по приоритету
-    const matchesPriority =
-      filterPriority === "all" || proposal.priority === filterPriority;
-
     // Филтер по датуму
     let matchesDate = true;
+
     if (filterDate === "month") {
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -427,12 +391,6 @@ export default function RezultatiPage() {
                           {formatDate(proposal.datePassed)}
                         </CardDescription>
                       </div>
-                      <div className="flex gap-2">
-                        <PriorityBadge priority={proposal.priority} />
-                        {proposal.urgent && (
-                          <Badge className="bg-red-500">Хитно</Badge>
-                        )}
-                      </div>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -446,18 +404,18 @@ export default function RezultatiPage() {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center">
                             <Badge className="bg-green-500">За</Badge>
-                            <span className="ml-1">{proposal.result.for}</span>
+                            <span className="ml-1">{proposal.votesFor}</span>
                           </div>
                           <div className="flex items-center">
                             <Badge className="bg-red-500">Против</Badge>
                             <span className="ml-1">
-                              {proposal.result.against}
+                              {proposal.votesAgainst}
                             </span>
                           </div>
                           <div className="flex items-center">
                             <Badge variant="outline">Уздржан</Badge>
                             <span className="ml-1">
-                              {proposal.result.abstain}
+                              {proposal.votesAbstain}
                             </span>
                           </div>
                         </div>
@@ -466,7 +424,7 @@ export default function RezultatiPage() {
                         <p className="text-sm font-medium mb-1">Кворум</p>
                         <div className="flex items-center">
                           <span>
-                            {proposal.quorum.current}/{proposal.quorum.required}
+                            {countTotalVotes(proposal)}/{QUORUM}
                           </span>
                           <Badge className="bg-green-500 ml-2">Достигнут</Badge>
                         </div>

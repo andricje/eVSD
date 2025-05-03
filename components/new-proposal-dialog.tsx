@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { createProposalDoNothing, getDeployedContracts } from "@/lib/utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
+
 export function NewProposalDialog() {
   const { signer } = useBrowserSigner();
   const [newProposal, setNewProposal] = useState({
@@ -37,7 +38,6 @@ export function NewProposalDialog() {
     if (!signer) {
       return;
     }
-    console.log("newProposal.description = ", newProposal.description);
     const deployedContracts = getDeployedContracts(signer);
     await createProposalDoNothing(
       signer,

@@ -414,8 +414,9 @@ export default function Dashboard() {
                                 />
                                 <p className="text-xs text-amber-600">
                                   Потребно још{" "}
-                                  {QUORUM - countTotalVotes(proposal)} гласова
-                                  за достизање кворума
+                                  {Number(QUORUM) -
+                                    Number(countTotalVotes(proposal))}{" "}
+                                  гласова за достизање кворума
                                 </p>
                               </div>
                             </CardContent>
@@ -570,7 +571,9 @@ export default function Dashboard() {
                                               {QUORUM}
                                               (потребно још{" "}
                                               {QUORUM -
-                                                countTotalVotes(proposal)}
+                                                Number(
+                                                  countTotalVotes(proposal)
+                                                )}
                                               )
                                             </span>
                                           </div>

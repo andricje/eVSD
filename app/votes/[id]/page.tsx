@@ -415,9 +415,9 @@ export default function VoteDetailPage() {
                     </Card>
                   )}
 
-                  {data.quorum.reached &&
-                    !isVotingComplete(data) &&
-                    data.expiresAt && (
+                  {isQuorumReached(selectedProposal) &&
+                    !isVotingComplete(selectedProposal) &&
+                    selectedProposal.closesAt && (
                       <Card>
                         <CardHeader>
                           <CardTitle>Статус кворума</CardTitle>
@@ -427,27 +427,19 @@ export default function VoteDetailPage() {
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Кворум достигнут</span>
                               <Badge className="bg-green-500">
-                                {data.quorum.current}/{data.quorum.required}
+                                {countTotalVotes(selectedProposal)}/{QUORUM}
                               </Badge>
                             </div>
-                            {data.quorum.reachedAt && (
-                              <div className="flex justify-between py-1 border-b">
-                                <span className="text-sm">
-                                  Време достизања кворума
-                                </span>
-                                <span className="text-sm font-medium">
-                                  {formatDate(data.quorum.reachedAt)}
-                                </span>
-                              </div>
-                            )}
                             <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
                               <div className="flex items-start gap-2">
                                 <Timer className="h-4 w-4 text-amber-500 mt-0.5" />
                                 <div>
                                   <p className="text-sm text-amber-700">
                                     Гласање ће бити затворено за{" "}
-                                    {getRemainingTime(data.expiresAt)} или када
-                                    сви факултети гласају.
+                                    {getRemainingTime(
+                                      selectedProposal.closesAt
+                                    )}{" "}
+                                    или када сви факултети гласају.
                                   </p>
                                 </div>
                               </div>
@@ -457,80 +449,6 @@ export default function VoteDetailPage() {
                       </Card>
                     )}
                 </div>
-              </div>
-
-              {/* Blockchain transakcije */}
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-4">
-                  Блокчејн трансакције
-                </h2>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Трансакције на блокчејну</CardTitle>
-                    <CardDescription>
-                      Све трансакције везане за овај предлог су трајно
-                      забележене на Ethereum блокчејну
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex flex-col p-3 border rounded-md">
-                        <div className="flex justify-between items-center">
-                          <div className="text-sm font-medium">
-                            Креирање предлога
-                          </div>
-                          <Badge variant="outline">Успешно</Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {formatDate(data.dateAdded)}
-                        </div>
-                        <div className="flex items-center text-xs mt-2">
-                          <span className="mr-1 text-muted-foreground">
-                            Хеш:
-                          </span>
-                          <span className="font-mono">
-                            0x8f721a5d7cd53d0eb3d1c97...
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Glasovi na blockchainu */}
-                      {data.votes &&
-                        data.votes.length > 0 &&
-                        data.votes.slice(0, 3).map((vote, i) => (
-                          <div
-                            key={i}
-                            className="flex flex-col p-3 border rounded-md"
-                          >
-                            <div className="flex justify-between items-center">
-                              <div className="text-sm font-medium">
-                                Глас: {vote.faculty}
-                              </div>
-                              <Badge variant="outline">Успешно</Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {formatDate(vote.timestamp)}
-                            </div>
-                            <div className="flex items-center text-xs mt-2">
-                              <span className="mr-1 text-muted-foreground">
-                                Хеш:
-                              </span>
-                              <span className="font-mono">
-                                {vote.walletAddress}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-
-                      {/* Ostali glasovi link */}
-                      {data.votes && data.votes.length > 3 && (
-                        <div className="text-center text-sm text-blue-600 hover:text-blue-800 cursor-pointer">
-                          Прикажи још {data.votes.length - 3} трансакција
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </div>
           )}

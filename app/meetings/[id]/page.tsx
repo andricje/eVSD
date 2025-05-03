@@ -1,12 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+import { useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Wallet,
   LogOut,
@@ -19,7 +25,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   MinusCircle,
-} from "lucide-react"
+} from "lucide-react";
 
 // Simulirani podaci za sednicu
 const meetingData = {
@@ -34,13 +40,15 @@ const meetingData = {
     {
       id: 1,
       title: "Usvajanje zapisnika sa prethodne sednice",
-      description: "Pregled i usvajanje zapisnika sa sednice održane 05.03.2025.",
+      description:
+        "Pregled i usvajanje zapisnika sa sednice održane 05.03.2025.",
       status: "pending",
     },
     {
       id: 2,
       title: "Izbor novog predsednika VSD",
-      description: "Glasanje za novog predsednika VSD za mandatni period 2025-2026.",
+      description:
+        "Glasanje za novog predsednika VSD za mandatni period 2025-2026.",
       status: "pending",
       candidates: [
         { id: 1, name: "Marko Marković", faculty: "Fakultet tehničkih nauka" },
@@ -51,45 +59,66 @@ const meetingData = {
     {
       id: 3,
       title: "Predlog izmena pravilnika o radu",
-      description: "Razmatranje i glasanje o predloženim izmenama pravilnika o radu VSD.",
+      description:
+        "Razmatranje i glasanje o predloženim izmenama pravilnika o radu VSD.",
       status: "pending",
       documents: [{ id: 1, name: "Pravilnik_izmene_2025.pdf" }],
     },
   ],
   participants: [
-    { id: 1, faculty: "Fakultet tehničkih nauka", representative: "Marko Marković", status: "confirmed" },
-    { id: 2, faculty: "Pravni fakultet", representative: "Ana Anić", status: "confirmed" },
-    { id: 3, faculty: "Ekonomski fakultet", representative: "Petar Petrović", status: "confirmed" },
-    { id: 4, faculty: "Medicinski fakultet", representative: "Jovana Jovanović", status: "pending" },
+    {
+      id: 1,
+      faculty: "Fakultet tehničkih nauka",
+      representative: "Marko Marković",
+      status: "confirmed",
+    },
+    {
+      id: 2,
+      faculty: "Pravni fakultet",
+      representative: "Ana Anić",
+      status: "confirmed",
+    },
+    {
+      id: 3,
+      faculty: "Ekonomski fakultet",
+      representative: "Petar Petrović",
+      status: "confirmed",
+    },
+    {
+      id: 4,
+      faculty: "Medicinski fakultet",
+      representative: "Jovana Jovanović",
+      status: "pending",
+    },
   ],
-}
+};
 
 export default function MeetingDetailPage() {
-  const params = useParams()
-  const meetingId = params.id
+  const params = useParams();
+  const meetingId = params.id;
 
-  const [activeVoteItem, setActiveVoteItem] = useState<number | null>(null)
-  const [votes, setVotes] = useState<Record<number, string>>({})
+  const [activeVoteItem, setActiveVoteItem] = useState<number | null>(null);
+  const [votes, setVotes] = useState<Record<number, string>>({});
 
   // Formatiranje datuma
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat("sr-RS", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(date)
-  }
+    }).format(date);
+  };
 
   const handleVote = (itemId: number, vote: string) => {
     setVotes({
       ...votes,
       [itemId]: vote,
-    })
-    setActiveVoteItem(null)
-  }
+    });
+    setActiveVoteItem(null);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -134,7 +163,9 @@ export default function MeetingDetailPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Dnevni red</CardTitle>
-                  <CardDescription>Tačke dnevnog reda za sednicu {formatDate(meetingData.date)}</CardDescription>
+                  <CardDescription>
+                    Tačke dnevnog reda za sednicu {formatDate(meetingData.date)}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
@@ -145,20 +176,36 @@ export default function MeetingDetailPage() {
                             <h3 className="font-medium">
                               {index + 1}. {item.title}
                             </h3>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {item.description}
+                            </p>
                           </div>
 
                           {votes[item.id] ? (
                             <div className="flex items-center gap-2">
-                              {votes[item.id] === "for" && <Badge className="bg-green-500">Za</Badge>}
-                              {votes[item.id] === "against" && <Badge className="bg-red-500">Protiv</Badge>}
-                              {votes[item.id] === "abstain" && <Badge variant="outline">Uzdržan</Badge>}
+                              {votes[item.id] === "for" && (
+                                <Badge className="bg-green-500">Za</Badge>
+                              )}
+                              {votes[item.id] === "against" && (
+                                <Badge className="bg-red-500">Protiv</Badge>
+                              )}
+                              {votes[item.id] === "abstain" && (
+                                <Badge variant="outline">Uzdržan</Badge>
+                              )}
                             </div>
                           ) : (
                             <Button
                               size="sm"
-                              variant={activeVoteItem === item.id ? "default" : "outline"}
-                              onClick={() => setActiveVoteItem(activeVoteItem === item.id ? null : item.id)}
+                              variant={
+                                activeVoteItem === item.id
+                                  ? "default"
+                                  : "outline"
+                              }
+                              onClick={() =>
+                                setActiveVoteItem(
+                                  activeVoteItem === item.id ? null : item.id,
+                                )
+                              }
                             >
                               Glasaj
                             </Button>
@@ -185,7 +232,11 @@ export default function MeetingDetailPage() {
                               <ThumbsDown className="h-4 w-4 mr-1" />
                               Protiv
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => handleVote(item.id, "abstain")}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleVote(item.id, "abstain")}
+                            >
                               <MinusCircle className="h-4 w-4 mr-1" />
                               Uzdržan
                             </Button>
@@ -207,14 +258,20 @@ export default function MeetingDetailPage() {
                           <div className="pl-4 mt-2">
                             <p className="text-sm font-medium">Dokumenti:</p>
                             {item.documents.map((doc) => (
-                              <Button key={doc.id} variant="link" className="text-sm p-0 h-auto">
+                              <Button
+                                key={doc.id}
+                                variant="link"
+                                className="text-sm p-0 h-auto"
+                              >
                                 {doc.name}
                               </Button>
                             ))}
                           </div>
                         )}
 
-                        {index < meetingData.agenda.length - 1 && <Separator className="mt-4" />}
+                        {index < meetingData.agenda.length - 1 && (
+                          <Separator className="mt-4" />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -238,12 +295,16 @@ export default function MeetingDetailPage() {
                         <Users className="h-4 w-4 text-muted-foreground mt-1" />
                         <div>
                           <div className="font-medium">Moderatori:</div>
-                          <div className="text-sm text-muted-foreground">{meetingData.moderators.join(", ")}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {meetingData.moderators.join(", ")}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-blue-500" />
-                        <span className="text-sm">Glasanje će biti aktivno tokom sednice</span>
+                        <span className="text-sm">
+                          Glasanje će biti aktivno tokom sednice
+                        </span>
                       </div>
                     </div>
                   </CardContent>
@@ -253,16 +314,26 @@ export default function MeetingDetailPage() {
                   <CardHeader>
                     <CardTitle>Učesnici</CardTitle>
                     <CardDescription>
-                      {meetingData.participants.filter((p) => p.status === "confirmed").length} potvrđenih
+                      {
+                        meetingData.participants.filter(
+                          (p) => p.status === "confirmed",
+                        ).length
+                      }{" "}
+                      potvrđenih
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       {meetingData.participants.map((participant) => (
-                        <div key={participant.id} className="flex items-center justify-between text-sm">
+                        <div
+                          key={participant.id}
+                          className="flex items-center justify-between text-sm"
+                        >
                           <div>
                             <div>{participant.faculty}</div>
-                            <div className="text-xs text-muted-foreground">{participant.representative}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {participant.representative}
+                            </div>
                           </div>
                           {participant.status === "confirmed" ? (
                             <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -287,5 +358,5 @@ export default function MeetingDetailPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

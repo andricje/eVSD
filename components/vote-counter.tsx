@@ -48,7 +48,7 @@ export function VoteCounter({ proposal }: VoteCounterProps) {
   const result = getVoteResult(
     Number(proposal.votesFor),
     Number(proposal.votesAgainst),
-    Number(proposal.votesAbstain)
+    Number(proposal.votesAbstain),
   );
   return (
     <div className="space-y-4">

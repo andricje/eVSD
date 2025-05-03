@@ -17,7 +17,7 @@ async function main() {
   const [_, wallet1] = await ethers.getSigners();
   const governor = EvsdGovernor__factory.connect(
     governorArtifacts.address,
-    wallet1
+    wallet1,
   );
   const evsdToken = EvsdToken__factory.connect(tokenArtifacts.address, wallet1);
   await delegateVoteToSelf(evsdToken, wallet1);

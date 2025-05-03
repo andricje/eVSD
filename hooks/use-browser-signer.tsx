@@ -6,7 +6,7 @@ export function useBrowserSigner() {
   const [provider, setProvider] = useState<ethers.BrowserProvider>();
   const [signer, setSigner] = useState<ethers.Signer>();
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading"
+    "loading",
   );
 
   useEffect(() => {
