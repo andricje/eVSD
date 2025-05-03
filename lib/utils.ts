@@ -5,11 +5,11 @@ import {
   EvsdToken__factory,
 } from "../typechain-types";
 import { clsx, type ClassValue } from "clsx";
-import { Signer } from "ethers";
+import { BigNumberish, Signer } from "ethers";
 import { twMerge } from "tailwind-merge";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
-import { Proposal } from "../types/proposal";
+import { Proposal, VoteOption, VoteResult } from "../types/proposal";
 import { addressNameMap } from "./address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
@@ -21,10 +21,68 @@ export interface DeployedContracts {
   token: EvsdToken;
 }
 
+const governorVoteMap: Record<number, VoteOption> = {
+  0: "against",
+  1: "for",
+  2: "abstain",
+};
+
+const inverseGovernorVoteMap: Record<VoteOption, bigint> = {
+  didntVote: BigInt(-1),
+  against: BigInt(0),
+  for: BigInt(1),
+  abstain: BigInt(2),
+};
+
+export function convertVoteOptionToGovernor(vote: VoteOption): bigint {
+  if (vote === "didntVote") {
+    throw new Error("didntVote can't be converted to a governor vote");
+  }
+  return inverseGovernorVoteMap[vote];
+}
+
 export function convertAddressToName(address: string): string {
   return address in addressNameMap
     ? (addressNameMap[address] as string)
     : "Nepoznato";
+}
+
+export const QUORUM = BigInt(20);
+
+export function getVoteResult(
+  votesFor: number,
+  votesAgainst: number,
+  votesAbstain: number
+): VoteResult {
+  const totalVotes = votesFor + votesAgainst + votesAbstain;
+  if (totalVotes >= QUORUM) {
+    if (votesFor > votesAgainst) {
+      return "passed";
+    } else {
+      return "failed";
+    }
+  } else {
+    return "returned";
+  }
+}
+
+async function getVotesForProposal(
+  governor: EvsdGovernor,
+  proposalId: bigint
+): Promise<Record<string, VoteOption>> {
+  const votes: Record<string, VoteOption> = {};
+  for (const address of Object.keys(addressNameMap)) {
+    /*const filter = governor.filters.VoteCast(address, proposalId);
+    const events = await governor.queryFilter(filter);
+    if (events.length == 0) {
+      votes[address] = "didntVote";
+    } else {
+      const vote = Number(events[0].args.support);
+      votes[address] = governorVoteMap[vote];
+    }*/
+    votes[address] = "didntVote";
+  }
+  return votes;
 }
 
 export async function getProposals(
@@ -37,6 +95,7 @@ export async function getProposals(
       const proposalId = event.args.proposalId;
       const proposalState = await governor.state(proposalId);
       const countedVotes = await governor.proposalVotes(event.args.proposalId);
+      // TODO: Remove all placeholder data
       const proposal: Proposal = {
         id: proposalId,
         title: "Test Proposal",
@@ -49,13 +108,13 @@ export async function getProposals(
         status: "open",
         closesAt: "1/1/2026",
         yourVote: "didntVote",
+        votesForAddress: await getVotesForProposal(governor, proposalId),
       };
       return proposal;
     })
   );
   return results;
 }
-
 export function getDeployedContracts(signer: Signer): DeployedContracts {
   const governor = EvsdGovernor__factory.connect(
     evsdGovernorArtifacts.address,
@@ -75,7 +134,6 @@ export const formatDate = (dateString: string) => {
     minute: "2-digit",
   }).format(date);
 };
-// Funkcija za računanje preostalog vremena
 export const getRemainingTime = (expiresAt: string) => {
   const now = new Date();
   const expiration = new Date(expiresAt);
@@ -127,8 +185,6 @@ export const groupProposalsByDate = (proposals: Proposal[]) => {
     }));
 };
 
-export const QUORUM = 20;
-
 export function isQuorumReached(proposal: Proposal) {
   return countTotalVotes(proposal) > QUORUM;
 }
@@ -151,4 +207,21 @@ export async function createProposalDoNothing(
     [doNothingCalldata],
     proposalDescription
   );
+}
+
+export async function castVote(
+  voter: Signer,
+  governor: EvsdGovernor,
+  proposalId: BigNumberish,
+  vote: BigNumberish
+) {
+  await governor.connect(voter).castVote(proposalId, vote);
+}
+
+export function tryParseAsBigInt(value: string): bigint | undefined {
+  try {
+    return BigInt(value);
+  } catch {
+    return undefined;
+  }
 }

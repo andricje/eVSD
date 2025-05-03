@@ -37,6 +37,7 @@ export function NewProposalDialog() {
     if (!signer) {
       return;
     }
+    console.log("newProposal.description = ", newProposal.description);
     const deployedContracts = getDeployedContracts(signer);
     await createProposalDoNothing(
       signer,

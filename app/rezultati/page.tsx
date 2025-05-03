@@ -1,13 +1,26 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Key, Calendar, Search, Filter } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Key, Calendar, Search, Filter } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Header } from "@/components/header";
 
 // Симулирани подаци за изгласане предлоге
 const passedProposals = [
@@ -51,7 +64,10 @@ const passedProposals = [
       { faculty: "Технолошки факултет", vote: "for" },
       { faculty: "Факултет организационих наука", vote: "for" },
       { faculty: "Факултет политичких наука", vote: "against" },
-      { faculty: "Факултет за специјалну едукацију и рехабилитацију", vote: "for" },
+      {
+        faculty: "Факултет за специјалну едукацију и рехабилитацију",
+        vote: "for",
+      },
       { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
       { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "for" },
       { faculty: "Учитељски факултет", vote: "for" },
@@ -97,7 +113,10 @@ const passedProposals = [
       { faculty: "Технолошки факултет", vote: "for" },
       { faculty: "Факултет организационих наука", vote: "for" },
       { faculty: "Факултет политичких наука", vote: "for" },
-      { faculty: "Факултет за специјалну едукацију и рехабилитацију", vote: "for" },
+      {
+        faculty: "Факултет за специјалну едукацију и рехабилитацију",
+        vote: "for",
+      },
       { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
       { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "for" },
       { faculty: "Учитељски факултет", vote: "for" },
@@ -143,7 +162,10 @@ const passedProposals = [
       { faculty: "Технолошки факултет", vote: "for" },
       { faculty: "Факултет организационих наука", vote: "for" },
       { faculty: "Факултет политичких наука", vote: "for" },
-      { faculty: "Факултет за специјалну едукацију и рехабилитацију", vote: "for" },
+      {
+        faculty: "Факултет за специјалну едукацију и рехабилитацију",
+        vote: "for",
+      },
       { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
       { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "for" },
       { faculty: "Учитељски факултет", vote: "abstain" },
@@ -189,9 +211,15 @@ const passedProposals = [
       { faculty: "Технолошки факултет", vote: "for" },
       { faculty: "Факултет организационих наука", vote: "for" },
       { faculty: "Факултет политичких наука", vote: "for" },
-      { faculty: "Факултет за специјалну едукацију и рехабилитацију", vote: "for" },
+      {
+        faculty: "Факултет за специјалну едукацију и рехабилитацију",
+        vote: "for",
+      },
       { faculty: "Факултет ветеринарске медицине", vote: "abstain" },
-      { faculty: "Факултет спорта и физичког васпитања у Нишу", vote: "abstain" },
+      {
+        faculty: "Факултет спорта и физичког васпитања у Нишу",
+        vote: "abstain",
+      },
       { faculty: "Учитељски факултет", vote: "abstain" },
     ],
   },
@@ -200,7 +228,8 @@ const passedProposals = [
     title: "Предлог за организацију студентске конференције",
     dateAdded: "2025-04-01T08:00:00",
     datePassed: "2025-04-03T08:00:00",
-    description: "Гласање о предлогу за организацију међународне студентске конференције",
+    description:
+      "Гласање о предлогу за организацију међународне студентске конференције",
     author: "Факултет организационих наука",
     priority: "low",
     urgent: false,
@@ -233,54 +262,64 @@ const passedProposals = [
       { faculty: "Електротехнички факултет", vote: "for" },
     ],
   },
-]
+];
 
 // Форматирање датума
 const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
+  const date = new Date(dateString);
   return new Intl.DateTimeFormat("sr-RS", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(date)
-}
+  }).format(date);
+};
 
 // Priority badge
 const PriorityBadge = ({ priority }: { priority: string }) => {
   if (priority === "high") {
-    return <Badge className="bg-red-500">Висок приоритет</Badge>
+    return <Badge className="bg-red-500">Висок приоритет</Badge>;
   } else if (priority === "medium") {
-    return <Badge className="bg-amber-500">Средњи приоритет</Badge>
+    return <Badge className="bg-amber-500">Средњи приоритет</Badge>;
   } else {
-    return <Badge className="bg-blue-500">Низак приоритет</Badge>
+    return <Badge className="bg-blue-500">Низак приоритет</Badge>;
   }
-}
+};
 
 // Status badge
-const StatusBadge = ({ status, urgent }: { status: string; urgent: boolean }) => {
+const StatusBadge = ({
+  status,
+  urgent,
+}: {
+  status: string;
+  urgent: boolean;
+}) => {
   if (status === "closed") {
-    return <Badge className="bg-green-500">Завршено</Badge>
+    return <Badge className="bg-green-500">Завршено</Badge>;
   } else if (status === "expiring") {
-    return urgent ? 
-      <Badge className="bg-red-500">Хитно - квор. достигнут</Badge> : 
+    return urgent ? (
+      <Badge className="bg-red-500">Хитно - квор. достигнут</Badge>
+    ) : (
       <Badge className="bg-amber-500">Квор. достигнут</Badge>
+    );
   } else if (status === "expired") {
-    return <Badge className="bg-gray-500">Време истекло</Badge>
+    return <Badge className="bg-gray-500">Време истекло</Badge>;
   } else if (status === "active") {
-    return urgent ? 
-      <Badge className="bg-red-500">Хитно</Badge> : 
+    return urgent ? (
+      <Badge className="bg-red-500">Хитно</Badge>
+    ) : (
       <Badge variant="outline">Активно</Badge>
+    );
   }
-  return null
-}
+  return null;
+};
 
 export default function RezultatiPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterPriority, setFilterPriority] = useState("all")
-  const [filterDate, setFilterDate] = useState("all")
-  const [expandedProposal, setExpandedProposal] = useState<number | null>(null)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterDate, setFilterDate] = useState("all");
+  const [expandedProposal, setExpandedProposal] = useState<number | null>(null);
 
   // Филтрирање предлога
   const filteredProposals = passedProposals.filter((proposal) => {
@@ -288,59 +327,45 @@ export default function RezultatiPage() {
     const matchesSearch =
       proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.author.toLowerCase().includes(searchTerm.toLowerCase())
+      proposal.author.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Филтер по приоритету
-    const matchesPriority = filterPriority === "all" || proposal.priority === filterPriority
+    const matchesPriority =
+      filterPriority === "all" || proposal.priority === filterPriority;
 
     // Филтер по датуму
-    let matchesDate = true
+    let matchesDate = true;
     if (filterDate === "month") {
-      const oneMonthAgo = new Date()
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1)
-      matchesDate = new Date(proposal.datePassed) > oneMonthAgo
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      matchesDate = new Date(proposal.datePassed) > oneMonthAgo;
     } else if (filterDate === "quarter") {
-      const threeMonthsAgo = new Date()
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
-      matchesDate = new Date(proposal.datePassed) > threeMonthsAgo
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      matchesDate = new Date(proposal.datePassed) > threeMonthsAgo;
     } else if (filterDate === "year") {
-      const oneYearAgo = new Date()
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
-      matchesDate = new Date(proposal.datePassed) > oneYearAgo
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      matchesDate = new Date(proposal.datePassed) > oneYearAgo;
     }
 
-    return matchesSearch && matchesPriority && matchesDate
-  })
+    return matchesSearch && matchesPriority && matchesDate;
+  });
 
   // Vote badge
   const VoteBadge = ({ vote }: { vote: string }) => {
     if (vote === "for") {
-      return <Badge className="bg-green-500">За</Badge>
+      return <Badge className="bg-green-500">За</Badge>;
     } else if (vote === "against") {
-      return <Badge className="bg-red-500">Против</Badge>
+      return <Badge className="bg-red-500">Против</Badge>;
     } else {
-      return <Badge variant="outline">Уздржан</Badge>
+      return <Badge variant="outline">Уздржан</Badge>;
     }
-  }
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="border-b w-full">
-        <div className="w-full max-w-full flex h-16 items-center px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 font-semibold">
-            <Key className="h-6 w-6" />
-            <span>еВСД - Јавни резултати</span>
-          </div>
-          <nav className="ml-auto flex gap-4 sm:gap-6">
-            <Link href="/" className="text-sm font-medium">
-              Почетна
-            </Link>
-            <Link href="/login" className="text-sm font-medium">
-              Пријава
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
       <main className="flex-1 w-full max-w-full py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -394,14 +419,19 @@ export default function RezultatiPage() {
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start gap-4 flex-wrap">
                       <div>
-                        <CardTitle className="text-xl">{proposal.title}</CardTitle>
+                        <CardTitle className="text-xl">
+                          {proposal.title}
+                        </CardTitle>
                         <CardDescription className="mt-1">
-                          Предложио: {proposal.author} | Усвојено: {formatDate(proposal.datePassed)}
+                          Предложио: {proposal.author} | Усвојено:{" "}
+                          {formatDate(proposal.datePassed)}
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
                         <PriorityBadge priority={proposal.priority} />
-                        {proposal.urgent && <Badge className="bg-red-500">Хитно</Badge>}
+                        {proposal.urgent && (
+                          <Badge className="bg-red-500">Хитно</Badge>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
@@ -410,7 +440,9 @@ export default function RezultatiPage() {
 
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-4">
                       <div>
-                        <p className="text-sm font-medium mb-1">Резултат гласања</p>
+                        <p className="text-sm font-medium mb-1">
+                          Резултат гласања
+                        </p>
                         <div className="flex items-center gap-4">
                           <div className="flex items-center">
                             <Badge className="bg-green-500">За</Badge>
@@ -418,11 +450,15 @@ export default function RezultatiPage() {
                           </div>
                           <div className="flex items-center">
                             <Badge className="bg-red-500">Против</Badge>
-                            <span className="ml-1">{proposal.result.against}</span>
+                            <span className="ml-1">
+                              {proposal.result.against}
+                            </span>
                           </div>
                           <div className="flex items-center">
                             <Badge variant="outline">Уздржан</Badge>
-                            <span className="ml-1">{proposal.result.abstain}</span>
+                            <span className="ml-1">
+                              {proposal.result.abstain}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -437,7 +473,10 @@ export default function RezultatiPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium mb-1">Статус</p>
-                        <StatusBadge status={proposal.status} urgent={proposal.urgent} />
+                        <StatusBadge
+                          status={proposal.status}
+                          urgent={proposal.urgent}
+                        />
                       </div>
                     </div>
 
@@ -446,18 +485,29 @@ export default function RezultatiPage() {
                         variant="outline"
                         size="sm"
                         onClick={() =>
-                          setExpandedProposal(expandedProposal === proposal.id ? null : proposal.id)
+                          setExpandedProposal(
+                            expandedProposal === proposal.id
+                              ? null
+                              : proposal.id
+                          )
                         }
                       >
-                        {expandedProposal === proposal.id ? "Сакриј детаље" : "Прикажи детаље гласања"}
+                        {expandedProposal === proposal.id
+                          ? "Сакриј детаље"
+                          : "Прикажи детаље гласања"}
                       </Button>
 
                       {expandedProposal === proposal.id && (
                         <div className="mt-4 border rounded-md p-4">
-                          <h3 className="text-sm font-medium mb-2">Детаљи гласања по факултетима</h3>
+                          <h3 className="text-sm font-medium mb-2">
+                            Детаљи гласања по факултетима
+                          </h3>
                           <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
                             {proposal.votes.map((vote, index) => (
-                              <div key={index} className="flex justify-between py-1 border-b text-sm">
+                              <div
+                                key={index}
+                                className="flex justify-between py-1 border-b text-sm"
+                              >
                                 <span>{vote.faculty}</span>
                                 <VoteBadge vote={vote.vote} />
                               </div>
@@ -471,9 +521,12 @@ export default function RezultatiPage() {
               ))
             ) : (
               <div className="text-center py-12">
-                <p className="text-lg text-muted-foreground">Нема резултата за приказ</p>
+                <p className="text-lg text-muted-foreground">
+                  Нема резултата за приказ
+                </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Покушајте да измените филтере или претрагу да бисте видели резултате
+                  Покушајте да измените филтере или претрагу да бисте видели
+                  резултате
                 </p>
               </div>
             )}
@@ -488,5 +541,5 @@ export default function RezultatiPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

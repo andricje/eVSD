@@ -41,6 +41,7 @@ import {
   QUORUM,
 } from "@/lib/utils";
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
+import { Header } from "@/components/header";
 
 // Simulirani podaci za istoriju logovanja
 const loginHistory = [
@@ -215,26 +216,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="border-b w-full">
-        <div className="w-full max-w-full flex h-16 items-center px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 font-semibold">
-            <Wallet className="h-6 w-6" />
-            <span>еВСД</span>
-          </div>
-          <nav className="ml-auto flex gap-4 sm:gap-6">
-            <Link href="/dashboard" className="text-sm font-medium">
-              Дашборд
-            </Link>
-            <Link href="/rezultati" className="text-sm font-medium">
-              Јавни резултати
-            </Link>
-            <Link href="/login" className="text-sm font-medium text-red-500">
-              <LogOut className="h-4 w-4 inline mr-1" />
-              Одјава
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
       <main className="flex-1 w-full max-w-full py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
@@ -416,7 +398,7 @@ export default function Dashboard() {
                                   <span className="text-xs text-muted-foreground">
                                     {Math.round(
                                       (Number(countTotalVotes(proposal)) /
-                                        QUORUM) *
+                                        Number(QUORUM)) *
                                         100
                                     )}
                                     %
@@ -425,15 +407,15 @@ export default function Dashboard() {
                                 <Progress
                                   value={
                                     (Number(countTotalVotes(proposal)) /
-                                      QUORUM) *
+                                      Number(QUORUM)) *
                                     100
                                   }
                                   className="h-2 mb-2"
                                 />
                                 <p className="text-xs text-amber-600">
                                   Потребно још{" "}
-                                  {QUORUM - Number(countTotalVotes(proposal))}{" "}
-                                  гласова за достизање кворума
+                                  {QUORUM - countTotalVotes(proposal)} гласова
+                                  за достизање кворума
                                 </p>
                               </div>
                             </CardContent>
@@ -588,9 +570,7 @@ export default function Dashboard() {
                                               {QUORUM}
                                               (потребно још{" "}
                                               {QUORUM -
-                                                Number(
-                                                  countTotalVotes(proposal)
-                                                )}
+                                                countTotalVotes(proposal)}
                                               )
                                             </span>
                                           </div>
