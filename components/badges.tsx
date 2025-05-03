@@ -28,7 +28,7 @@ export const StatusBadge = ({
   expiresAt,
 }: {
   status: string;
-  expiresAt?: string;
+  expiresAt?: Date;
 }) => {
   if (status === "closed") {
     return <Badge className="bg-green-500">Zatvoreno</Badge>;

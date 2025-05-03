@@ -39,6 +39,7 @@ import {
   isQuorumReached,
   countTotalVotes,
   QUORUM,
+  formatDateString,
 } from "@/lib/utils";
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import { Header } from "@/components/header";
@@ -83,49 +84,13 @@ const loginHistory = [
   },
 ];
 
-// Simulirani podaci za istoriju glasanja
-const voteHistory = [
-  {
-    id: 1,
-    proposalId: 1,
-    proposalTitle: "Usvajanje budžeta za 2025. godinu",
-    date: "2025-04-05T10:32:15",
-    vote: "for",
-    device: "Windows PC (Chrome)",
-  },
-  {
-    id: 2,
-    proposalId: 2,
-    proposalTitle: "Izmene pravilnika o radu VSD",
-    date: "2025-04-05T11:15:30",
-    vote: "for",
-    device: "Windows PC (Chrome)",
-  },
-  {
-    id: 3,
-    proposalId: 7,
-    proposalTitle: "Usvajanje plana rada za letnji semestar",
-    date: "2025-03-15T09:45:20",
-    vote: "for",
-    device: "Windows PC (Chrome)",
-  },
-  {
-    id: 4,
-    proposalId: 8,
-    proposalTitle: "Izbor predstavnika za Studentski parlament",
-    date: "2025-02-20T14:10:05",
-    vote: "against",
-    device: "Windows PC (Chrome)",
-  },
-];
-
 // Status badge
 const StatusBadge = ({
   status,
   expiresAt,
 }: {
   status: string;
-  expiresAt?: string;
+  expiresAt?: Date;
 }) => {
   if (status === "closed") {
     return <Badge className="bg-green-500">Затворено</Badge>;
@@ -173,7 +138,11 @@ function categorizeProposals(proposals: Proposal[]) {
   );
 
   // Svi predlozi za koje je korisnik glasao (za kompatibilnost sa postojećim kodom)
-  const votedProposals = proposals.filter((proposal) => proposal.yourVote);
+  const votedProposals = proposals.filter(
+    (proposal) => proposal.yourVote !== "didntVote"
+  );
+
+  console.log("Voted proposals:", votedProposals);
 
   // Predlozi gde korisnik treba da glasa, sa dostupnim kvorumom
   const proposalsWithQuorum = activeProposalsToVote.filter(isQuorumReached);
@@ -224,7 +193,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
               <span>
-                Последња активност: {formatDate(new Date().toISOString())}
+                Последња активност: {formatDateString(new Date().toISOString())}
               </span>
             </div>
           </div>
@@ -274,7 +243,11 @@ export default function Dashboard() {
             <NewProposalDialog />
           </div>
 
-          <Tabs defaultValue="glasanje" onValueChange={setActiveTab}>
+          <Tabs
+            defaultValue="glasanje"
+            onValueChange={setActiveTab}
+            value={activeTab}
+          >
             <TabsList className="grid w-full grid-cols-3 mb-4">
               <TabsTrigger value="glasanje">
                 <Vote className="h-4 w-4 mr-2" />
@@ -313,7 +286,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
                                       <div className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        {formatDate(proposal.dateAdded)}
+                                        {formatDateString(proposal.dateAdded)}
                                       </div>
                                       <div>Предложио: {proposal.author}</div>
                                     </div>
@@ -375,7 +348,7 @@ export default function Dashboard() {
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1">
                                       <div className="flex items-center gap-1">
                                         <Calendar className="h-3 w-3" />
-                                        {formatDate(proposal.dateAdded)}
+                                        {formatDateString(proposal.dateAdded)}
                                       </div>
                                       <div>Предложио: {proposal.author}</div>
                                     </div>
@@ -489,7 +462,9 @@ export default function Dashboard() {
                                           <div className="text-sm text-muted-foreground flex items-center gap-2">
                                             <span>
                                               Гласали сте:{" "}
-                                              {formatDate(proposal.dateAdded)}
+                                              {formatDateString(
+                                                proposal.dateAdded
+                                              )}
                                             </span>
                                             <VoteBadge
                                               vote={proposal.yourVote || "for"}
@@ -526,15 +501,18 @@ export default function Dashboard() {
                             )}
 
                             {/* Затим прикажи оне без кворума */}
-                            {votedProposals.filter(isQuorumReached).length >
-                              0 && (
+                            {votedProposals.filter(
+                              (proposal) => !isQuorumReached(proposal)
+                            ).length > 0 && (
                               <div>
                                 <h4 className="text-sm font-medium text-amber-600 mb-2">
                                   У току прикупљања кворума
                                 </h4>
                                 <div className="space-y-3">
                                   {votedProposals
-                                    .filter(isQuorumReached)
+                                    .filter(
+                                      (proposal) => !isQuorumReached(proposal)
+                                    )
                                     .sort(
                                       (a, b) =>
                                         new Date(b.dateAdded).getTime() -
@@ -552,7 +530,9 @@ export default function Dashboard() {
                                           <div className="text-sm text-muted-foreground flex items-center gap-2">
                                             <span>
                                               Гласали сте:{" "}
-                                              {formatDate(proposal.dateAdded)}
+                                              {formatDateString(
+                                                proposal.dateAdded
+                                              )}
                                             </span>
                                             <VoteBadge
                                               vote={proposal.yourVote || "for"}
@@ -571,9 +551,7 @@ export default function Dashboard() {
                                               {QUORUM}
                                               (потребно још{" "}
                                               {QUORUM -
-                                                Number(
-                                                  countTotalVotes(proposal)
-                                                )}
+                                                countTotalVotes(proposal)}
                                               )
                                             </span>
                                           </div>
@@ -621,7 +599,7 @@ export default function Dashboard() {
                                     <div className="text-sm text-muted-foreground flex items-center gap-2">
                                       <span>
                                         Гласали сте:{" "}
-                                        {formatDate(proposal.dateAdded)}
+                                        {formatDateString(proposal.dateAdded)}
                                       </span>
                                       <VoteBadge
                                         vote={proposal.yourVote || "for"}
@@ -686,7 +664,7 @@ export default function Dashboard() {
                       >
                         <div>
                           <div className="font-medium">
-                            {formatDate(login.date)}{" "}
+                            {formatDateString(login.date)}{" "}
                             {login.status === "failed" && (
                               <Badge variant="destructive" className="ml-2">
                                 Неуспешно

@@ -5,7 +5,7 @@ import {
   EvsdToken__factory,
 } from "../typechain-types";
 import { clsx, type ClassValue } from "clsx";
-import { BigNumberish, Signer } from "ethers";
+import { BigNumberish, ethers, Signer } from "ethers";
 import { twMerge } from "tailwind-merge";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
@@ -23,6 +23,7 @@ const governorVoteMap: Record<number, VoteOption> = {
 };
 
 const inverseGovernorVoteMap: Record<VoteOption, bigint> = {
+  notEligible: BigInt(-1),
   didntVote: BigInt(-1),
   against: BigInt(0),
   for: BigInt(1),
@@ -42,7 +43,7 @@ export function convertAddressToName(address: string): string {
     : "Nepoznato";
 }
 
-export const QUORUM = BigInt(20);
+export const QUORUM = 20;
 
 export function getVoteResult(
   votesFor: number,
@@ -86,15 +87,27 @@ async function getVotesForProposal(
 }
 
 export async function getProposals(
-  governor: EvsdGovernor
+  governor: EvsdGovernor,
+  token: EvsdToken,
+  signer: Signer
 ): Promise<Proposal[]> {
   const proposalCreatedFilter = governor.filters.ProposalCreated();
   const events = await governor.queryFilter(proposalCreatedFilter, 0, "latest");
+  const signerAddress = await signer.getAddress();
+  const decimals = await token.decimals();
+  const oneToken = ethers.parseUnits("1", decimals);
+
   const results = await Promise.all(
     events.map(async (event) => {
       const proposalId = event.args.proposalId;
       const proposalState = await governor.state(proposalId);
       const countedVotes = await governor.proposalVotes(event.args.proposalId);
+      const allVotes = await getVotesForProposal(governor, proposalId);
+      const yourVote =
+        signerAddress in allVotes ? allVotes[signerAddress] : "notEligible";
+      const deadline = await governor.proposalDeadline(proposalId);
+
+      // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
       // TODO: Remove all placeholder data
       const proposal: Proposal = {
         id: proposalId,
@@ -102,13 +115,13 @@ export async function getProposals(
         dateAdded: "1/1/2000",
         description: event.args.description,
         author: convertAddressToName(event.args.proposer),
-        votesFor: countedVotes.forVotes,
-        votesAgainst: countedVotes.againstVotes,
-        votesAbstain: countedVotes.abstainVotes,
+        votesFor: Number(countedVotes.forVotes / oneToken),
+        votesAgainst: Number(countedVotes.againstVotes / oneToken),
+        votesAbstain: Number(countedVotes.abstainVotes / oneToken),
         status: "open",
-        closesAt: "1/1/2026",
-        yourVote: "didntVote",
-        votesForAddress: await getVotesForProposal(governor, proposalId),
+        closesAt: new Date(Number(deadline) * 1000),
+        yourVote: yourVote,
+        votesForAddress: allVotes,
       };
       return proposal;
     })
@@ -127,8 +140,12 @@ export function getDeployedContracts(signer: Signer): {
   return { governor, token };
 }
 // Formatiranje datuma
-export const formatDate = (dateString: string) => {
+export const formatDateString = (dateString: string) => {
   const date = new Date(dateString);
+  return formatDate(date);
+};
+
+export function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("sr-RS", {
     day: "2-digit",
     month: "2-digit",
@@ -136,11 +153,11 @@ export const formatDate = (dateString: string) => {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
-};
-export const getRemainingTime = (expiresAt: string) => {
+}
+
+export const getRemainingTime = (expiresAt: Date) => {
   const now = new Date();
-  const expiration = new Date(expiresAt);
-  const diffMs = expiration.getTime() - now.getTime();
+  const diffMs = expiresAt.getTime() - now.getTime();
 
   if (diffMs <= 0) {
     return "Isteklo";

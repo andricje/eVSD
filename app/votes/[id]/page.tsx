@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Calendar,
   ChevronLeft,
@@ -29,6 +28,7 @@ import {
   convertVoteOptionToGovernor,
   countTotalVotes,
   formatDate,
+  formatDateString,
   getDeployedContracts,
   getRemainingTime,
   isQuorumReached,
@@ -108,7 +108,7 @@ export default function VoteDetailPage() {
                   </h1>
                   <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                     <Calendar className="h-4 w-4" />
-                    Dodato: {formatDate(selectedProposal.dateAdded)}
+                    Dodato: {formatDateString(selectedProposal.dateAdded)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

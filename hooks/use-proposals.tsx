@@ -9,8 +9,8 @@ export function useProposals() {
   useEffect(() => {
     const fillProposals = async () => {
       if (signer) {
-        const { governor } = getDeployedContracts(signer);
-        const proposals = await getProposals(governor);
+        const { governor, token } = getDeployedContracts(signer);
+        const proposals = await getProposals(governor, token, signer);
         console.log("proposals", proposals);
         setProposals(proposals);
       }
