@@ -24,13 +24,15 @@ import {
   convertAddressToName,
   countTotalVotes,
   formatDate,
+  isQuorumReached,
+  isVotingComplete,
   QUORUM,
 } from "@/lib/utils";
 import { useProposals } from "@/hooks/use-proposals";
 import { StatusBadge } from "@/components/badges";
 
 export default function RezultatiPage() {
-  const proposals = useProposals();
+  const { proposals } = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
   const [expandedProposal, setExpandedProposal] = useState<bigint | null>(null);
@@ -120,8 +122,9 @@ export default function RezultatiPage() {
                           {proposal.title}
                         </CardTitle>
                         <CardDescription className="mt-1">
-                          Предложио: {proposal.author} | Усвојено:{" "}
-                          {formatDate(proposal.closesAt)}
+                          Предложио: {proposal.author}
+                          {isVotingComplete(proposal) &&
+                            `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
                         </CardDescription>
                       </div>
                     </div>
@@ -159,7 +162,11 @@ export default function RezultatiPage() {
                           <span>
                             {countTotalVotes(proposal)}/{QUORUM}
                           </span>
-                          <Badge className="bg-green-500 ml-2">Достигнут</Badge>
+                          {isQuorumReached(proposal) && (
+                            <Badge className="bg-green-500 ml-2">
+                              Достигнут
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div>

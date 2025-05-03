@@ -51,14 +51,14 @@ export default function VoteDetailPage() {
   // TODO: Handle invalid proposal id
   const proposalId = tryParseAsBigInt(params.id);
   // There is no way to fetch proposal description and proposer id except filtering all events, so just fetch all proposals and filter
-  const allProposals = useProposals();
+  const { proposals } = useProposals();
 
   const [selectedVote, setSelectedVote] = useState<VoteOption>("didntVote");
   const [voteConfirmed, setVoteConfirmed] = useState(false);
   const [voteRegistered, setVoteRegistered] = useState(false);
   const { toast } = useToast();
 
-  const selectedProposal = allProposals.find(
+  const selectedProposal = proposals.find(
     (proposal) => proposal.id === proposalId
   );
 

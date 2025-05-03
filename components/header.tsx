@@ -1,5 +1,6 @@
 import { LogOut, Wallet } from "lucide-react";
 import Link from "next/link";
+import { WalletInfo } from "./wallet-info";
 
 export function Header() {
   return (
@@ -8,6 +9,7 @@ export function Header() {
         <div className="flex items-center gap-2 font-semibold">
           <Wallet className="h-6 w-6" />
           <span>eVSD</span>
+          <WalletInfo />
         </div>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link href="/dashboard" className="text-sm font-medium">

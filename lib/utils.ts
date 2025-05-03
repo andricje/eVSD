@@ -37,6 +37,14 @@ export function convertVoteOptionToGovernor(vote: VoteOption): bigint {
   return inverseGovernorVoteMap[vote];
 }
 
+export function convertGovernorToVoteOption(vote: bigint): VoteOption {
+  const voteNumber = Number(vote);
+  if (voteNumber in governorVoteMap) {
+    return governorVoteMap[voteNumber];
+  }
+  throw new Error("Invalid vote option");
+}
+
 export function convertAddressToName(address: string): string {
   return address in addressNameMap
     ? (addressNameMap[address] as string)

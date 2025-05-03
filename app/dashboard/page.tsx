@@ -159,9 +159,8 @@ function categorizeProposals(proposals: Proposal[]) {
 }
 
 export default function Dashboard() {
-  const { wallet, authorizedWallet } = useWallet();
   const [activeTab, setActiveTab] = useState("glasanje");
-  const proposals = useProposals();
+  const { proposals } = useProposals();
   const {
     activeProposalsToVote,
     votedCompletedProposals,
@@ -195,9 +194,7 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-
-          {wallet && authorizedWallet && <WalletInfo />}
-
+          <WalletInfo />
           <Card>
             <CardHeader>
               <CardTitle>Блокчејн гласање и управљање седницама</CardTitle>
@@ -218,7 +215,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex flex-col gap-1 p-3 border rounded-md">
                   <div className="text-sm font-medium text-muted-foreground">
-                    Активни предлози
+                    Предлози за које нисте гласали
                   </div>
                   <div className="font-medium">
                     {activeProposalsToVote.length}
@@ -226,7 +223,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex flex-col gap-1 p-3 border rounded-md">
                   <div className="text-sm font-medium text-muted-foreground">
-                    Са доступним кворумом
+                    Предлози који су достигли кворум
                   </div>
                   <div className="font-medium">
                     {proposalsWithQuorum.length}

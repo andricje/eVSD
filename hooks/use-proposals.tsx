@@ -1,22 +1,10 @@
-import { getDeployedContracts, getProposals } from "@/lib/utils";
-import { Proposal } from "@/types/proposal";
-import { useEffect, useState } from "react";
-import { useBrowserSigner } from "./use-browser-signer";
+import { useContext } from "react";
+import { ProposalsContext } from "./proposals-context";
 
-export function useProposals() {
-  // TODO: Add listeners here: Listen for new votes, proposals etc.
-  const { signer } = useBrowserSigner();
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  useEffect(() => {
-    const fillProposals = async () => {
-      if (signer) {
-        const { governor, token } = getDeployedContracts(signer);
-        const proposals = await getProposals(governor, token, signer);
-        console.log("proposals", proposals);
-        setProposals(proposals);
-      }
-    };
-    fillProposals();
-  }, [signer]);
-  return proposals;
-}
+export const useProposals = () => {
+  const context = useContext(ProposalsContext);
+  if (!context) {
+    throw new Error("useProposals must be used within a ProposalsContext");
+  }
+  return context;
+};
