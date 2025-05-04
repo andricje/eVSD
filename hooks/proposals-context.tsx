@@ -6,10 +6,12 @@ import {
   getProposals,
 } from "@/lib/utils";
 import { Proposal } from "@/types/proposal";
-import { Signer } from "ethers";
-import { createContext, useEffect, useState } from "react";
+import { Contract, Signer } from "ethers";
+import { createContext, useEffect, useRef, useState } from "react";
 import { useBrowserSigner } from "./use-browser-signer";
 import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { TypedListener } from "@/typechain-types/common";
+import { VoteCastEvent } from "@/typechain-types/contracts/EvsdGovernor";
 
 interface ProposalsContextValue {
   proposals: Proposal[];
@@ -27,6 +29,7 @@ export const ProposalsProvider = ({
   children: React.ReactNode;
 }) => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
+
   const { signer, signerAddress } = useBrowserSigner();
   useEffect(() => {
     if (!signer) {
@@ -37,7 +40,7 @@ export const ProposalsProvider = ({
     const voteCastFilter = governor.filters.VoteCast();
 
     // Function to fetch historical data once
-    async function fetchInitialProposals(
+    async function fetchAllProposals(
       governor: EvsdGovernor,
       token: EvsdToken,
       signer: Signer
@@ -46,25 +49,16 @@ export const ProposalsProvider = ({
       setProposals(proposals);
     }
 
-    // Listen to new voteCast events and update proposals
-    governor.on(
-      voteCastFilter,
-      (voter, proposalId, support, weight, reason, event) => {
-        // Make a new array and new proposal objects instead of reusing existing ones to make sure all components and child components re-render
-        const newProposals: Proposal[] = [];
-        for (const proposal of proposals) {
-          const newProposal = { ...proposal } as Proposal;
-          if (newProposal.id === proposalId) {
-            newProposal.votesForAddress[voter] =
-              convertGovernorToVoteOption(support);
-          }
-          newProposals.push(newProposal);
-        }
-        setProposals(newProposals);
+    // Listen to new voteCast events and update proposals. For some reason calling .on directly on the EvsdGovernor fails to properly unpack the arguments so first cast into an ethers contract (this is fine)
+    const ethersGovernor = governor as unknown as Contract;
+    ethersGovernor.on(
+      ethersGovernor.filters.VoteCast,
+      (voter, proposalId, support, weight, reason) => {
+        fetchAllProposals(governor, token, signer);
       }
     );
 
-    fetchInitialProposals(governor, token, signer);
+    fetchAllProposals(governor, token, signer);
 
     // Cleanup listeners on unmount
     return () => {

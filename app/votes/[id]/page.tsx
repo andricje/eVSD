@@ -39,7 +39,7 @@ import {
 import { useProposals } from "@/hooks/use-proposals";
 import { Header } from "@/components/header";
 import { StatusBadge, VoteIcon } from "@/components/badges";
-import { VoteOption } from "@/types/proposal";
+import { Proposal, VoteOption } from "@/types/proposal";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { VoteCounter } from "@/components/vote-counter";
 import { useToast } from "@/hooks/use-toast";
@@ -57,11 +57,9 @@ export default function VoteDetailPage() {
   const [voteConfirmed, setVoteConfirmed] = useState(false);
   const [voteRegistered, setVoteRegistered] = useState(false);
   const { toast } = useToast();
-
   const selectedProposal = proposals.find(
     (proposal) => proposal.id === proposalId
   );
-
   useEffect(() => {
     if (
       selectedVote !== "didntVote" &&
