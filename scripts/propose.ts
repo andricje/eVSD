@@ -14,14 +14,14 @@ async function delegateVoteToSelf(evsdToken: EvsdToken, voter: Signer) {
 }
 
 async function main() {
-  const [_, wallet1] = await ethers.getSigners();
+  const [deployer] = await ethers.getSigners();
   const governor = EvsdGovernor__factory.connect(
     governorArtifacts.address,
-    wallet1,
+    deployer,
   );
-  const evsdToken = EvsdToken__factory.connect(tokenArtifacts.address, wallet1);
-  await delegateVoteToSelf(evsdToken, wallet1);
-  await createProposalDoNothing(wallet1, governor, "Proposal to do nothing");
+  const evsdToken = EvsdToken__factory.connect(tokenArtifacts.address, deployer);
+  await delegateVoteToSelf(evsdToken, deployer);
+  await createProposalDoNothing(deployer, governor, "Proposal to do nothing");
   console.log("Proposal created successfully");
 }
 

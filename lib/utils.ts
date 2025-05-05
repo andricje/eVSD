@@ -128,13 +128,25 @@ export async function getProposals(
       const closesAt = new Date(Number(deadline) * 1000);
       const voteStart = new Date(Number(event.args.voteStart) * 1000);
 
+      // Извлачимо наслов из описа ако је у правилном формату
+      let title = "Предлог за гласање";
+      let description = event.args.description;
+      
+      // Проверавамо да ли опис садржи наслов у формату "НАСЛОВ:наслов|опис"
+      if (description.startsWith("НАСЛОВ:")) {
+        const parts = description.substring(7).split("|", 2);
+        if (parts.length === 2) {
+          title = parts[0];
+          description = parts[1];
+        }
+      }
+
       // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
-      // TODO: Remove all placeholder data
       const proposal: Proposal = {
         id: proposalId,
-        title: "Test Proposal",
+        title: title,
         dateAdded: voteStart,
-        description: event.args.description,
+        description: description,
         author: convertAddressToName(event.args.proposer),
         votesFor: Number(countedVotes.forVotes / oneToken),
         votesAgainst: Number(countedVotes.againstVotes / oneToken),
@@ -153,11 +165,15 @@ export function getDeployedContracts(signer: Signer): {
   governor: EvsdGovernor;
   token: EvsdToken;
 } {
+  // Ажуриране адресе након поновног деплојмента
+  const GOVERNOR_ADDRESS = "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44";
+  const TOKEN_ADDRESS = "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1";
+  
   const governor = EvsdGovernor__factory.connect(
-    evsdGovernorArtifacts.address,
+    GOVERNOR_ADDRESS,
     signer
   );
-  const token = EvsdToken__factory.connect(evsdTokenArtifacts.address, signer);
+  const token = EvsdToken__factory.connect(TOKEN_ADDRESS, signer);
   return { governor, token };
 }
 // Formatiranje datuma
@@ -211,18 +227,64 @@ export function countTotalVotes(proposal: Proposal) {
 export async function createProposalDoNothing(
   proposer: Signer,
   governor: EvsdGovernor,
-  proposalDescription: string
+  proposalDescription: string,
+  proposalTitle: string = ""
 ) {
-  console.log("Creating a 'do nothing' proposal...");
-  governor = governor.connect(proposer);
-  const governorAddress = await governor.getAddress();
-  const doNothingCalldata = governor.interface.encodeFunctionData("doNothing");
-  await governor.propose(
-    [governorAddress],
-    [0],
-    [doNothingCalldata],
-    proposalDescription
-  );
+  // Форматирамо опис да укључује и наслов
+  const formattedDescription = proposalTitle 
+    ? `НАСЛОВ:${proposalTitle}|${proposalDescription}` 
+    : proposalDescription;
+  
+  console.log("Креирање предлога: " + formattedDescription);
+  
+  try {
+    // Проверавамо стање токена
+    const proposerAddress = await proposer.getAddress();
+    const proposalThresholdValue = await governor.proposalThreshold();
+    
+    console.log(`Потребни токени за предлог: ${ethers.formatUnits(proposalThresholdValue, 18)}`);
+    
+    // Директно креирамо предлог (делегирање се већ обавља у UI компоненти)
+    console.log("Креирање предлога...");
+    governor = governor.connect(proposer);
+    const governorAddress = await governor.getAddress();
+    const doNothingCalldata = governor.interface.encodeFunctionData("doNothing");
+    
+    // Слање трансакције за креирање предлога
+    const tx = await governor.propose(
+      [governorAddress],
+      [0],
+      [doNothingCalldata],
+      formattedDescription
+    );
+    
+    console.log("Трансакција послата:", tx.hash);
+    await tx.wait(1); // Чекамо да се трансакција потврди
+    console.log("Предлог успешно креиран");
+    return tx.hash;
+  } catch (error) {
+    console.error("Грешка при креирању предлога:", error);
+    throw error;
+  }
+}
+
+/**
+ * Функција за симулацију слања токена кориснику за потребе тестирања
+ * У правој имплементацији ово би био позив на бекенд или фаукет
+ */
+export async function mintTestTokens(
+  signer: Signer,
+  amount: string = "1.0" 
+): Promise<boolean> {
+  try {
+    // Овде бисмо имали стварну имплементацију за пренос токена
+    // За сад само симулирамо успех
+    console.log(`Симулирано слање ${amount} токена кориснику: ${await signer.getAddress()}`);
+    return true;
+  } catch (error) {
+    console.error("Error minting test tokens:", error);
+    return false;
+  }
 }
 
 export async function castVote(
@@ -231,7 +293,8 @@ export async function castVote(
   proposalId: BigNumberish,
   vote: BigNumberish
 ) {
-  await governor.connect(voter).castVote(proposalId, vote);
+  const governorContract = governor.connect(voter);
+  await governorContract.castVote(proposalId, vote);
 }
 
 export function tryParseAsBigInt(value: string): bigint | undefined {
@@ -239,5 +302,30 @@ export function tryParseAsBigInt(value: string): bigint | undefined {
     return BigInt(value);
   } catch {
     return undefined;
+  }
+}
+
+/**
+ * Помоћна функција за пребацивање токена од админ адресе до предлагача.
+ * У правој имплементацији ово би био део бекенд сервиса или фаукет уговора.
+ * Сам уговор има токене, али овде симулирамо пренос токена са адресе која их већ има.
+ */
+export async function transferTokensForProposal(
+  signer: Signer,
+  amount: string = "1.0"
+): Promise<boolean> {
+  try {
+    // Симулирамо успешан трансфер токена
+    console.log(`Симулирани трансфер ${amount} токена на адресу: ${await signer.getAddress()}`);
+    
+    // Пауза да симулирамо време трансакције
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Симулирани успешан резултат
+    console.log("Токени су успешно пренети!");
+    return true;
+  } catch (error) {
+    console.error("Грешка при трансферу токена:", error);
+    return false;
   }
 }
