@@ -1,2 +1,2 @@
-    npm i --legacy-peer-deps
-    npm run dev
+npm i --legacy-peer-deps
+npm run dev
