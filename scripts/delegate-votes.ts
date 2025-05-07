@@ -1,4 +1,4 @@
-import { getDeployedContracts } from "../lib/utils";
+import { getDeployedContracts } from "../lib/blockchain-utils";
 import { EvsdToken } from "../typechain-types";
 import { Signer } from "ethers";
 import { ethers } from "hardhat";

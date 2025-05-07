@@ -23,23 +23,22 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import {
-  castVote,
   convertAddressToName,
   convertVoteOptionToGovernor,
   convertVoteOptionToString,
   countTotalVotes,
   formatDate,
-  getDeployedContracts,
   getRemainingTime,
   isQuorumReached,
   isVotingComplete,
   QUORUM,
   tryParseAsBigInt,
 } from "@/lib/utils";
+import { castVote, getDeployedContracts } from "@/lib/blockchain-utils";
 import { useProposals } from "@/hooks/use-proposals";
 import { Header } from "@/components/header";
 import { StatusBadge, VoteIcon } from "@/components/badges";
-import { Proposal, VoteOption } from "@/types/proposal";
+import { VoteOption } from "@/types/proposal";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { VoteCounter } from "@/components/vote-counter";
 import { useToast } from "@/hooks/use-toast";
@@ -69,20 +68,27 @@ export default function VoteDetailPage() {
       voteConfirmed
     ) {
       const deployedContracts = getDeployedContracts(signer);
-      
+
       const voteOnProposal = async () => {
         try {
-          console.log("Припрема за гласање на предлог ID:", selectedProposal.id.toString());
-          
+          console.log(
+            "Припрема за гласање на предлог ID:",
+            selectedProposal.id.toString()
+          );
+
           // Проверавамо да ли је корисник већ гласао пре него што покушамо да гласамо
           const signerAddress = await signer.getAddress();
-          const hasVoted = await deployedContracts.governor.hasVoted(selectedProposal.id, signerAddress);
-          
+          const hasVoted = await deployedContracts.governor.hasVoted(
+            selectedProposal.id,
+            signerAddress
+          );
+
           if (hasVoted) {
             console.log("Корисник је већ гласао за овај предлог");
             toast({
               title: "Већ сте гласали",
-              description: "Већ сте гласали за овај предлог. Није могуће променити глас након што је забележен на блокчејну.",
+              description:
+                "Већ сте гласали за овај предлог. Није могуће променити глас након што је забележен на блокчејну.",
               variant: "destructive",
             });
             // Ажурирамо UI да показује да је корисник већ гласао
@@ -90,29 +96,42 @@ export default function VoteDetailPage() {
             setVoteRegistered(true);
             return;
           }
-          
+
           // Провера стања предлога
-          const proposalState = await deployedContracts.governor.state(selectedProposal.id);
+          const proposalState = await deployedContracts.governor.state(
+            selectedProposal.id
+          );
           console.log("Стање предлога:", proposalState);
-          
+
           // Провера да ли је предлог у стању за гласање (1 = Active)
           if (Number(proposalState) !== 1) {
-            console.error("Предлог није у стању за гласање. Тренутно стање:", proposalState);
-            throw new Error("Предлог није у стању за гласање. Тренутно стање: " + proposalState);
+            console.error(
+              "Предлог није у стању за гласање. Тренутно стање:",
+              proposalState
+            );
+            throw new Error(
+              "Предлог није у стању за гласање. Тренутно стање: " +
+                proposalState
+            );
           }
-          
+
           // Прво делегирајмо токене себи
           console.log("Делегирање токена за адресу:", signerAddress);
           await deployedContracts.token.delegate(signerAddress);
-          
+
           // Провера гласачке моћи
           const votes = await deployedContracts.token.getVotes(signerAddress);
           console.log("Гласачка моћ корисника:", ethers.formatUnits(votes, 18));
-          
+
           // Конвертујемо опцију гласа
           const convertedVote = convertVoteOptionToGovernor(selectedVote);
-          console.log("Одабрани глас:", selectedVote, "Конвертовано:", convertedVote.toString());
-          
+          console.log(
+            "Одабрани глас:",
+            selectedVote,
+            "Конвертовано:",
+            convertedVote.toString()
+          );
+
           // Сада гласајмо
           console.log("Слање трансакције за гласање...");
           await castVote(
@@ -121,19 +140,22 @@ export default function VoteDetailPage() {
             selectedProposal.id,
             convertedVote
           );
-          
+
           console.log("Глас успешно забележен");
           setVoteRegistered(true);
         } catch (error) {
           console.error("Грешка приликом гласања:", error);
           toast({
             title: "Грешка приликом гласања",
-            description: error instanceof Error ? error.message : "Дошло је до непознате грешке приликом гласања.",
+            description:
+              error instanceof Error
+                ? error.message
+                : "Дошло је до непознате грешке приликом гласања.",
             variant: "destructive",
           });
         }
       };
-      
+
       voteOnProposal();
     }
   }, [signer, selectedVote, selectedProposal, voteConfirmed, toast]);
