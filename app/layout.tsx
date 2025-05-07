@@ -1,27 +1,31 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { WalletProvider } from "@/context/wallet-context"
+import type React from "react";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { WalletProvider } from "@/context/wallet-context";
+import { Toaster } from "@/components/ui/toaster";
+import { ProposalsProvider } from "@/hooks/proposals-context";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "eVSD - Elektronski sistem za sednice i glasanje",
-  description: "Elektronski sistem za sednice i glasanje Velikog studentskog doma",
-    generator: 'Marko Andric'
-}
+  description:
+    "Elektronski sistem za sednice i glasanje Velikog studentskog doma",
+  generator: "Marko Andric",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="sr">
       <body className={inter.className}>
-        <WalletProvider>{children}</WalletProvider>
+        <ProposalsProvider>{children}</ProposalsProvider>
+        <Toaster />
       </body>
     </html>
-  )
+  );
 }
