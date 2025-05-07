@@ -8,12 +8,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, FileUp, PlusCircle, AlertCircle, Info } from "lucide-react";
+import {
+  CheckCircle2,
+  FileUp,
+  PlusCircle,
+  AlertCircle,
+  Info,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect } from "react";
-import { createProposalDoNothing, getDeployedContracts } from "@/lib/utils";
+import {
+  createProposalDoNothing,
+  getDeployedContracts,
+} from "@/lib/blockchain-utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { ethers } from "ethers";
 
@@ -33,7 +42,9 @@ export function NewProposalDialog() {
 
   // Проверавамо стање токена при отварању дијалога
   useEffect(() => {
-    if (!signer) return;
+    if (!signer) {
+      return;
+    }
 
     const checkTokenBalance = async () => {
       try {
@@ -42,14 +53,17 @@ export function NewProposalDialog() {
         const tokenAddress = await governor.token();
         const token = new ethers.Contract(
           tokenAddress,
-          ["function balanceOf(address) view returns (uint256)", "function proposalThreshold() view returns (uint256)"],
+          [
+            "function balanceOf(address) view returns (uint256)",
+            "function proposalThreshold() view returns (uint256)",
+          ],
           signer
         );
-        
+
         const address = await signer.getAddress();
         const balance = await token.balanceOf(address);
         const threshold = await governor.proposalThreshold();
-        
+
         setNeedsTokens(balance < threshold);
       } catch (e) {
         console.error("Грешка при провери стања токена:", e);
@@ -71,41 +85,41 @@ export function NewProposalDialog() {
       setError("Новчаник није повезан.");
       return;
     }
-    
+
     if (!newProposal.description.trim()) {
       setError("Опис предлога је обавезан.");
       return;
     }
-    
+
     if (!newProposal.title.trim()) {
       setError("Наслов предлога је обавезан.");
       return;
     }
-    
+
     setError(null);
     setLoading(true);
-    
+
     try {
       const deployedContracts = getDeployedContracts(signer);
       const token = deployedContracts.token;
       const governor = deployedContracts.governor;
-      
+
       // Прво приказујемо информацију да проверавамо стање
       setError("Провера стања токена и делегација гласова...");
-      
+
       // Проверавамо адресу корисника за лакше праћење
-      const signerAddress = await signer.getAddress(); 
+      const signerAddress = await signer.getAddress();
       console.log("Корисник:", signerAddress);
-      
+
       // Добављамо информације о стању токена и гласовима
       const balance = await token.balanceOf(signerAddress);
       const votes = await token.getVotes(signerAddress);
       const threshold = await governor.proposalThreshold();
-      
+
       console.log(`Баланс токена: ${ethers.formatUnits(balance, 18)}`);
       console.log(`Гласачка моћ: ${ethers.formatUnits(votes, 18)}`);
       console.log(`Потребно за предлог: ${ethers.formatUnits(threshold, 18)}`);
-      
+
       // Ако корисник нема довољно токена или гласачке моћи, покушавамо то да решимо
       if (balance < threshold || votes < threshold) {
         // Прво проверавамо да ли има токена али их није делегирао
@@ -113,18 +127,18 @@ export function NewProposalDialog() {
           setError("Делегирање токена... (потврдите трансакцију у новчанику)");
           await token.delegate(signerAddress);
           console.log("Токени успешно делегирани");
-        } 
-        
+        }
+
         // Добављамо нову гласачку моћ
         const newVotes = await token.getVotes(signerAddress);
         console.log(`Нова гласачка моћ: ${ethers.formatUnits(newVotes, 18)}`);
-        
+
         // Ако и даље нема довољно гласачке моћи, не можемо креирати предлог
         if (newVotes < threshold) {
           throw new Error("GovernorInsufficientProposerVotes");
         }
       }
-      
+
       // Креирамо предлог
       setError("Креирање предлога... (потврдите трансакцију у новчанику)");
       const result = await createProposalDoNothing(
@@ -133,7 +147,7 @@ export function NewProposalDialog() {
         newProposal.description,
         newProposal.title
       );
-      
+
       console.log("Предлог послат:", newProposal, "Hash:", result);
       setError(null);
       setProposalSubmitted(true);
@@ -151,19 +165,22 @@ export function NewProposalDialog() {
       }, 3000);
     } catch (error) {
       console.error("Грешка при креирању предлога:", error);
-      
+
       // Детаљније руковање грешкама за јаснију поруку кориснику
       let errorMessage = "Дошло је до грешке при креирању предлога.";
-      
+
       if (error instanceof Error) {
         const errorString = error.toString();
-        
+
         if (errorString.includes("GovernorInsufficientProposerVotes")) {
-          errorMessage = "Немате довољно токена за креирање предлога. За креирање предлога потребно је имати најмање 1 EVSD токен и делегирати их себи.";
+          errorMessage =
+            "Немате довољно токена за креирање предлога. За креирање предлога потребно је имати најмање 1 EVSD токен и делегирати их себи.";
         } else if (errorString.includes("user rejected transaction")) {
-          errorMessage = "Трансакција је одбијена од стране корисника. Потребно је одобрити трансакцију у новчанику.";
+          errorMessage =
+            "Трансакција је одбијена од стране корисника. Потребно је одобрити трансакцију у новчанику.";
         } else if (errorString.includes("insufficient funds")) {
-          errorMessage = "Недовољно средстава за плаћање трошкова трансакције (ETH).";
+          errorMessage =
+            "Недовољно средстава за плаћање трошкова трансакције (ETH).";
         } else if (errorString.includes("ERC20InsufficientBalance")) {
           errorMessage = "Недовољно EVSD токена за креирање предлога.";
         } else {
@@ -171,7 +188,7 @@ export function NewProposalDialog() {
           errorMessage = `Грешка: ${errorString}`;
         }
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -212,17 +229,21 @@ export function NewProposalDialog() {
                 </div>
               </div>
             )}
-            
+
             {needsTokens && (
               <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 text-amber-700 flex items-start gap-2">
                 <Info className="h-5 w-5 mt-0.5" />
                 <div>
                   <h3 className="font-medium">Потребни су токени</h3>
-                  <p className="text-sm">За креирање предлога потребно је најмање 1 EVSD токен. Токени ће бити аутоматски додати када кликнете на "Додај предлог".</p>
+                  <p className="text-sm">
+                    За креирање предлога потребно је најмање 1 EVSD токен.
+                    Токени ће бити аутоматски додати када кликнете на
+                    &quot;Додај предлог&quot;.
+                  </p>
                 </div>
               </div>
             )}
-            
+
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="title">Наслов предлога</Label>
@@ -294,9 +315,9 @@ export function NewProposalDialog() {
               </div>
             </div>
             <DialogFooter>
-              <Button 
-                type="submit" 
-                onClick={handleProposalSubmit} 
+              <Button
+                type="submit"
+                onClick={handleProposalSubmit}
                 disabled={loading}
               >
                 {loading ? "Слање..." : "Додај предлог"}
