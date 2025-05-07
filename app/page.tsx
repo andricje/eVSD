@@ -1,27 +1,19 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Wallet, FileCheck } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Shield, Wallet, FileCheck } from "lucide-react";
+import { Header } from "@/components/header";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="border-b w-full">
-        <div className="w-full max-w-full flex h-16 items-center px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 font-semibold">
-            <Wallet className="h-6 w-6" />
-            <span>eVSD</span>
-          </div>
-          <nav className="ml-auto flex gap-4 sm:gap-6">
-            <Link href="/rezultati" className="text-sm font-medium">
-              Javni rezultati
-            </Link>
-            <Link href="/login" className="text-sm font-medium">
-              Prijava
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <Header />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-blue-50 to-white">
           <div className="w-full max-w-full px-4 md:px-6 lg:px-8">
@@ -31,7 +23,8 @@ export default function Home() {
                   eVSD – Blockchain sistem za sednice i glasanje
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Modernizacija i digitalizacija procesa VSD kroz bezbedan, transparentan i decentralizovan sistem
+                  Modernizacija i digitalizacija procesa VSD kroz bezbedan,
+                  transparentan i decentralizovan sistem
                 </p>
               </div>
               <div className="space-x-4">
@@ -47,18 +40,23 @@ export default function Home() {
         </section>
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="w-full max-w-full px-4 md:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-center mb-12">Prednosti blockchain glasanja</h2>
+            <h2 className="text-2xl font-bold text-center mb-12">
+              Prednosti blockchain glasanja
+            </h2>
             <div className="grid gap-6 lg:grid-cols-3 lg:gap-12">
               <Card>
                 <CardHeader>
                   <Wallet className="h-6 w-6 mb-2 text-blue-500" />
                   <CardTitle>Kripto novčanik za pristup</CardTitle>
-                  <CardDescription>Autentifikacija korisnika pomoću blockchain tehnologije</CardDescription>
+                  <CardDescription>
+                    Autentifikacija korisnika pomoću blockchain tehnologije
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Svaki fakultet koristi svoj jedinstveni kripto novčanik za pristup sistemu i glasanje, obezbeđujući
-                    najviši nivo sigurnosti i transparentnosti.
+                    Svaki fakultet koristi svoj jedinstveni kripto novčanik za
+                    pristup sistemu i glasanje, obezbeđujući najviši nivo
+                    sigurnosti i transparentnosti.
                   </p>
                 </CardContent>
               </Card>
@@ -66,12 +64,15 @@ export default function Home() {
                 <CardHeader>
                   <FileCheck className="h-6 w-6 mb-2 text-blue-500" />
                   <CardTitle>Nepromenjivi zapisi</CardTitle>
-                  <CardDescription>Svi glasovi su trajno zabeleženi na blockchain-u</CardDescription>
+                  <CardDescription>
+                    Svi glasovi su trajno zabeleženi na blockchain-u
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Jednom kada se glas zabeleži na blockchain-u, ne može se promeniti ili izbrisati, što garantuje
-                    integritet glasanja i sprečava manipulacije.
+                    Jednom kada se glas zabeleži na blockchain-u, ne može se
+                    promeniti ili izbrisati, što garantuje integritet glasanja i
+                    sprečava manipulacije.
                   </p>
                 </CardContent>
               </Card>
@@ -79,12 +80,15 @@ export default function Home() {
                 <CardHeader>
                   <Shield className="h-6 w-6 mb-2 text-blue-500" />
                   <CardTitle>Digitalna verifikacija</CardTitle>
-                  <CardDescription>Svaki glas se digitalno potpisuje pomoću novčanika</CardDescription>
+                  <CardDescription>
+                    Svaki glas se digitalno potpisuje pomoću novčanika
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Glasovi se beleže sa datumom, vremenom i digitalnim potpisom, garantujući autentičnost i
-                    sprečavajući zloupotrebe.
+                    Glasovi se beleže sa datumom, vremenom i digitalnim
+                    potpisom, garantujući autentičnost i sprečavajući
+                    zloupotrebe.
                   </p>
                 </CardContent>
               </Card>
@@ -100,5 +104,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  )
+  );
 }

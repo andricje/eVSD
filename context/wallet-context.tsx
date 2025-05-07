@@ -1,7 +1,11 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react"
-import type { WalletInfo, ConnectionStatus, AuthorizedWallet } from "@/types/wallet"
+import { createContext, useContext, useState, type ReactNode } from "react";
+import type {
+  WalletInfo,
+  ConnectionStatus,
+  AuthorizedWallet,
+} from "@/types/wallet";
 
 // Simulirani podaci za autorizovane novčanike
 const AUTHORIZED_WALLETS: AuthorizedWallet[] = [
@@ -25,38 +29,42 @@ const AUTHORIZED_WALLETS: AuthorizedWallet[] = [
     faculty: "Medicinski fakultet",
     authorized: true,
   },
-]
+];
 
 interface WalletContextType {
-  wallet: WalletInfo | null
-  connectionStatus: ConnectionStatus
-  authorizedWallet: AuthorizedWallet | null
-  connectMetaMask: () => Promise<void>
-  connectWalletConnect: () => Promise<void>
-  disconnect: () => void
-  signMessage: (message: string) => Promise<string | null>
+  wallet: WalletInfo | null;
+  connectionStatus: ConnectionStatus;
+  authorizedWallet: AuthorizedWallet | null;
+  connectMetaMask: () => Promise<void>;
+  connectWalletConnect: () => Promise<void>;
+  disconnect: () => void;
+  signMessage: (message: string) => Promise<string | null>;
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined)
+const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [wallet, setWallet] = useState<WalletInfo | null>(null)
-  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>("disconnected")
-  const [authorizedWallet, setAuthorizedWallet] = useState<AuthorizedWallet | null>(null)
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [connectionStatus, setConnectionStatus] =
+    useState<ConnectionStatus>("disconnected");
+  const [authorizedWallet, setAuthorizedWallet] =
+    useState<AuthorizedWallet | null>(null);
 
   // Proverava da li je novčanik autorizovan
   const checkAuthorization = (address: string) => {
-    const wallet = AUTHORIZED_WALLETS.find((w) => w.address.toLowerCase() === address.toLowerCase() && w.authorized)
-    return wallet || null
-  }
+    const wallet = AUTHORIZED_WALLETS.find(
+      (w) => w.address.toLowerCase() === address.toLowerCase() && w.authorized,
+    );
+    return wallet || null;
+  };
 
   // Simulacija povezivanja sa MetaMask-om
   const connectMetaMask = async () => {
     try {
-      setConnectionStatus("connecting")
+      setConnectionStatus("connecting");
 
       // Simulacija povezivanja sa MetaMask-om
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Simulacija dobijanja adrese novčanika
       const mockWallet: WalletInfo = {
@@ -64,83 +72,83 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         chainId: 1,
         provider: "metamask",
         ensName: "ftn.eth",
-      }
+      };
 
-      setWallet(mockWallet)
-      setConnectionStatus("connected")
+      setWallet(mockWallet);
+      setConnectionStatus("connected");
 
       // Provera autorizacije
-      const authorized = checkAuthorization(mockWallet.address)
+      const authorized = checkAuthorization(mockWallet.address);
       if (authorized) {
         setAuthorizedWallet({
           ...authorized,
           lastLogin: new Date().toISOString(),
-        })
+        });
       } else {
-        setConnectionStatus("error")
+        setConnectionStatus("error");
       }
     } catch (error) {
-      console.error("Error connecting to MetaMask:", error)
-      setConnectionStatus("error")
+      console.error("Error connecting to MetaMask:", error);
+      setConnectionStatus("error");
     }
-  }
+  };
 
   // Simulacija povezivanja sa WalletConnect-om
   const connectWalletConnect = async () => {
     try {
-      setConnectionStatus("connecting")
+      setConnectionStatus("connecting");
 
       // Simulacija povezivanja sa WalletConnect-om
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Simulacija dobijanja adrese novčanika
       const mockWallet: WalletInfo = {
         address: "0x2345678901234567890123456789012345678901",
         chainId: 1,
         provider: "walletconnect",
-      }
+      };
 
-      setWallet(mockWallet)
-      setConnectionStatus("connected")
+      setWallet(mockWallet);
+      setConnectionStatus("connected");
 
       // Provera autorizacije
-      const authorized = checkAuthorization(mockWallet.address)
+      const authorized = checkAuthorization(mockWallet.address);
       if (authorized) {
         setAuthorizedWallet({
           ...authorized,
           lastLogin: new Date().toISOString(),
-        })
+        });
       } else {
-        setConnectionStatus("error")
+        setConnectionStatus("error");
       }
     } catch (error) {
-      console.error("Error connecting to WalletConnect:", error)
-      setConnectionStatus("error")
+      console.error("Error connecting to WalletConnect:", error);
+      setConnectionStatus("error");
     }
-  }
+  };
 
   // Simulacija potpisivanja poruke
   const signMessage = async (message: string): Promise<string | null> => {
-    if (!wallet) return null
+    if (!wallet) return null;
 
     try {
       // Simulacija potpisivanja poruke
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Simulacija potpisa
-      return `0x${Array.from({ length: 130 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`
+      return `0x${Array.from({ length: 130 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
     } catch (error) {
-      console.error("Error signing message:", error)
-      return null
+      console.error("Error signing message:", error);
+      return null;
     }
-  }
+  };
 
   // Prekid veze sa novčanikom
   const disconnect = () => {
-    setWallet(null)
-    setAuthorizedWallet(null)
-    setConnectionStatus("disconnected")
-  }
+    setWallet(null);
+    setAuthorizedWallet(null);
+    setConnectionStatus("disconnected");
+  };
 
   return (
     <WalletContext.Provider
@@ -156,13 +164,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </WalletContext.Provider>
-  )
+  );
 }
 
 export function useWallet() {
-  const context = useContext(WalletContext)
+  const context = useContext(WalletContext);
   if (context === undefined) {
-    throw new Error("useWallet must be used within a WalletProvider")
+    throw new Error("useWallet must be used within a WalletProvider");
   }
-  return context
+  return context;
 }

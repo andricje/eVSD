@@ -2,6 +2,7 @@
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
+    dirs: ["app", "components", "lib", "hooks"],
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -9,6 +10,6 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

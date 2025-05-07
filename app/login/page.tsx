@@ -1,50 +1,58 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Wallet, AlertTriangle, Loader2, Info, Laptop } from "lucide-react"
-import { WalletConnectButton } from "@/components/wallet-connect-button"
-import { useWallet } from "@/context/wallet-context"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Wallet, AlertTriangle, Loader2, Info, Laptop } from "lucide-react";
+import { ethers } from "ethers";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { wallet, connectionStatus, authorizedWallet } = useWallet()
-  const [status, setStatus] = useState<"idle" | "checking" | "error" | "success">("idle")
-  const [errorMessage, setErrorMessage] = useState("")
-  const [isDemoMode, setIsDemoMode] = useState(false)
+  const router = useRouter();
+  const [status, setStatus] = useState<
+    "idle" | "checking" | "error" | "success"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
-  // Pratimo promene u statusu povezivanja novčanika
-  useEffect(() => {
-    if (connectionStatus === "connected" && authorizedWallet) {
-      setStatus("checking")
-
-      // Simulacija provere
-      setTimeout(() => {
-        setStatus("success")
-        setTimeout(() => router.push("/dashboard"), 1000)
-      }, 1500)
-    } else if (connectionStatus === "error") {
-      setStatus("error")
-      setErrorMessage("Vaš novčanik nije autorizovan za pristup sistemu. Molimo koristite registrovani novčanik.")
+  const [signerAddress, setSignerAddress] = useState<string>();
+  const [provider, setProvider] = useState<ethers.BrowserProvider>();
+  const [signer, setSigner] = useState<ethers.Signer>();
+  const connectWallet = async () => {
+    const { ethereum } = window;
+    if (ethereum) {
+      const provider = new ethers.BrowserProvider(ethereum);
+      const signer = await provider.getSigner();
+      setProvider(provider);
+      setSigner(signer);
+      setSignerAddress(await signer.getAddress());
+    } else {
+      setStatus("error");
+      console.error("No Ethereum provider found");
     }
-  }, [connectionStatus, authorizedWallet, router])
+  };
 
   const checkWallet = () => {
-    setStatus("checking")
+    setStatus("checking");
 
     // Ako je demo režim, preskačemo sve provere
     if (isDemoMode) {
       // Simuliramo uspešnu prijavu bez provere novčanika
       setTimeout(() => {
-        setStatus("success")
-        setTimeout(() => router.push("/dashboard"), 1000)
-      }, 1500)
-      return
+        setStatus("success");
+        setTimeout(() => router.push("/dashboard"), 1000);
+      }, 1500);
+      return;
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-full flex items-center justify-center min-h-screen px-4 py-12">
@@ -53,9 +61,13 @@ export default function LoginPage() {
           <div className="flex justify-center mb-4">
             <Wallet className="h-12 w-12" />
           </div>
-          <CardTitle className="text-2xl text-center">Prijava na eVSD</CardTitle>
+          <CardTitle className="text-2xl text-center">
+            Prijava na eVSD
+          </CardTitle>
           <CardDescription className="text-center">
-            {isDemoMode ? "Demo pristup sistemu" : "Povežite vaš kripto novčanik da biste pristupili sistemu"}
+            {isDemoMode
+              ? "Demo pristup sistemu"
+              : "Povežite vaš kripto novčanik da biste pristupili sistemu"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -63,7 +75,9 @@ export default function LoginPage() {
             <Alert className="bg-blue-50 text-blue-800 border-blue-200">
               <Info className="h-4 w-4" />
               <AlertTitle>Demo režim je aktivan</AlertTitle>
-              <AlertDescription>Preskočićemo proveru novčanika. Ovo je samo za demonstraciju.</AlertDescription>
+              <AlertDescription>
+                Preskočićemo proveru novčanika. Ovo je samo za demonstraciju.
+              </AlertDescription>
             </Alert>
           )}
 
@@ -79,21 +93,26 @@ export default function LoginPage() {
             <Alert className="bg-green-50 text-green-800 border-green-200">
               <AlertTitle>Uspešna autentifikacija</AlertTitle>
               <AlertDescription>
-                {isDemoMode ? "Demo pristup odobren" : "Novčanik je verifikovan"}. Preusmeravamo vas...
+                {isDemoMode
+                  ? "Demo pristup odobren"
+                  : "Novčanik je verifikovan"}
+                . Preusmeravamo vas...
               </AlertDescription>
             </Alert>
           )}
 
-          {wallet && authorizedWallet && (
+          {provider && signer && (
             <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
               <h3 className="font-medium mb-2">Povezani novčanik</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-blue-500" />
                   <div>
-                    <div className="font-medium">{authorizedWallet.faculty}</div>
+                    {/* <div className="font-medium">{authorizedWallet.faculty}</div> */}
+                    Test Fakultet
                     <div className="text-xs text-muted-foreground">
-                      {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                      {/* {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)} */}
+                      {signerAddress}
                     </div>
                   </div>
                 </div>
@@ -122,27 +141,40 @@ export default function LoginPage() {
               </button>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Omogućite demo režim da biste preskočili sve provere (samo za demonstraciju)
+              Omogućite demo režim da biste preskočili sve provere (samo za
+              demonstraciju)
             </p>
           </div>
         </CardContent>
         <CardFooter>
-          {!wallet ? (
+          {!provider || !signer ? (
             isDemoMode ? (
-              <Button className="w-full" onClick={checkWallet} disabled={status === "checking" || status === "success"}>
-                {status === "checking" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button
+                className="w-full"
+                onClick={checkWallet}
+                disabled={status === "checking" || status === "success"}
+              >
+                {status === "checking" && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 {status === "checking" ? "Provera..." : "Demo prijava"}
               </Button>
             ) : (
-              <WalletConnectButton />
+              <Button onClick={async () => await connectWallet()}>
+                <Wallet className="h-4 w-4 mr-2" />
+                Poveži novčanik
+              </Button>
             )
           ) : (
-            <Button className="w-full" onClick={() => router.push("/dashboard")}>
+            <Button
+              className="w-full"
+              onClick={() => router.push("/dashboard")}
+            >
               Nastavi na dashboard
             </Button>
           )}
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

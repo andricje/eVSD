@@ -1,3 +1,7 @@
+# hardhat
+/cache
+/artifacts
+/typechain-types
 # dependencies
 /node_modules
 /.pnp
