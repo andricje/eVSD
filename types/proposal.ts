@@ -21,3 +21,4 @@ export type VoteOption =
   | "notEligible";
 
 export type VoteResult = "passed" | "failed" | "returned";
+export type ProposalSerializationData = Pick<Proposal, "title" | "description">;
