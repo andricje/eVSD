@@ -1,17 +1,10 @@
 "use client";
-import {
-  convertGovernorToVoteOption,
-  convertVoteOptionToGovernor,
-  getDeployedContracts,
-  getProposals,
-} from "@/lib/utils";
+import { getProposals, getDeployedContracts } from "@/lib/blockchain-utils";
 import { Proposal } from "@/types/proposal";
 import { Contract, Signer } from "ethers";
-import { createContext, useEffect, useRef, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { useBrowserSigner } from "./use-browser-signer";
 import { EvsdGovernor, EvsdToken } from "@/typechain-types";
-import { TypedListener } from "@/typechain-types/common";
-import { VoteCastEvent } from "@/typechain-types/contracts/EvsdGovernor";
 
 interface ProposalsContextValue {
   proposals: Proposal[];
