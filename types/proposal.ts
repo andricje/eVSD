@@ -14,6 +14,7 @@ export interface Proposal {
   isMultilayered: boolean;
   mainVoteResult?: VoteResult;
   subItems?: ProposalSubItem[];
+  canBeCanceled?: boolean;
 }
 
 export interface ProposalSubItem {
