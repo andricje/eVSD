@@ -58,6 +58,8 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
   const [documentName, setDocumentName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [infoDots, setInfoDots] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [needsTokens, setNeedsTokens] = useState(false);
   const [expandedSubItem, setExpandedSubItem] = useState<string | null>(null);
@@ -220,6 +222,7 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
     }
 
     setError(null);
+    setInfoMessage(null);
     setLoading(true);
 
     try {
@@ -228,7 +231,7 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
       const governor = deployedContracts.governor;
 
       // Прво приказујемо информацију да проверавамо стање
-      setError("Провера стања токена и делегација гласова...");
+      setInfoMessage("Провера стања токена и делегација гласова...");
 
       // Проверавамо адресу корисника за лакше праћење
       const signerAddress = await signer.getAddress();
@@ -247,7 +250,9 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
       if (balance < threshold || votes < threshold) {
         // Прво проверавамо да ли има токена али их није делегирао
         if (balance >= threshold && votes < threshold) {
-          setError("Делегирање токена... (потврдите трансакцију у новчанику)");
+          setInfoMessage(
+            "Делегирање токена... (потврдите трансакцију у новчанику)"
+          );
           await token.delegate(signerAddress);
           console.log("Токени успешно делегирани");
         }
@@ -263,7 +268,9 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
       }
 
       // Креирамо предлог
-      setError("Креирање предлога... (потврдите трансакцију у новчанику)");
+      setInfoMessage(
+        "Креирање предлога... (потврдите трансакцију у новчанику)"
+      );
       const result = await createProposalDoNothing(
         signer,
         deployedContracts.governor,
@@ -275,6 +282,7 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
 
       console.log("Предлог послат:", newProposal, "Hash:", result);
       setError(null);
+      setInfoMessage(null);
       setProposalSubmitted(true);
 
       // Reset форме након 3 секунде
@@ -291,17 +299,23 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
       }, 3000);
     } catch (error) {
       console.error("Грешка при креирању предлога:", error);
+      setInfoMessage(null);
 
       // Детаљније руковање грешкама за јаснију поруку кориснику
       let errorMessage = "Дошло је до грешке при креирању предлога.";
 
       if (error instanceof Error) {
         const errorString = error.toString();
+        const errorWithCode = error as any;
 
         if (errorString.includes("GovernorInsufficientProposerVotes")) {
           errorMessage =
             "Немате довољно токена за креирање предлога. За креирање предлога потребно је имати најмање 1 EVSD токен и делегирати их себи.";
-        } else if (errorString.includes("user rejected transaction")) {
+        } else if (
+          errorString.includes("user rejected") ||
+          errorString.includes("user denied") ||
+          errorString.includes("action rejected")
+        ) {
           errorMessage =
             "Трансакција је одбијена од стране корисника. Потребно је одобрити трансакцију у новчанику.";
         } else if (errorString.includes("insufficient funds")) {
@@ -309,6 +323,18 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
             "Недовољно средстава за плаћање трошкова трансакције (ETH).";
         } else if (errorString.includes("ERC20InsufficientBalance")) {
           errorMessage = "Недовољно EVSD токена за креирање предлога.";
+        } else if (errorWithCode.code === "BAD_DATA") {
+          errorMessage =
+            "Проблем са прослеђеним подацима. Проверите да ли је адреса токена исправна и параметри одговарајући.";
+        } else if (errorWithCode.code === "CALL_EXCEPTION") {
+          errorMessage =
+            "Трансакција је одбијена. Могућ проблем са адресом паметног уговора.";
+        } else if (errorWithCode.code === "UNPREDICTABLE_GAS_LIMIT") {
+          errorMessage =
+            "Неуспешна процена трошкова гаса. Проверите да ли испуњавате услове за предлог.";
+        } else if (errorWithCode.code === "INSUFFICIENT_FUNDS") {
+          errorMessage =
+            "Недовољно средстава за плаћање трошкова трансакције (ETH).";
         } else {
           // Приказујемо стварну поруку грешке у развојном окружењу
           errorMessage = `Грешка: ${errorString}`;
@@ -320,6 +346,17 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
       setLoading(false);
     }
   };
+
+  // "Анимација" обраде кроз тачкице
+  useEffect(() => {
+    if (!infoMessage) return;
+
+    const interval = setInterval(() => {
+      setInfoDots((prev) => (prev.length < 3 ? prev + "." : ""));
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [infoMessage]);
 
   return (
     <Dialog>
@@ -355,7 +392,23 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
                 <AlertCircle className="h-5 w-5 mt-0.5" />
                 <div>
                   <h3 className="font-medium">Грешка</h3>
-                  <p className="text-sm">{error}</p>
+                  <p className="text-sm break-words whitespace-pre-wrap">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {infoMessage && !error && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4 text-blue-600 flex items-start gap-2">
+                <Info className="h-5 w-5 mt-0.5" />
+                <div>
+                  <h3 className="font-medium">
+                    Обрада<span>{infoDots}</span>
+                  </h3>
+                  <p className="text-sm break-words whitespace-pre-wrap">
+                    {infoMessage}
+                  </p>
                 </div>
               </div>
             )}
