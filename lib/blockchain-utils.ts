@@ -31,11 +31,13 @@ export async function createProposalDoNothing(
   proposer: Signer,
   governor: EvsdGovernor,
   proposalDescription: string,
-  proposalTitle: string = ""
+  proposalTitle: string = "",
+  proposalFile?: File
 ) {
   const serializedProposal = serializeProposal({
     title: proposalTitle,
     description: proposalDescription,
+    file: proposalFile,
   });
   console.log("Креирање предлога: " + serializedProposal);
 
