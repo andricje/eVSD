@@ -14,6 +14,8 @@ import {
   PlusCircle,
   AlertCircle,
   Info,
+  Trash2,
+  Layers,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +27,8 @@ import {
 } from "@/lib/blockchain-utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { ethers } from "ethers";
+import { ProposalSubItem } from "@/types/proposal";
+import { Switch } from "@/components/ui/switch";
 
 export function NewProposalDialog() {
   const { signer } = useBrowserSigner();
@@ -33,6 +37,8 @@ export function NewProposalDialog() {
     description: "",
     urgent: false,
     document: null as File | null,
+    isMultilayered: false,
+    subItems: [] as ProposalSubItem[],
   });
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
   const [documentName, setDocumentName] = useState("");
@@ -80,6 +86,40 @@ export function NewProposalDialog() {
     }
   };
 
+  const addSubItem = () => {
+    const newSubItem: ProposalSubItem = {
+      id: crypto.randomUUID(),
+      title: "",
+      description: "",
+      votesFor: 0,
+      votesAgainst: 0,
+      votesAbstain: 0,
+      yourVote: "didntVote",
+      votesForAddress: {},
+    };
+    
+    setNewProposal({
+      ...newProposal,
+      subItems: [...newProposal.subItems, newSubItem],
+    });
+  };
+
+  const updateSubItem = (id: string, field: keyof ProposalSubItem, value: string) => {
+    setNewProposal({
+      ...newProposal,
+      subItems: newProposal.subItems.map(item => 
+        item.id === id ? { ...item, [field]: value } : item
+      ),
+    });
+  };
+
+  const removeSubItem = (id: string) => {
+    setNewProposal({
+      ...newProposal,
+      subItems: newProposal.subItems.filter(item => item.id !== id),
+    });
+  };
+
   const handleProposalSubmit = async () => {
     if (!signer) {
       setError("Новчаник није повезан.");
@@ -94,6 +134,21 @@ export function NewProposalDialog() {
     if (!newProposal.title.trim()) {
       setError("Наслов предлога је обавезан.");
       return;
+    }
+
+    if (newProposal.isMultilayered) {
+      // Проверавамо да ли су сви подпредлози попуњени
+      if (newProposal.subItems.length === 0) {
+        setError("За вишеслојни предлог морате додати најмање једну подтачку.");
+        return;
+      }
+
+      for (const item of newProposal.subItems) {
+        if (!item.title.trim() || !item.description.trim()) {
+          setError("Сви наслови и описи подтачака су обавезни.");
+          return;
+        }
+      }
     }
 
     setError(null);
@@ -145,7 +200,9 @@ export function NewProposalDialog() {
         signer,
         deployedContracts.governor,
         newProposal.description,
-        newProposal.title
+        newProposal.title,
+        newProposal.isMultilayered,
+        newProposal.subItems
       );
 
       console.log("Предлог послат:", newProposal, "Hash:", result);
@@ -154,12 +211,13 @@ export function NewProposalDialog() {
 
       // Reset форме након 3 секунде
       setTimeout(() => {
-        setProposalSubmitted(false);
         setNewProposal({
           title: "",
           description: "",
           urgent: false,
           document: null,
+          isMultilayered: false,
+          subItems: [],
         });
         setDocumentName("");
       }, 3000);
@@ -274,6 +332,90 @@ export function NewProposalDialog() {
                   rows={6}
                 />
               </div>
+
+              {/* Опција за вишеслојни предлог */}
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <Label htmlFor="multilayered-proposal" className="mb-1">Вишеслојни предлог</Label>
+                  <span className="text-xs text-muted-foreground">
+                    Омогућава гласање о предлогу у начелу и појединачним тачкама
+                  </span>
+                </div>
+                <Switch
+                  id="multilayered-proposal"
+                  checked={newProposal.isMultilayered}
+                  onCheckedChange={(checked) =>
+                    setNewProposal({
+                      ...newProposal,
+                      isMultilayered: checked,
+                    })
+                  }
+                />
+              </div>
+
+              {/* Подтачке предлога - видљиве само ако је вишеслојни предлог */}
+              {newProposal.isMultilayered && (
+                <div className="space-y-4 mt-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Подтачке предлога</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addSubItem}
+                      className="flex items-center gap-1"
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span>Додај подтачку</span>
+                    </Button>
+                  </div>
+
+                  {newProposal.subItems.length === 0 && (
+                    <div className="bg-muted p-4 text-center rounded-md">
+                      <Layers className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
+                      <p className="text-sm text-muted-foreground">
+                        Додајте подтачке предлога на које ће се гласати појединачно
+                      </p>
+                    </div>
+                  )}
+
+                  {newProposal.subItems.map((item, index) => (
+                    <div 
+                      key={item.id}
+                      className="bg-slate-50 border rounded-lg p-3 space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">Подтачка {index + 1}</h4>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSubItem(item.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Наслов подтачке"
+                          value={item.title}
+                          onChange={(e) => updateSubItem(item.id, 'title', e.target.value)}
+                        />
+                        
+                        <Textarea
+                          placeholder="Опис подтачке предлога"
+                          value={item.description}
+                          onChange={(e) => updateSubItem(item.id, 'description', e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
