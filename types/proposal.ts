@@ -11,6 +11,21 @@ export interface Proposal {
   closesAt: Date;
   yourVote: VoteOption;
   votesForAddress: Record<string, VoteOption>;
+  isMultilayered: boolean;
+  mainVoteResult?: VoteResult;
+  subItems?: ProposalSubItem[];
+}
+
+export interface ProposalSubItem {
+  id: string;
+  title: string;
+  description: string;
+  votesFor: number;
+  votesAgainst: number;
+  votesAbstain: number;
+  yourVote: VoteOption;
+  result?: VoteResult;
+  votesForAddress: Record<string, VoteOption>;
 }
 
 export type VoteOption =
@@ -21,4 +36,7 @@ export type VoteOption =
   | "notEligible";
 
 export type VoteResult = "passed" | "failed" | "returned";
-export type ProposalSerializationData = Pick<Proposal, "title" | "description">;
+export type ProposalSerializationData = Pick<
+  Proposal, 
+  "title" | "description" | "isMultilayered" | "subItems"
+>;

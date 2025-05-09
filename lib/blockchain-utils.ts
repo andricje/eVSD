@@ -31,11 +31,15 @@ export async function createProposalDoNothing(
   proposer: Signer,
   governor: EvsdGovernor,
   proposalDescription: string,
-  proposalTitle: string = ""
+  proposalTitle: string = "",
+  isMultilayered: boolean = false,
+  subItems: any[] = []
 ) {
   const serializedProposal = serializeProposal({
     title: proposalTitle,
     description: proposalDescription,
+    isMultilayered,
+    subItems: isMultilayered ? subItems : undefined,
   });
   console.log("Креирање предлога: " + serializedProposal);
 
