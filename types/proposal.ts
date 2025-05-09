@@ -11,9 +11,7 @@ export interface ProposalService {
   ) => Promise<Proposal>;
   getProposal: (id: bigint) => Promise<Proposal>;
   getProposalVoteResult: (id: bigint) => Promise<VoteResult>;
-  voteForProposal: (
-    id: bigint, vote: VoteOption
-  ) => Promise<void>;
+  voteForProposal: (id: bigint, vote: VoteOption) => Promise<void>;
 }
 
 class BlockchainProposalService implements ProposalService {
@@ -25,7 +23,11 @@ class BlockchainProposalService implements ProposalService {
     this.governor = contracts.governor;
     this.token = contracts.token;
   }
-  createProposal: (title: string, description: string, file: File) => Promise<Proposal>;
+  createProposal: (
+    title: string,
+    description: string,
+    file: File
+  ) => Promise<Proposal>;
   getProposal: (id: bigint) => Promise<Proposal>;
   getProposalVoteResult: (id: bigint) => Promise<VoteResult>;
   voteForProposal: (id: bigint, vote: VoteOption) => Promise<void>;
@@ -48,6 +50,22 @@ export interface Proposal {
   closesAt: Date;
   yourVote: VoteOption;
   votesForAddress: Record<string, VoteOption>;
+  isMultilayered: boolean;
+  mainVoteResult?: VoteResult;
+  subItems?: ProposalSubItem[];
+  canBeCanceled?: boolean;
+}
+
+export interface ProposalSubItem {
+  id: string;
+  title: string;
+  description: string;
+  votesFor: number;
+  votesAgainst: number;
+  votesAbstain: number;
+  yourVote: VoteOption;
+  result?: VoteResult;
+  votesForAddress: Record<string, VoteOption>;
 }
 
 export type VoteOption =
@@ -60,5 +78,5 @@ export type VoteOption =
 export type VoteResult = "passed" | "failed" | "returned";
 export type ProposalSerializationData = Pick<
   Proposal,
-  "title" | "description" | "fileDigest"
+  "title" | "description" | "fileUrl" | "isMultilayered" | "subItems"
 >;

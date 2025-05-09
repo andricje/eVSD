@@ -6,7 +6,7 @@ import fs from "fs";
 export const ONE_TOKEN = ethers.parseUnits("1", 18);
 
 export async function deployTokenAndGovernor(
-  deployer: Signer,
+  deployer: Signer
 ): Promise<[EvsdToken, EvsdGovernor]> {
   const tokenContract = await deployToken(deployer);
   const governorContract = await deployGovernor(deployer, tokenContract);
@@ -16,7 +16,7 @@ export async function deployTokenAndGovernor(
 export async function deployToken(deployer: Signer) {
   const EvsdTokenFactory = await ethers.getContractFactory(
     "EvsdToken",
-    deployer,
+    deployer
   );
   const evsdToken = await EvsdTokenFactory.deploy(deployer);
   await evsdToken.waitForDeployment();
@@ -26,13 +26,17 @@ export async function deployToken(deployer: Signer) {
 
 export async function deployGovernor(
   deployer: Signer,
-  deployedTokenAddress: AddressLike,
+  deployedTokenAddress: AddressLike
 ) {
   const EvsdGovernorFactory = await ethers.getContractFactory(
     "EvsdGovernor",
-    deployer,
+    deployer
   );
-  const evsdGovernor = await EvsdGovernorFactory.deploy(deployedTokenAddress);
+  const deployerAddress = await deployer.getAddress();
+  const evsdGovernor = await EvsdGovernorFactory.deploy(
+    deployedTokenAddress,
+    deployerAddress
+  );
   await evsdGovernor.waitForDeployment();
   return evsdGovernor;
 }
@@ -48,7 +52,7 @@ export async function distributeVotingRights(
   deployer: Signer,
   evsdToken: EvsdToken,
   governor: EvsdGovernor,
-  voters: AddressLike[],
+  voters: AddressLike[]
 ) {
   // Send exactly one token to each voter
   for (const adr of voters) {
@@ -71,11 +75,11 @@ async function main() {
   const governorArtifacts = await getArtifacts(evsdGovernor);
   fs.writeFileSync(
     "contracts/evsd-token.json",
-    JSON.stringify(tokenArtifacts, null, 2),
+    JSON.stringify(tokenArtifacts, null, 2)
   );
   fs.writeFileSync(
     "contracts/evsd-governor.json",
-    JSON.stringify(governorArtifacts, null, 2),
+    JSON.stringify(governorArtifacts, null, 2)
   );
   console.log("Token and Governor contracts deployed successfully!");
   console.log("Token Address:", tokenArtifacts.address);
