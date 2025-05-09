@@ -16,11 +16,14 @@ import {
   Info,
   Trash2,
   Layers,
+  ChevronDown,
+  ChevronUp,
+  Copy
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactElement } from "react";
 import {
   createProposalDoNothing,
   getDeployedContracts,
@@ -29,8 +32,20 @@ import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { ethers } from "ethers";
 import { ProposalSubItem } from "@/types/proposal";
 import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
-export function NewProposalDialog() {
+interface NewProposalDialogProps {
+  customClassName?: string;
+  customText?: ReactElement;
+}
+
+export function NewProposalDialog({ customClassName, customText }: NewProposalDialogProps) {
   const { signer } = useBrowserSigner();
   const [newProposal, setNewProposal] = useState({
     title: "",
@@ -45,6 +60,7 @@ export function NewProposalDialog() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [needsTokens, setNeedsTokens] = useState(false);
+  const [expandedSubItem, setExpandedSubItem] = useState<string | null>(null);
 
   // Проверавамо стање токена при отварању дијалога
   useEffect(() => {
@@ -102,6 +118,9 @@ export function NewProposalDialog() {
       ...newProposal,
       subItems: [...newProposal.subItems, newSubItem],
     });
+
+    // Automatski proširimo novi podtačku
+    setExpandedSubItem(newSubItem.id);
   };
 
   const updateSubItem = (id: string, field: keyof ProposalSubItem, value: string) => {
@@ -118,6 +137,55 @@ export function NewProposalDialog() {
       ...newProposal,
       subItems: newProposal.subItems.filter(item => item.id !== id),
     });
+    
+    if (expandedSubItem === id) {
+      setExpandedSubItem(null);
+    }
+  };
+  
+  const moveSubItem = (id: string, direction: 'up' | 'down') => {
+    const currentIndex = newProposal.subItems.findIndex(item => item.id === id);
+    if (currentIndex === -1) return;
+    
+    const newSubItems = [...newProposal.subItems];
+    
+    if (direction === 'up' && currentIndex > 0) {
+      // Zamena sa prethodnim elementom
+      [newSubItems[currentIndex], newSubItems[currentIndex - 1]] = 
+      [newSubItems[currentIndex - 1], newSubItems[currentIndex]];
+    } else if (direction === 'down' && currentIndex < newSubItems.length - 1) {
+      // Zamena sa sledećim elementom
+      [newSubItems[currentIndex], newSubItems[currentIndex + 1]] = 
+      [newSubItems[currentIndex + 1], newSubItems[currentIndex]];
+    }
+    
+    setNewProposal({
+      ...newProposal,
+      subItems: newSubItems,
+    });
+  };
+  
+  const duplicateSubItem = (id: string) => {
+    const originalItem = newProposal.subItems.find(item => item.id === id);
+    if (!originalItem) return;
+    
+    const newSubItem: ProposalSubItem = {
+      ...originalItem,
+      id: crypto.randomUUID(),
+      yourVote: "didntVote",
+      votesFor: 0, 
+      votesAgainst: 0, 
+      votesAbstain: 0,
+      title: `${originalItem.title} (kopija)`,
+    };
+    
+    setNewProposal({
+      ...newProposal,
+      subItems: [...newProposal.subItems, newSubItem],
+    });
+    
+    // Automatski proširimo novu podtačku
+    setExpandedSubItem(newSubItem.id);
   };
 
   const handleProposalSubmit = async () => {
@@ -256,12 +324,16 @@ export function NewProposalDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="h-4 w-4 mr-2" />
-          Додај нови предлог
+        <Button className={customClassName || ""}>
+          {customText || (
+            <>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              Додај нови предлог
+            </>
+          )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Нови предлог за гласање</DialogTitle>
           <DialogDescription>
@@ -348,6 +420,7 @@ export function NewProposalDialog() {
                     setNewProposal({
                       ...newProposal,
                       isMultilayered: checked,
+                      subItems: checked ? newProposal.subItems : []
                     })
                   }
                 />
@@ -357,7 +430,10 @@ export function NewProposalDialog() {
               {newProposal.isMultilayered && (
                 <div className="space-y-4 mt-2">
                   <div className="flex items-center justify-between">
-                    <Label>Подтачке предлога</Label>
+                    <Label className="flex items-center gap-2">
+                      <Layers className="h-4 w-4" />
+                      <span>Подтачке предлога ({newProposal.subItems.length})</span>
+                    </Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -379,40 +455,103 @@ export function NewProposalDialog() {
                     </div>
                   )}
 
-                  {newProposal.subItems.map((item, index) => (
-                    <div 
-                      key={item.id}
-                      className="bg-slate-50 border rounded-lg p-3 space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Подтачка {index + 1}</h4>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSubItem(item.id)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Input
-                          placeholder="Наслов подтачке"
-                          value={item.title}
-                          onChange={(e) => updateSubItem(item.id, 'title', e.target.value)}
-                        />
+                  <ScrollArea className={newProposal.subItems.length > 2 ? "h-[300px] pr-4" : ""}>
+                    {newProposal.subItems.map((item, index) => (
+                      <div 
+                        key={item.id}
+                        className="bg-slate-50 border rounded-lg mb-3 overflow-hidden"
+                      >
+                        <div className="flex items-center justify-between p-3 bg-slate-100 border-b">
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                              {index + 1}
+                            </span>
+                            <h4 className="font-medium truncate">
+                              {item.title || `Подтачка ${index + 1}`}
+                            </h4>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => moveSubItem(item.id, 'up')}
+                              disabled={index === 0}
+                              className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+                            >
+                              <ChevronUp className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => moveSubItem(item.id, 'down')}
+                              disabled={index === newProposal.subItems.length - 1}
+                              className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+                            >
+                              <ChevronDown className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => duplicateSubItem(item.id)}
+                              className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeSubItem(item.id)}
+                              className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                         
-                        <Textarea
-                          placeholder="Опис подтачке предлога"
-                          value={item.description}
-                          onChange={(e) => updateSubItem(item.id, 'description', e.target.value)}
-                          rows={3}
-                        />
+                        <Accordion
+                          type="single"
+                          collapsible
+                          value={expandedSubItem === item.id ? item.id : undefined}
+                          onValueChange={(value) => setExpandedSubItem(value || null)}
+                        >
+                          <AccordionItem value={item.id} className="border-b-0">
+                            <AccordionContent className="p-3">
+                              <div className="space-y-3">
+                                <div>
+                                  <Label htmlFor={`title-${item.id}`} className="text-xs font-medium mb-1 block">
+                                    Наслов подтачке
+                                  </Label>
+                                  <Input
+                                    id={`title-${item.id}`}
+                                    placeholder="Унесите наслов подtaчке"
+                                    value={item.title}
+                                    onChange={(e) => updateSubItem(item.id, 'title', e.target.value)}
+                                  />
+                                </div>
+                                
+                                <div>
+                                  <Label htmlFor={`description-${item.id}`} className="text-xs font-medium mb-1 block">
+                                    Опис подtaчке предлога
+                                  </Label>
+                                  <Textarea
+                                    id={`description-${item.id}`}
+                                    placeholder="Опис подtaчке предлога"
+                                    value={item.description}
+                                    onChange={(e) => updateSubItem(item.id, 'description', e.target.value)}
+                                    rows={3}
+                                  />
+                                </div>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </ScrollArea>
                 </div>
               )}
 

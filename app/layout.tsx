@@ -5,6 +5,7 @@ import "./globals.css";
 import { WalletProvider } from "@/context/wallet-context";
 import { Toaster } from "@/components/ui/toaster";
 import { ProposalsProvider } from "@/hooks/proposals-context";
+import { AnnouncementsProvider } from "@/context/announcements-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,7 +24,13 @@ export default function RootLayout({
   return (
     <html lang="sr">
       <body className={inter.className}>
-        <ProposalsProvider>{children}</ProposalsProvider>
+        <WalletProvider>
+          <ProposalsProvider>
+            <AnnouncementsProvider>
+              {children}
+            </AnnouncementsProvider>
+          </ProposalsProvider>
+        </WalletProvider>
         <Toaster />
       </body>
     </html>
