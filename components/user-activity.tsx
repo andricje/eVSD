@@ -475,17 +475,7 @@ export function UserActivity() {
                           {activity.timestamp instanceof Date ? formatDate(activity.timestamp) : "Nepoznat datum"}
                         </div>
                       </div>
-                      {activity.type === "proposal_created" && activity.data.canBeCanceled && (
-                        <Button 
-                          variant="outline"
-                          size="sm"
-                          className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                          onClick={() => handleCancelProposal(activity.data)}
-                        >
-                          <X className="h-3.5 w-3.5 mr-1" />
-                          Otkaži
-                        </Button>
-                      )}
+                      
                     </div>
                   </div>
                 </div>
