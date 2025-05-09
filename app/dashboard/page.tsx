@@ -120,7 +120,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
       {isAdmin && (
         <NewAnnouncementDialog 
           customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
-          customText={<><Megaphone className="h-4.5 w-4.5 mr-2" />Обраћање</>}
+          customText={<><Megaphone className="h-4.5 w-4.5 mr-2" />Новo Обраћање</>}
         />
       )}
       <Button variant="outline" className="flex-1 border border-primary/20 hover:bg-primary/5 text-primary font-medium py-3 text-sm h-full" asChild>
@@ -446,6 +446,7 @@ const AdminTools: React.FC = () => {
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
   const { proposals, signerAddress } = useProposals();
+  const { disconnect } = useWallet();
   const {
     activeProposalsToVote,
     votedCompletedProposals,
@@ -462,26 +463,57 @@ export default function Dashboard() {
   const plenumDate = "15.05.2023.";
   const totalActiveProposals = proposalsWithQuorum.length + proposalsWithoutQuorum.length;
   
+  // Додатне информације о кориснику
+  const userFaculty = "Електротехнички факултет";
+  const userRole = "Студент";
+  
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
-      <main className="flex-1 w-full px-5 py-8">
-        <div className="flex flex-col gap-7 max-w-full">
-          {/* Avatar and title with plenum status */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">еВСД Платформа</h1>
-              <Badge variant="outline" className="text-sm px-3 py-1 bg-green-500/10 text-green-700 border-green-200">
-                <Clock className="h-4 w-4 mr-1.5" />
-                Пленум: {plenumStatus} од {plenumDate}
-              </Badge>
-            </div>
-            {signerAddress && (
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="text-base font-medium">ВС</AvatarFallback>
-              </Avatar>
-            )}
+      {/* Главно заглавље са платформским информацијама и корисничким подацима */}
+      <header className="w-full bg-background border-b px-5 py-3">
+        <div className="flex items-center justify-between max-w-full">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold">еВСД Платформа</h1>
+            <Badge variant="outline" className="text-sm px-3 py-1 bg-green-500/10 text-green-700 border-green-200">
+              <Clock className="h-4 w-4 mr-1.5" />
+              Пленум: {plenumStatus} од {plenumDate}
+            </Badge>
           </div>
           
+          {signerAddress && (
+            <div className="flex items-center gap-5">
+              <div className="flex flex-col items-end">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{signerAddress.substring(0, 6)}...{signerAddress.substring(signerAddress.length - 4)}</span>
+                  <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-700 border-blue-200">
+                    {userRole}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  <span>{userFaculty}</span>
+                </div>
+              </div>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-8 px-3 text-sm border-border/40 hover:bg-destructive/5 hover:text-destructive"
+                onClick={() => disconnect()}
+              >
+                <X className="h-4 w-4 mr-1.5" /> Одјави се
+              </Button>
+              
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="text-sm font-medium">ВС</AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+        </div>
+      </header>
+      
+      <main className="flex-1 w-full px-5 py-6">
+        <div className="flex flex-col gap-7 max-w-full">
           {/* Platform stats */}
           <div className="grid grid-cols-3 gap-4">
             <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
@@ -513,18 +545,9 @@ export default function Dashboard() {
             </Card>
           </div>
           
-          {/* Wallet info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="md:col-span-2">
-              {signerAddress ? (
-                <CompactWalletInfo address={signerAddress} />
-              ) : (
-                <OriginalWalletInfo />
-              )}
-            </div>
-            <div className="flex items-center">
-              <ActionButtons isAdmin={isAdmin} />
-            </div>
+          {/* Action Buttons */}
+          <div className="flex">
+            <ActionButtons isAdmin={isAdmin} />
           </div>
           
           {/* Urgent Proposals */}
