@@ -8,7 +8,7 @@ import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
 import {
   Proposal,
-  ProposalSerializationData,
+  VotableItemSerializationData,
   VoteOption,
 } from "@/types/proposal";
 import { Announcement } from "@/types/announcements";
@@ -28,52 +28,6 @@ export function getDeployedContracts(signer: Signer): {
   return { governor, token };
 }
 
-export async function createProposalDoNothing(
-  proposer: Signer,
-  governor: EvsdGovernor,
-  proposalDescription: string,
-  proposalTitle: string = "",
-  proposalFile?: File
-) {
-  const serializedProposal = serializeProposal({
-    title: proposalTitle,
-    description: proposalDescription,
-    file: proposalFile,
-  });
-  console.log("Креирање предлога: " + serializedProposal);
-
-  try {
-    // Проверавамо стање токена
-    const proposerAddress = await proposer.getAddress();
-    const proposalThresholdValue = await governor.proposalThreshold();
-
-    console.log(
-      `Потребни токени за предлог: ${ethers.formatUnits(proposalThresholdValue, 18)}`
-    );
-
-    // Директно креирамо предлог (делегирање се већ обавља у UI компоненти)
-    console.log("Креирање предлога...");
-    governor = governor.connect(proposer);
-    const governorAddress = await governor.getAddress();
-    const doNothingCalldata =
-      governor.interface.encodeFunctionData("doNothing");
-
-    const tx = await governor.propose(
-      [governorAddress],
-      [0],
-      [doNothingCalldata],
-      serializedProposal
-    );
-
-    console.log("Трансакција послата:", tx.hash);
-    await tx.wait(1); // Чекамо да се трансакција потврди
-    console.log("Предлог успешно креиран");
-    return tx.hash;
-  } catch (error) {
-    console.error("Грешка при креирању предлога:", error);
-    throw error;
-  }
-}
 export async function castVote(
   voter: Signer,
   governor: EvsdGovernor,
@@ -82,129 +36,16 @@ export async function castVote(
 ) {
   const governorContract = governor.connect(voter);
   await governorContract.castVote(proposalId, vote);
-} /**
- * Помоћна функција за пребацивање токена од админ адресе до предлагача.
- * У правој имплементацији ово би био део бекенд сервиса или фаукет уговора.
- * Сам уговор има токене, али овде симулирамо пренос токена са адресе која их већ има.
- */
-
-export async function transferTokensForProposal(
-  signer: Signer,
-  amount: string = "1.0"
-): Promise<boolean> {
-  try {
-    // Симулирамо успешан трансфер токена
-    console.log(
-      `Симулирани трансфер ${amount} токена на адресу: ${await signer.getAddress()}`
-    );
-
-    // Пауза да симулирамо време трансакције
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Симулирани успешан резултат
-    console.log("Токени су успешно пренети!");
-    return true;
-  } catch (error) {
-    console.error("Грешка при трансферу токена:", error);
-    return false;
-  }
-} /**
- * Функција за симулацију слања токена кориснику за потребе тестирања
- * У правој имплементацији ово би био позив на бекенд или фаукет
- */
-export async function mintTestTokens(
-  signer: Signer,
-  amount: string = "1.0"
-): Promise<boolean> {
-  try {
-    // Овде бисмо имали стварну имплементацију за пренос токена
-    // За сад само симулирамо успех
-    console.log(
-      `Симулирано слање ${amount} токена кориснику: ${await signer.getAddress()}`
-    );
-    return true;
-  } catch (error) {
-    console.error("Error minting test tokens:", error);
-    return false;
-  }
-}
-export async function getProposals(
-  governor: EvsdGovernor,
-  token: EvsdToken,
-  signer: Signer
-): Promise<Proposal[]> {
-  const proposalCreatedFilter = governor.filters.ProposalCreated();
-  const events = await governor.queryFilter(proposalCreatedFilter, 0, "latest");
-  const signerAddress = await signer.getAddress();
-  const decimals = await token.decimals();
-  const oneToken = ethers.parseUnits("1", decimals);
-
-  const results = await Promise.all(
-    events.map(async (event) => {
-      const proposalId = event.args.proposalId;
-      const proposalState = await governor.state(proposalId);
-      const countedVotes = await governor.proposalVotes(event.args.proposalId);
-      const allVotes = await getVotesForProposal(governor, proposalId);
-      const yourVote =
-        signerAddress in allVotes ? allVotes[signerAddress] : "notEligible";
-      const deadline = await governor.proposalDeadline(proposalId);
-      const closesAt = new Date(Number(deadline) * 1000);
-      const voteStart = new Date(Number(event.args.voteStart) * 1000);
-
-      // All serializable data is stored as a json string inside the proposal description
-      const deserializedData = deserializeProposal(event.args.description);
-
-      // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
-      const proposal: Proposal = {
-        ...deserializedData,
-        id: proposalId,
-        dateAdded: voteStart,
-        author: convertAddressToName(event.args.proposer),
-        votesFor: Number(countedVotes.forVotes / oneToken),
-        votesAgainst: Number(countedVotes.againstVotes / oneToken),
-        votesAbstain: Number(countedVotes.abstainVotes / oneToken),
-        status: "open",
-        closesAt: closesAt,
-        yourVote: yourVote,
-        votesForAddress: allVotes,
-      };
-      return proposal;
-    })
-  );
-  return results;
-}
-export async function getVotesForProposal(
-  governor: EvsdGovernor,
-  proposalId: bigint
-): Promise<Record<string, VoteOption>> {
-  const votes: Record<string, VoteOption> = {};
-  const filter = governor.filters.VoteCast();
-  const events = await governor.queryFilter(filter);
-  const eventsForProposal = events.filter(
-    (event) => event.args.proposalId === proposalId
-  );
-  for (const address of Object.keys(addressNameMap)) {
-    const eventsForAddress = eventsForProposal.filter(
-      (event) => event.args.voter === address
-    );
-    if (eventsForAddress.length == 0) {
-      votes[address] = "didntVote";
-    } else {
-      const vote = Number(eventsForAddress[0].args.support);
-      votes[address] = governorVoteMap[vote];
-    }
-  }
-  return votes;
 }
 
-function serializeProposal(proposal: ProposalSerializationData): string {
+function serializeProposal(proposal: VotableItemSerializationData): string {
   return JSON.stringify(proposal);
 }
 
 function deserializeProposal(
   proposalString: string
-): ProposalSerializationData {
-  return JSON.parse(proposalString) as ProposalSerializationData;
+): VotableItemSerializationData {
+  return JSON.parse(proposalString) as VotableItemSerializationData;
 }
 
 // Funkcija za dohvatanje aktivnih obraćanja
@@ -214,23 +55,33 @@ export async function getActiveAnnouncements(
   try {
     // Filteriramo događaje za kreirana obraćanja
     const createdFilter = governor.filters.AnnouncementCreated();
-    const createdEvents = await governor.queryFilter(createdFilter, 0, "latest");
-    
+    const createdEvents = await governor.queryFilter(
+      createdFilter,
+      0,
+      "latest"
+    );
+
     // Filteriramo događaje za deaktivirana obraćanja
     const deactivatedFilter = governor.filters.AnnouncementDeactivated();
-    const deactivatedEvents = await governor.queryFilter(deactivatedFilter, 0, "latest");
-    
+    const deactivatedEvents = await governor.queryFilter(
+      deactivatedFilter,
+      0,
+      "latest"
+    );
+
     // Kreiramo set ID-jeva deaktiviranih obraćanja za brzu proveru
     const deactivatedIds = new Set(
       deactivatedEvents.map((event) => event.args.announcementId.toString())
     );
-    
+
     // Mapiramo kreirana obraćanja u niz, isključujući ona koja su deaktivirana
     const announcements = createdEvents
       .map((event) => {
         const id = event.args.announcementId.toString();
-        if (deactivatedIds.has(id)) return null; // Preskačemo deaktivirana obraćanja
-        
+        if (deactivatedIds.has(id)) {
+          return null;
+        } // Preskačemo deaktivirana obraćanja
+
         return {
           id: id,
           content: event.args.content,
@@ -239,8 +90,10 @@ export async function getActiveAnnouncements(
           isActive: true,
         };
       })
-      .filter((announcement): announcement is Announcement => announcement !== null);
-    
+      .filter(
+        (announcement): announcement is Announcement => announcement !== null
+      );
+
     return announcements;
   } catch (error) {
     console.error("Greška pri dohvatanju obraćanja:", error);
@@ -271,7 +124,9 @@ export async function deactivateAnnouncement(
   announcementId: string
 ): Promise<boolean> {
   try {
-    const tx = await governor.connect(signer).deactivateAnnouncement(announcementId);
+    const tx = await governor
+      .connect(signer)
+      .deactivateAnnouncement(announcementId);
     await tx.wait();
     return true;
   } catch (error) {
@@ -289,26 +144,31 @@ export async function cancelProposal(
   try {
     // Da bismo otkazali predlog u OpenZeppelin Governor-u, moramo dobiti originalne podatke predloga
     // iz ProposalCreated događaja, jer cancel funkcija zahteva te podatke
-    
+
     // 1. Pronalazimo originalni ProposalCreated događaj za ovaj proposalId
     const filter = governor.filters.ProposalCreated(proposalId);
     const events = await governor.queryFilter(filter);
-    
+
     if (events.length === 0) {
       throw new Error("Nije pronađen originalni događaj kreiranja predloga");
     }
-    
+
     const event = events[0];
     const { targets, values, calldatas, description } = event.args;
-    
+
     // 2. Računamo hash opisa za cancel funkciju
     const descriptionHash = ethers.id(description);
-    
+
     // 3. Pozivamo cancel funkciju sa svim potrebnim parametrima
     const governorContract = governor.connect(signer);
-    const tx = await governorContract.cancel(targets, values, calldatas, descriptionHash);
+    const tx = await governorContract.cancel(
+      targets,
+      values,
+      calldatas,
+      descriptionHash
+    );
     await tx.wait();
-    
+
     return true;
   } catch (error) {
     console.error("Greška pri otkazivanju predloga:", error);
@@ -320,26 +180,29 @@ export async function cancelProposal(
 export async function getUserVotingHistory(
   governor: EvsdGovernor,
   userAddress: string
-): Promise<{
-  proposalId: string;
-  vote: VoteOption;
-  timestamp: number;
-}[]> {
+): Promise<
+  {
+    proposalId: string;
+    vote: VoteOption;
+    timestamp: number;
+  }[]
+> {
   try {
     // Filteriramo događaje za glasanje korisnika
     const filter = governor.filters.VoteCast(userAddress);
     const events = await governor.queryFilter(filter, 0, "latest");
-    
+
     // Mapiramo događaje u format za istoriju glasanja
     const votingHistory = events.map((event) => {
       const vote = Number(event.args.support);
       return {
         proposalId: event.args.proposalId.toString(),
         vote: governorVoteMap[vote],
-        timestamp: (event.args as any).timestamp || event.blockNumber?.toString() || 0,
+        timestamp:
+          (event.args as any).timestamp || event.blockNumber?.toString() || 0,
       };
     });
-    
+
     return votingHistory;
   } catch (error) {
     console.error("Greška pri dohvatanju istorije glasanja:", error);
@@ -356,29 +219,37 @@ export async function getUserProposals(
 ): Promise<Proposal[]> {
   try {
     const proposalCreatedFilter = governor.filters.ProposalCreated();
-    const events = await governor.queryFilter(proposalCreatedFilter, 0, "latest");
+    const events = await governor.queryFilter(
+      proposalCreatedFilter,
+      0,
+      "latest"
+    );
     const decimals = await token.decimals();
     const oneToken = ethers.parseUnits("1", decimals);
-    
+
     // Filtriramo samo predloge koje je kreirao korisnik
     const userEvents = events.filter(
       (event) => event.args.proposer.toLowerCase() === userAddress.toLowerCase()
     );
-    
+
     const results = await Promise.all(
       userEvents.map(async (event) => {
         const proposalId = event.args.proposalId;
         const proposalState = await governor.state(proposalId);
-        const countedVotes = await governor.proposalVotes(event.args.proposalId);
+        const countedVotes = await governor.proposalVotes(
+          event.args.proposalId
+        );
         const allVotes = await getVotesForProposal(governor, proposalId);
         const yourVote =
-          userAddress.toLowerCase() in allVotes ? allVotes[userAddress.toLowerCase()] : "notEligible";
+          userAddress.toLowerCase() in allVotes
+            ? allVotes[userAddress.toLowerCase()]
+            : "notEligible";
         const deadline = await governor.proposalDeadline(proposalId);
         const closesAt = new Date(Number(deadline) * 1000);
         const voteStart = new Date(Number(event.args.voteStart) * 1000);
-        
+
         const deserializedData = deserializeProposal(event.args.description);
-        
+
         const proposal: Proposal = {
           ...deserializedData,
           id: proposalId,
@@ -391,7 +262,8 @@ export async function getUserProposals(
           closesAt: closesAt,
           yourVote: yourVote,
           votesForAddress: allVotes,
-          canBeCanceled: Number(proposalState) === 0 || Number(proposalState) === 1, // Pending (0) ili Active (1)
+          canBeCanceled:
+            Number(proposalState) === 0 || Number(proposalState) === 1, // Pending (0) ili Active (1)
         };
         return proposal;
       })
