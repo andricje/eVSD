@@ -1,4 +1,5 @@
 import React from "react";
+import moment from "moment";
 
 import { Donation } from "@/types/donors";
 
@@ -32,8 +33,16 @@ export function DonationCard({ donation }: DonationCardProps) {
         )}
 
         <div className="flex-1">
-          <p className="font-medium">{displayName}</p>
-          <p className="text-sm text-muted-foreground">{donation.amount} ETH</p>
+          <p className="font-medium">
+            {displayName}{" "}
+            <span className="text-gray-500">
+              {donation.donor.walletAddress}
+            </span>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {donation.amount} ETH{" "}
+            <span>({moment(donation.dateTime).fromNow()})</span>
+          </p>
         </div>
       </div>
       <div className="flex items-center">

@@ -1,14 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button } from "../ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { Calendar, Coins, HandCoins, Info } from "lucide-react";
+import { Calendar, Coins, Info } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,7 @@ import "/node_modules/flag-icons/css/flag-icons.min.css";
 
 import { testDonations } from "@/types/donors";
 import { DonationCard } from "./donation-card";
+import { NewDonationDialog } from "./new-donation-dialog";
 
 export function DonationsSection() {
   const [sortBy, setSortBy] = useState<string>("latest");
@@ -55,12 +55,10 @@ export function DonationsSection() {
               <h5 className="text-4xl font-semibold leading-none tracking-tight pt-2">
                 14.001251 ETH
               </h5>
-              <h6 className="text-sm text-muted-foreground pt-2">
+              <h6 className="text-sm text-muted-foreground pt-2 mb-6">
                 Укупно донирано: 26.216351 ETH
               </h6>
-              <Button className="mt-6">
-                <HandCoins /> Донирај
-              </Button>
+              <NewDonationDialog />
             </div>
           </div>
 
