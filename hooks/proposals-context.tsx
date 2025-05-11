@@ -1,15 +1,20 @@
 "use client";
-import { getProposals, getDeployedContracts } from "@/lib/blockchain-utils";
-import { Proposal } from "@/types/proposal";
-import { Contract, Signer } from "ethers";
+import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
+import {
+  BlockchainProposalService,
+  Proposal,
+  ProposalService,
+} from "@/types/proposal";
+import { Contract, ethers, Signer } from "ethers";
 import { createContext, useEffect, useState } from "react";
 import { useBrowserSigner } from "./use-browser-signer";
-import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { InMemoryProposalFileService } from "@/lib/file-upload";
 
 interface ProposalsContextValue {
   proposals: Proposal[];
   signer: Signer | undefined;
   signerAddress: string | undefined;
+  proposalService: ProposalService | undefined;
 }
 
 export const ProposalsContext = createContext<
@@ -22,23 +27,29 @@ export const ProposalsProvider = ({
   children: React.ReactNode;
 }) => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
-
-  const { signer, signerAddress } = useBrowserSigner();
+  const { provider, signer, signerAddress } = useBrowserSigner();
+  const [proposalService, setProposalService] = useState<ProposalService>();
   useEffect(() => {
-    if (!signer) {
+    if (!signer || !provider) {
       return;
     }
 
-    const { governor, token } = getDeployedContracts(signer);
-    const voteCastFilter = governor.filters.VoteCast();
+    const governor = new ethers.Contract(
+      evsdGovernorArtifacts.address,
+      evsdGovernorArtifacts.abi,
+      signer
+    );
 
+    const fileService = new InMemoryProposalFileService();
+    const service = new BlockchainProposalService(
+      signer,
+      fileService,
+      provider
+    );
+    setProposalService(service);
     // Function to fetch historical data once
-    async function fetchAllProposals(
-      governor: EvsdGovernor,
-      token: EvsdToken,
-      signer: Signer
-    ) {
-      const proposals = await getProposals(governor, token, signer);
+    async function fetchAllProposals() {
+      const proposals = await service.getProposals();
       setProposals(proposals);
     }
 
@@ -47,20 +58,27 @@ export const ProposalsProvider = ({
     ethersGovernor.on(
       ethersGovernor.filters.VoteCast,
       (voter, proposalId, support, weight, reason) => {
-        fetchAllProposals(governor, token, signer);
+        fetchAllProposals();
       }
     );
 
-    fetchAllProposals(governor, token, signer);
+    fetchAllProposals();
 
     // Cleanup listeners on unmount
     return () => {
       governor.removeAllListeners();
     };
-  }, [signer]);
+  }, [signer, provider]);
 
   return (
-    <ProposalsContext.Provider value={{ proposals, signer, signerAddress }}>
+    <ProposalsContext.Provider
+      value={{
+        proposals,
+        signer,
+        signerAddress,
+        proposalService,
+      }}
+    >
       {children}
     </ProposalsContext.Provider>
   );

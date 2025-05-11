@@ -12,10 +12,6 @@ import { Megaphone, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, ReactElement } from "react";
-import {
-  createAnnouncement,
-  getDeployedContracts,
-} from "@/lib/blockchain-utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -28,7 +24,7 @@ export function NewAnnouncementDialog({
   customClassName,
   customText,
 }: NewAnnouncementDialogProps) {
-  const { signer, signerAddress } = useBrowserSigner();
+  const { signer } = useBrowserSigner();
   const [announcementContent, setAnnouncementContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,18 +45,19 @@ export function NewAnnouncementDialog({
     setSubmitting(true);
 
     try {
-      const { governor } = getDeployedContracts(signer);
+      // const { governor } = getDeployedContracts(signer);
 
-      // Prikazujemo status izveštaja
-      setError("Priprema kreiranje obraćanja...");
+      // // Prikazujemo status izveštaja
+      // setError("Priprema kreiranje obraćanja...");
 
-      // Kreiranje obraćanja
-      setError("Kreiranje obraćanja... (potvrdite transakciju u novčaniku)");
-      const result = await createAnnouncement(
-        signer,
-        governor,
-        announcementContent
-      );
+      // // Kreiranje obraćanja
+      // setError("Kreiranje obraćanja... (potvrdite transakciju u novčaniku)");
+      // const result = await createAnnouncement(
+      //   signer,
+      //   governor,
+      //   announcementContent
+      // );
+      const result = undefined;
 
       if (result) {
         setError(null);

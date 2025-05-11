@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,8 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, Search, Filter } from "lucide-react";
+import { Calendar, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,22 +18,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Header } from "@/components/header";
-import {
-  convertAddressToName,
-  countTotalVotes,
-  formatDate,
-  isQuorumReached,
-  isVotingComplete,
-  QUORUM,
-} from "@/lib/utils";
+import { formatDate, isVotingComplete } from "@/lib/utils";
 import { useProposals } from "@/hooks/use-proposals";
 import { StatusBadge } from "@/components/badges";
+import { ProposalInfo } from "@/components/ProposalInfo/proposal-info";
 
 export default function RezultatiPage() {
   const { proposals } = useProposals();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
-  const [expandedProposal, setExpandedProposal] = useState<bigint | null>(null);
 
   // Филтрирање предлога
   const filteredProposals = proposals.filter((proposal) => {
@@ -64,17 +55,6 @@ export default function RezultatiPage() {
 
     return matchesSearch && matchesDate;
   });
-
-  // Vote badge
-  const VoteBadge = ({ vote }: { vote: string }) => {
-    if (vote === "for") {
-      return <Badge className="bg-green-500">За</Badge>;
-    } else if (vote === "against") {
-      return <Badge className="bg-red-500">Против</Badge>;
-    } else {
-      return <Badge variant="outline">Уздржан</Badge>;
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -116,17 +96,22 @@ export default function RezultatiPage() {
               filteredProposals.map((proposal) => (
                 <Card key={proposal.id}>
                   <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start gap-4 flex-wrap">
-                      <div>
-                        <CardTitle className="text-xl">
-                          {proposal.title}
-                        </CardTitle>
-                        <CardDescription className="mt-1">
-                          Предложио: {proposal.author}
-                          {isVotingComplete(proposal) &&
-                            `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
-                        </CardDescription>
-                      </div>
+                    <div className="flex flex-col">
+                      <CardTitle className="w-full">
+                        <div className="flex flex-row gap-4">
+                          <p className="flex-grow text-xl">{proposal.title}</p>
+                          <p className="text-sm font-medium mb-1">Статус</p>
+                          <StatusBadge
+                            status={proposal.status}
+                            expiresAt={proposal.closesAt}
+                          />
+                        </div>
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        Предложио: {proposal.author}
+                        {isVotingComplete(proposal) &&
+                          `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
+                      </CardDescription>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -135,87 +120,12 @@ export default function RezultatiPage() {
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-4">
                       <div>
                         <p className="text-sm font-medium mb-1">
-                          Резултат гласања
+                          Резултат гласања:
                         </p>
-                        <div className="flex items-center gap-4">
-                          <div className="flex items-center">
-                            <Badge className="bg-green-500">За</Badge>
-                            <span className="ml-1">{proposal.votesFor}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Badge className="bg-red-500">Против</Badge>
-                            <span className="ml-1">
-                              {proposal.votesAgainst}
-                            </span>
-                          </div>
-                          <div className="flex items-center">
-                            <Badge variant="outline">Уздржан</Badge>
-                            <span className="ml-1">
-                              {proposal.votesAbstain}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium mb-1">Кворум</p>
-                        <div className="flex items-center">
-                          <span>
-                            {countTotalVotes(proposal)}/{QUORUM}
-                          </span>
-                          {isQuorumReached(proposal) && (
-                            <Badge className="bg-green-500 ml-2">
-                              Достигнут
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium mb-1">Статус</p>
-                        <StatusBadge
-                          status={proposal.status}
-                          expiresAt={proposal.closesAt}
-                        />
                       </div>
                     </div>
 
-                    <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setExpandedProposal(
-                            expandedProposal === proposal.id
-                              ? null
-                              : proposal.id
-                          )
-                        }
-                      >
-                        {expandedProposal === proposal.id
-                          ? "Сакриј детаље"
-                          : "Прикажи детаље гласања"}
-                      </Button>
-
-                      {expandedProposal === proposal.id && (
-                        <div className="mt-4 border rounded-md p-4">
-                          <h3 className="text-sm font-medium mb-2">
-                            Детаљи гласања по факултетима
-                          </h3>
-                          <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
-                            {Object.entries(proposal.votesForAddress).map(
-                              ([address, vote]) => (
-                                <div
-                                  key={address}
-                                  className="flex justify-between py-1 border-b text-sm"
-                                >
-                                  <span>{convertAddressToName(address)}</span>
-                                  <VoteBadge vote={vote} />
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <ProposalInfo proposal={proposal} />
                   </CardContent>
                 </Card>
               ))

@@ -25,9 +25,7 @@ export default function RootLayout({
     <html lang="sr">
       <body className={inter.className}>
         <WalletProvider>
-          <ProposalsProvider>
-            <AnnouncementsProvider>{children}</AnnouncementsProvider>
-          </ProposalsProvider>
+          <ProposalsProvider>{children}</ProposalsProvider>
         </WalletProvider>
         <Toaster />
       </body>

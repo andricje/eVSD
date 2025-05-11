@@ -32,11 +32,7 @@ export async function deployGovernor(
     "EvsdGovernor",
     deployer
   );
-  const deployerAddress = await deployer.getAddress();
-  const evsdGovernor = await EvsdGovernorFactory.deploy(
-    deployedTokenAddress,
-    deployerAddress
-  );
+  const evsdGovernor = await EvsdGovernorFactory.deploy(deployedTokenAddress);
   await evsdGovernor.waitForDeployment();
   return evsdGovernor;
 }

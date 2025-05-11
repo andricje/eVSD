@@ -3,63 +3,38 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 import {
-  Bell,
   ChevronRight,
-  Clock,
   FileText,
-  LayoutDashboard,
   PieChart,
-  Plus,
   Users,
   Vote,
   Wallet,
-  AlertTriangle,
-  CheckCircle2,
   X,
-  Calendar,
   History,
-  Timer,
   Megaphone,
-  Newspaper,
-  ListChecks,
-  Shield,
   User,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import { NewAnnouncementDialog } from "@/components/new-announcement-dialog";
-import { AnnouncementManager } from "@/components/announcement-manager";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
-import { Header } from "@/components/header";
 import { UserActivity } from "@/components/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal } from "@/types/proposal";
 import {
-  getRemainingTime,
   hasVotingTimeExpired,
   isVotingComplete,
   formatDate,
-  isQuorumReached,
-  countTotalVotes,
   QUORUM,
-  formatDateString,
-  convertAddressToName,
+  countUserRemainingItemsToVote,
+  isQuorumReachedForAllPoints,
 } from "@/lib/utils";
+import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 
 // Compact WalletInfo Component
 const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
@@ -122,7 +97,7 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
   return (
-    <div className="flex gap-3 h-full w-full">
+    <div className="flex gap-3 w-full">
       <NewProposalDialog
         customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
         customText={
@@ -157,246 +132,36 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
   );
 };
 
-// Status badge
-const StatusBadge = ({
-  status,
-  expiresAt,
-  isUrgent,
-}: {
-  status: string;
-  expiresAt?: Date;
-  isUrgent?: boolean;
-}) => {
-  if (isUrgent) {
-    return (
-      <Badge variant="destructive" className="text-xs px-2 py-0.5 font-medium">
-        Хитно
-      </Badge>
-    );
-  } else if (status === "closed") {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-green-500/10 text-green-700 border-green-200 text-xs font-medium px-2"
-      >
-        Затворено
-      </Badge>
-    );
-  } else if (status === "expired") {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-gray-500/10 text-gray-700 border-gray-200 text-xs font-medium px-2"
-      >
-        Истекло
-      </Badge>
-    );
-  } else if (status === "expiring" && expiresAt) {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-amber-500/10 text-amber-700 border-amber-200 text-xs font-medium px-2"
-      >
-        <Timer className="h-3 w-3 mr-1" />
-        {getRemainingTime(expiresAt)}
-      </Badge>
-    );
-  } else {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-blue-500/10 text-blue-700 border-blue-200 text-xs font-medium px-2"
-      >
-        Активно
-      </Badge>
-    );
-  }
-};
-
-// Vote Badge
-const VoteBadge = ({ vote }: { vote: string }) => {
-  if (vote === "for") {
-    return (
-      <Badge className="bg-green-500/10 text-green-700 border-green-200 text-xs font-medium px-2">
-        За
-      </Badge>
-    );
-  } else if (vote === "against") {
-    return (
-      <Badge className="bg-red-500/10 text-red-700 border-red-200 text-xs font-medium px-2">
-        Против
-      </Badge>
-    );
-  } else {
-    return (
-      <Badge variant="outline" className="text-xs font-medium px-2">
-        Уздржан
-      </Badge>
-    );
-  }
-};
-
-// ProposalCard Component - Proširena sa dodatnim informacijama
-const ProposalCard: React.FC<{ proposal: Proposal; isUrgent?: boolean }> = ({
-  proposal,
-  isUrgent = false,
-}) => {
-  const timeLeft = Math.max(
-    0,
-    proposal.closesAt ? proposal.closesAt.getTime() - new Date().getTime() : 0
-  );
-  const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
-  const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
-  const totalVotes = countTotalVotes(proposal);
-  const quorumPercentage = (Number(totalVotes) / Number(QUORUM)) * 100;
-  const quorumRemaining = Math.max(0, Number(QUORUM) - Number(totalVotes));
-  const quorumReached = isQuorumReached(proposal);
-
-  const forPercentage =
-    proposal.votesFor &&
-    proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain > 0
-      ? (Number(proposal.votesFor) /
-          (Number(proposal.votesFor) +
-            Number(proposal.votesAgainst) +
-            Number(proposal.votesAbstain))) *
-        100
-      : 0;
-
-  const authorName =
-    convertAddressToName(proposal.author) ||
-    proposal.author.substring(0, 6) +
-      "..." +
-      proposal.author.substring(proposal.author.length - 4);
-
-  return (
-    <Card
-      className={`bg-background border ${isUrgent ? "border-destructive/30" : "border-border/40"} rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden`}
-    >
-      <CardHeader className="pb-2.5 pt-4 px-5">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-semibold text-foreground">
-              {proposal.title}
-            </CardTitle>
-            <div className="flex items-center gap-1.5">
-              <StatusBadge
-                status={isUrgent ? "expiring" : proposal.status}
-                expiresAt={proposal.closesAt}
-                isUrgent={isUrgent}
-              />
-              {proposal.isMultilayered && (
-                <Badge
-                  variant="outline"
-                  className="bg-purple-500/10 text-purple-700 border-purple-200 text-xs font-medium px-2"
-                >
-                  <ListChecks className="h-3 w-3 mr-1" />
-                  Вишеслојни
-                </Badge>
-              )}
-            </div>
-          </div>
-          {quorumReached && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <span className="font-medium">
-                {hoursLeft}ч {minutesLeft}м
-              </span>
-            </div>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-          {proposal.description}
-        </p>
-      </CardHeader>
-      <CardContent className="pt-2 pb-4 space-y-3 px-5">
-        <div className="flex justify-between items-center text-sm border-t border-border/20 pt-2.5">
-          <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Аутор:</span>
-            <span className="font-medium">{authorName}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs">{formatDate(proposal.dateAdded)}</span>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-muted-foreground">Кворум</span>
-            <div className="flex items-center gap-1.5">
-              <span className="font-medium">
-                {quorumPercentage.toFixed(0)}%
-              </span>
-              {quorumRemaining > 0 && (
-                <span className="text-xs text-muted-foreground">
-                  (још {quorumRemaining} гласова)
-                </span>
-              )}
-            </div>
-          </div>
-          <Progress value={quorumPercentage} className="h-2" />
-        </div>
-
-        <div className="pt-1.5 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-medium">За:</span>
-              <span className="text-sm">{proposal.votesFor || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-medium">Против:</span>
-              <span className="text-sm">{proposal.votesAgainst || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-sm font-medium">Уздржани:</span>
-              <span className="text-sm">{proposal.votesAbstain || 0}</span>
-            </div>
-          </div>
-
-          <Button
-            size="sm"
-            className="text-sm px-4 py-2 h-auto font-medium"
-            asChild
-          >
-            <Link href={`/votes/${proposal.id}`}>
-              <Vote className="h-4 w-4 mr-2" />
-              Гласај
-            </Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 // Function to categorize proposals
-function categorizeProposals(proposals: Proposal[]) {
+function categorizeProposals(proposals: Proposal[], userAddress: string) {
   // Aktivni predlozi za koje korisnik NIJE glasao
   const activeProposalsToVote = proposals.filter(
     (proposal: Proposal) =>
       proposal.status === "open" &&
       !hasVotingTimeExpired(proposal) &&
-      proposal.yourVote === "didntVote"
+      countUserRemainingItemsToVote(proposal, userAddress) > 0
   );
 
   // Predlozi za koje je korisnik glasao i glasanje je završeno
   const votedCompletedProposals = proposals.filter(
     (proposal: Proposal) =>
-      proposal.yourVote !== "didntVote" && isVotingComplete(proposal)
+      countUserRemainingItemsToVote(proposal, userAddress) === 0 &&
+      isVotingComplete(proposal)
   );
 
   // Svi predlozi za koje je korisnik glasao
   const votedProposals = proposals.filter(
-    (proposal: Proposal) => proposal.yourVote !== "didntVote"
+    (proposal: Proposal) =>
+      countUserRemainingItemsToVote(proposal, userAddress) === 0
   );
 
   // Predlozi gde korisnik treba da glasa, sa dostupnim kvorumom
-  const proposalsWithQuorum = activeProposalsToVote.filter(isQuorumReached);
+  const proposalsWithQuorum = activeProposalsToVote.filter(
+    isQuorumReachedForAllPoints
+  );
 
   const proposalsWithoutQuorum = activeProposalsToVote.filter(
-    (p: Proposal) => !isQuorumReached(p)
+    (p: Proposal) => !isQuorumReachedForAllPoints(p)
   );
 
   return {
@@ -412,11 +177,13 @@ function categorizeProposals(proposals: Proposal[]) {
 const UrgentProposals: React.FC<{ proposals: Proposal[] }> = ({
   proposals,
 }) => {
-  if (proposals.length === 0) return null;
+  if (proposals.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mt-6">
-      <Alert className="bg-destructive/10 border-destructive/30 text-foreground py-3 px-5">
+      {/* <Alert className="bg-destructive/10 border-destructive/30 text-foreground py-3 px-5">
         <AlertTriangle className="h-5 w-5 text-destructive" />
         <AlertTitle className="text-base font-semibold">
           Хитни предлози
@@ -424,7 +191,7 @@ const UrgentProposals: React.FC<{ proposals: Proposal[] }> = ({
         <AlertDescription className="text-sm">
           Следећи предлози су достигли кворум и захтевају хитно гласање
         </AlertDescription>
-      </Alert>
+      </Alert> */}
 
       <div className="space-y-4 mt-4">
         {proposals.map((proposal) => (
@@ -499,90 +266,16 @@ const FacultyAnnouncements: React.FC = () => {
   );
 };
 
-// AdminTools Component
-const AdminTools: React.FC = () => {
-  const [showConfirmEndPlenum, setShowConfirmEndPlenum] = useState(false);
-
-  const handleEndPlenum = () => {
-    // Ovde bi se pozivala funkcija za završetak plenuma na blockchain nivou
-    console.log("Plenum završen");
-    setShowConfirmEndPlenum(false);
-  };
-
-  return (
-    <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
-      <h3 className="text-base font-semibold text-foreground mb-3">
-        Административне опције
-      </h3>
-      <div className="space-y-3">
-        <Button className="w-full justify-start py-2 text-sm" variant="outline">
-          <Users className="mr-2 h-4 w-4" />
-          Додај нову адресу у систем
-        </Button>
-        <Button className="w-full justify-start py-2 text-sm" variant="outline">
-          <Shield className="mr-2 h-4 w-4" />
-          Управљање дозволама
-        </Button>
-        <Button
-          className="w-full justify-start py-2 text-sm"
-          variant="outline"
-          onClick={() => setShowConfirmEndPlenum(true)}
-        >
-          <Timer className="mr-2 h-4 w-4 text-destructive" />
-          <span className="text-destructive">Заврши пленум</span>
-        </Button>
-
-        {showConfirmEndPlenum && (
-          <Alert variant="destructive" className="mt-3">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle className="text-sm font-semibold">
-              Потврда завршетка пленума
-            </AlertTitle>
-            <AlertDescription className="text-sm">
-              Да ли сте сигурни да желите да завршите пленум? Ова акција ће
-              онемогућити даље гласање.
-              <div className="flex gap-2 mt-3">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleEndPlenum}
-                >
-                  Да, заврши пленум
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowConfirmEndPlenum(false)}
-                >
-                  Откажи
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-    </Card>
-  );
-};
-
 // Dashboard component
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
   const { proposals, signerAddress } = useProposals();
-  const {
-    activeProposalsToVote,
-    votedCompletedProposals,
-    votedProposals,
-    proposalsWithQuorum,
-    proposalsWithoutQuorum,
-  } = categorizeProposals(proposals);
-
-  // Simuliramo admina za UI primer
-  const isAdmin = true;
+  const { proposalsWithQuorum, proposalsWithoutQuorum } = categorizeProposals(
+    proposals,
+    signerAddress ? signerAddress : ""
+  );
 
   // Status plenuma
-  const plenumStatus = "Активан";
-  const plenumDate = "15.05.2023.";
   const totalActiveProposals =
     proposalsWithQuorum.length + proposalsWithoutQuorum.length;
 
@@ -590,27 +283,6 @@ export default function Dashboard() {
     <div className="flex flex-col min-h-screen bg-muted/30">
       <main className="flex-1 w-full px-5 py-8">
         <div className="flex flex-col gap-7 max-w-full">
-          {/* Avatar and title with plenum status */}
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">еВСД Платформа</h1>
-              <Badge
-                variant="outline"
-                className="text-sm px-3 py-1 bg-green-500/10 text-green-700 border-green-200"
-              >
-                <Clock className="h-4 w-4 mr-1.5" />
-                Пленум: {plenumStatus} од {plenumDate}
-              </Badge>
-            </div>
-            {signerAddress && (
-              <Avatar className="h-10 w-10">
-                <AvatarFallback className="text-base font-medium">
-                  ВС
-                </AvatarFallback>
-              </Avatar>
-            )}
-          </div>
-
           {/* Platform stats */}
           <div className="grid grid-cols-3 gap-4">
             <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
@@ -658,7 +330,7 @@ export default function Dashboard() {
               )}
             </div>
             <div className="flex items-center">
-              <ActionButtons isAdmin={isAdmin} />
+              <ActionButtons isAdmin={false} />
             </div>
           </div>
 
@@ -696,7 +368,11 @@ export default function Dashboard() {
               {proposalsWithoutQuorum.length > 0 ? (
                 <div className="space-y-4 mt-5">
                   {proposalsWithoutQuorum.map((proposal) => (
-                    <ProposalCard key={proposal.id} proposal={proposal} />
+                    <ProposalCard
+                      key={proposal.id}
+                      proposal={proposal}
+                      isUrgent={false}
+                    />
                   ))}
                 </div>
               ) : (
@@ -725,7 +401,6 @@ export default function Dashboard() {
 
               <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FacultyAnnouncements />
-                {isAdmin && <AdminTools />}
               </div>
             </TabsContent>
 
