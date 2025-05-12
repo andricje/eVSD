@@ -1,0 +1,19 @@
+{
+  "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+  "abi": [
+    "constructor(address initialOwner)",
+    "error OwnableInvalidOwner(address owner)",
+    "error OwnableUnauthorizedAccount(address account)",
+    "event AnnouncementCreated(uint256 indexed announcementId, address indexed announcer, string content, uint256 timestamp)",
+    "event AnnouncementDeactivated(uint256 indexed announcementId)",
+    "event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)",
+    "function announcementCounter() view returns (uint256)",
+    "function announcements(uint256) view returns (address announcer, string content, uint256 timestamp, bool isActive)",
+    "function createAnnouncement(string content)",
+    "function deactivateAnnouncement(uint256 announcementId)",
+    "function getActiveAnnouncements() view returns ((address announcer, string content, uint256 timestamp, bool isActive)[])",
+    "function owner() view returns (address)",
+    "function renounceOwnership()",
+    "function transferOwnership(address newOwner)"
+  ]
+}

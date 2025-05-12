@@ -51,8 +51,8 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     const fetchAnnouncements = async () => {
       try {
         setIsLoading(true);
-        const { governor } = getDeployedContracts(signer);
-        const fetchedAnnouncements = await getActiveAnnouncements(governor);
+        const { announcements: announcementsContract } = getDeployedContracts(signer);
+        const fetchedAnnouncements = await getActiveAnnouncements(announcementsContract);
         
         setAnnouncements(fetchedAnnouncements);
         setUnseenAnnouncements(filterUnseenAnnouncements(fetchedAnnouncements));
@@ -66,12 +66,12 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     fetchAnnouncements();
 
     // Postavka slušaoca za nova obraćanja
-    const { governor } = getDeployedContracts(signer);
-    const ethersGovernor = governor as unknown as Contract;
+    const { announcements: announcementsContract } = getDeployedContracts(signer);
+    const ethersAnnouncements = announcementsContract as unknown as Contract;
     
     // Slušanje novih kreiranja obraćanja
-    ethersGovernor.on(
-      ethersGovernor.filters.AnnouncementCreated,
+    ethersAnnouncements.on(
+      ethersAnnouncements.filters.AnnouncementCreated,
       (announcementId, announcer, content, timestamp, event) => {
         const newAnnouncement: Announcement = {
           id: announcementId.toString(),
@@ -87,8 +87,8 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     );
     
     // Slušanje deaktiviranja obraćanja
-    ethersGovernor.on(
-      ethersGovernor.filters.AnnouncementDeactivated,
+    ethersAnnouncements.on(
+      ethersAnnouncements.filters.AnnouncementDeactivated,
       (announcementId, event) => {
         const idToDeactivate = announcementId.toString();
         
@@ -103,7 +103,7 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     );
 
     return () => {
-      ethersGovernor.removeAllListeners();
+      ethersAnnouncements.removeAllListeners();
     };
   }, [signer]);
 

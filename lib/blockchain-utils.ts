@@ -3,9 +3,12 @@ import {
   EvsdGovernor__factory,
   EvsdToken,
   EvsdToken__factory,
+  Announcements,
+  Announcements__factory,
 } from "../typechain-types";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
+import evsdAnnouncementsArtifacts from "../contracts/evsd-announcements.json";
 import {
   Proposal,
   ProposalSerializationData,
@@ -19,13 +22,18 @@ import { addressNameMap } from "./address-name-map";
 export function getDeployedContracts(signer: Signer): {
   governor: EvsdGovernor;
   token: EvsdToken;
+  announcements: Announcements;
 } {
   const governor = EvsdGovernor__factory.connect(
     evsdGovernorArtifacts.address,
     signer
   );
   const token = EvsdToken__factory.connect(evsdTokenArtifacts.address, signer);
-  return { governor, token };
+  const announcements = Announcements__factory.connect(
+    evsdAnnouncementsArtifacts.address,
+    signer
+  );
+  return { governor, token, announcements };
 }
 
 export async function createProposalDoNothing(
@@ -57,13 +65,14 @@ export async function createProposalDoNothing(
     console.log("Креирање предлога...");
     governor = governor.connect(proposer);
     const governorAddress = await governor.getAddress();
-    const doNothingCalldata =
-      governor.interface.encodeFunctionData("doNothing");
+    
+    // Sada koristimo neku drugu funkciju umesto doNothing
+    const emptyCalldata = governor.interface.encodeFunctionData("votingPeriod");
 
     const tx = await governor.propose(
       [governorAddress],
       [0],
-      [doNothingCalldata],
+      [emptyCalldata],
       serializedProposal
     );
 
@@ -211,39 +220,24 @@ function deserializeProposal(
 
 // Funkcija za dohvatanje aktivnih obraćanja
 export async function getActiveAnnouncements(
-  governor: EvsdGovernor
+  announcements: Announcements
 ): Promise<Announcement[]> {
   try {
-    // Filteriramo događaje za kreirana obraćanja
-    const createdFilter = governor.filters.AnnouncementCreated();
-    const createdEvents = await governor.queryFilter(createdFilter, 0, "latest");
+    // Pozivamo funkciju iz ugovora za dobijanje aktivnih obraćanja
+    const activeAnnouncementsList = await announcements.getActiveAnnouncements();
     
-    // Filteriramo događaje za deaktivirana obraćanja
-    const deactivatedFilter = governor.filters.AnnouncementDeactivated();
-    const deactivatedEvents = await governor.queryFilter(deactivatedFilter, 0, "latest");
+    // Mapiramo rezultate u naš tip Announcement
+    const parsedAnnouncements = activeAnnouncementsList.map((announcement, index) => {
+      return {
+        id: (index + 1).toString(),
+        content: announcement.content,
+        announcer: convertAddressToName(announcement.announcer),
+        timestamp: Number(announcement.timestamp),
+        isActive: announcement.isActive,
+      };
+    });
     
-    // Kreiramo set ID-jeva deaktiviranih obraćanja za brzu proveru
-    const deactivatedIds = new Set(
-      deactivatedEvents.map((event) => event.args.announcementId.toString())
-    );
-    
-    // Mapiramo kreirana obraćanja u niz, isključujući ona koja su deaktivirana
-    const announcements = createdEvents
-      .map((event) => {
-        const id = event.args.announcementId.toString();
-        if (deactivatedIds.has(id)) return null; // Preskačemo deaktivirana obraćanja
-        
-        return {
-          id: id,
-          content: event.args.content,
-          announcer: convertAddressToName(event.args.announcer),
-          timestamp: Number(event.args.timestamp),
-          isActive: true,
-        };
-      })
-      .filter((announcement): announcement is Announcement => announcement !== null);
-    
-    return announcements;
+    return parsedAnnouncements;
   } catch (error) {
     console.error("Greška pri dohvatanju obraćanja:", error);
     return [];
@@ -253,11 +247,11 @@ export async function getActiveAnnouncements(
 // Funkcija za kreiranje novog obraćanja (samo za vlasnike/administratore)
 export async function createAnnouncement(
   signer: Signer,
-  governor: EvsdGovernor,
   content: string
 ): Promise<string | null> {
   try {
-    const tx = await governor.connect(signer).createAnnouncement(content);
+    const { announcements } = getDeployedContracts(signer);
+    const tx = await announcements.connect(signer).createAnnouncement(content);
     await tx.wait();
     return tx.hash;
   } catch (error) {
@@ -269,11 +263,11 @@ export async function createAnnouncement(
 // Funkcija za deaktiviranje obraćanja
 export async function deactivateAnnouncement(
   signer: Signer,
-  governor: EvsdGovernor,
   announcementId: string
 ): Promise<boolean> {
   try {
-    const tx = await governor.connect(signer).deactivateAnnouncement(announcementId);
+    const { announcements } = getDeployedContracts(signer);
+    const tx = await announcements.connect(signer).deactivateAnnouncement(announcementId);
     await tx.wait();
     return true;
   } catch (error) {
