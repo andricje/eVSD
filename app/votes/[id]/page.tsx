@@ -620,17 +620,7 @@ export default function ProposalDetails() {
               Nazad
             </Button>
             
-            {/* Dugme za završetak plenuma - vidljivo samo ako je korisnik admin */}
-            {isAdmin && proposal.status === "open" && (
-              <Button 
-                variant="destructive" 
-                onClick={handleEndVoting}
-                disabled={isEndingVoting}
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Završi plenum
-              </Button>
-            )}
+            
           </div>
 
           {/* Glavni blok sa detaljem predloga */}

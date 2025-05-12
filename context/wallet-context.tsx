@@ -1,11 +1,34 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type {
-  WalletInfo,
-  ConnectionStatus,
-  AuthorizedWallet,
-} from "@/types/wallet";
+import { useRouter } from "next/navigation";
+
+// Tipovi za wallet
+type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
+
+interface WalletInfo {
+  address: string;
+  chainId: number;
+  provider: string;
+  ensName?: string;
+}
+
+interface AuthorizedWallet {
+  address: string;
+  faculty: string;
+  authorized: boolean;
+  lastLogin?: string;
+}
+
+// Deklaracija za window.ethereum
+declare global {
+  interface Window {
+    ethereum?: {
+      isMetaMask?: boolean;
+      disconnect?: () => void;
+    };
+  }
+}
 
 // Simulirani podaci za autorizovane novčanike
 const AUTHORIZED_WALLETS: AuthorizedWallet[] = [
@@ -49,6 +72,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     useState<ConnectionStatus>("disconnected");
   const [authorizedWallet, setAuthorizedWallet] =
     useState<AuthorizedWallet | null>(null);
+  const router = useRouter();
 
   // Proverava da li je novčanik autorizovan
   const checkAuthorization = (address: string) => {
@@ -145,9 +169,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   // Prekid veze sa novčanikom
   const disconnect = () => {
+    // Čišćenje podataka o novčaniku
     setWallet(null);
     setAuthorizedWallet(null);
     setConnectionStatus("disconnected");
+    
+    // Čišćenje localStorage-a
+    localStorage.clear();
+    
+    // Čišćenje MetaMask konekcije (ako je dostupan)
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        // Za novije verzije MetaMask-a
+        if (window.ethereum.disconnect) {
+          window.ethereum.disconnect();
+        }
+      } catch (error) {
+        console.error("Greška pri odjavljivanju iz MetaMask-a:", error);
+      }
+    }
+    
+    // Preusmeravanje na login stranicu
+    router.push('/login');
   };
 
   return (

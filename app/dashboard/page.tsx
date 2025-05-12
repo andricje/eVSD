@@ -55,6 +55,7 @@ import {
   formatDateString,
   convertAddressToName,
 } from "@/lib/utils";
+import { AddFacultyAddress } from "@/components/add-faculty-address";
 
 // Compact WalletInfo Component
 const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
@@ -335,6 +336,7 @@ const UrgentProposals: React.FC<{ proposals: Proposal[] }> = ({ proposals }) => 
 // AdminTools Component
 const AdminTools: React.FC = () => {
   const [showConfirmEndPlenum, setShowConfirmEndPlenum] = useState(false);
+  const [showAddFacultyDialog, setShowAddFacultyDialog] = useState(false);
   
   const handleEndPlenum = () => {
     // Ovde bi se pozivala funkcija za završetak plenuma na blockchain nivou
@@ -346,7 +348,11 @@ const AdminTools: React.FC = () => {
     <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
       <h3 className="text-base font-semibold text-foreground mb-3">Административне опције</h3>
       <div className="space-y-3">
-        <Button className="w-full justify-start py-2 text-sm" variant="outline">
+        <Button 
+          className="w-full justify-start py-2 text-sm" 
+          variant="outline"
+          onClick={() => setShowAddFacultyDialog(true)}
+        >
           <Users className="mr-2 h-4 w-4" />
           Додај нову адресу у систем
         </Button>
@@ -385,6 +391,25 @@ const AdminTools: React.FC = () => {
                   Откажи
                 </Button>
               </div>
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {showAddFacultyDialog && (
+          <Alert className="mt-3 bg-background border border-primary/20">
+            <div className="flex justify-between w-full mb-2">
+              <AlertTitle className="text-base font-semibold">Додавање нове адресе факултета</AlertTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowAddFacultyDialog(false)} 
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDescription>
+              <AddFacultyAddress onSuccess={() => setShowAddFacultyDialog(false)} />
             </AlertDescription>
           </Alert>
         )}
