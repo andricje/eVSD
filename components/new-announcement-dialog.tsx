@@ -12,7 +12,6 @@ import { Megaphone, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, ReactElement } from "react";
-import { createAnnouncement, getDeployedContracts } from "@/lib/blockchain-utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -21,8 +20,11 @@ interface NewAnnouncementDialogProps {
   customText?: ReactElement;
 }
 
-export function NewAnnouncementDialog({ customClassName, customText }: NewAnnouncementDialogProps) {
-  const { signer, signerAddress } = useBrowserSigner();
+export function NewAnnouncementDialog({
+  customClassName,
+  customText,
+}: NewAnnouncementDialogProps) {
+  const { signer } = useBrowserSigner();
   const [announcementContent, setAnnouncementContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,24 +45,25 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
     setSubmitting(true);
 
     try {
-      const { governor } = getDeployedContracts(signer);
-      
-      // Prikazujemo status izveštaja
-      setError("Priprema kreiranje obraćanja...");
-      
-      // Kreiranje obraćanja
-      setError("Kreiranje obraćanja... (potvrdite transakciju u novčaniku)");
-      const result = await createAnnouncement(
-        signer,
-        governor,
-        announcementContent
-      );
+      // const { governor } = getDeployedContracts(signer);
+
+      // // Prikazujemo status izveštaja
+      // setError("Priprema kreiranje obraćanja...");
+
+      // // Kreiranje obraćanja
+      // setError("Kreiranje obraćanja... (potvrdite transakciju u novčaniku)");
+      // const result = await createAnnouncement(
+      //   signer,
+      //   governor,
+      //   announcementContent
+      // );
+      const result = undefined;
 
       if (result) {
         setError(null);
         setSuccess(true);
         console.log("Obraćanje uspešno kreirano:", result);
-        
+
         // Resetovanje forme nakon 3 sekunde
         setTimeout(() => {
           setAnnouncementContent("");
@@ -73,7 +76,7 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
       console.error("Greška pri kreiranju obraćanja:", error);
 
       let errorMessage = "Došlo je do greške pri kreiranju obraćanja.";
-      
+
       if (error instanceof Error) {
         const errorString = error.toString();
 
@@ -84,12 +87,13 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
           errorMessage =
             "Nedovoljno sredstava za plaćanje troškova transakcije (ETH).";
         } else if (errorString.includes("execution reverted")) {
-          errorMessage = "Niste administrator i nemate dozvolu za kreiranje obraćanja.";
+          errorMessage =
+            "Niste administrator i nemate dozvolu za kreiranje obraćanja.";
         } else {
           errorMessage = `Greška: ${errorString}`;
         }
       }
-      
+
       setError(errorMessage);
     } finally {
       setSubmitting(false);
@@ -99,7 +103,12 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className={customClassName || "bg-indigo-600 hover:bg-indigo-700 text-white h-auto py-2.5"}>
+        <Button
+          className={
+            customClassName ||
+            "bg-indigo-600 hover:bg-indigo-700 text-white h-auto py-2.5"
+          }
+        >
           {customText || (
             <>
               <Megaphone className="h-5 w-5 mr-2" />
@@ -115,39 +124,48 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
             Novo obraćanje fakulteta
           </DialogTitle>
           <DialogDescription>
-            Kreiraj novo obraćanje koje će biti prikazano svim korisnicima platforme.
+            Kreiraj novo obraćanje koje će biti prikazano svim korisnicima
+            platforme.
           </DialogDescription>
         </DialogHeader>
-        
+
         {success ? (
           <div className="py-8 text-center space-y-4">
             <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl font-medium">Obraćanje uspešno objavljeno!</h3>
+            <h3 className="text-xl font-medium">
+              Obraćanje uspešno objavljeno!
+            </h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Vaše obraćanje je uspešno sačuvano na blockchain-u i biće prikazano korisnicima pri prvom sledećem prijavljivanju.
+              Vaše obraćanje je uspešno sačuvano na blockchain-u i biće
+              prikazano korisnicima pri prvom sledećem prijavljivanju.
             </p>
           </div>
         ) : (
           <>
-            {error && !error.includes("Kreiranje") && !error.includes("Priprema") && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Greška</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
-            {error && (error.includes("Kreiranje") || error.includes("Priprema")) && (
-              <Alert className="bg-blue-50 border-blue-200 text-blue-800">
-                <Info className="h-4 w-4" />
-                <AlertTitle>U toku</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            {error &&
+              !error.includes("Kreiranje") &&
+              !error.includes("Priprema") && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Greška</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+            {error &&
+              (error.includes("Kreiranje") || error.includes("Priprema")) && (
+                <Alert className="bg-blue-50 border-blue-200 text-blue-800">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>U toku</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="announcement-content" className="text-base">Sadržaj obraćanja</Label>
+                <Label htmlFor="announcement-content" className="text-base">
+                  Sadržaj obraćanja
+                </Label>
                 <Textarea
                   id="announcement-content"
                   value={announcementContent}
@@ -158,19 +176,24 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
                   disabled={submitting}
                 />
               </div>
-              
+
               <Alert className="bg-blue-50 border-blue-200 text-blue-800">
                 <Info className="h-4 w-4" />
                 <AlertTitle>Važno obaveštenje</AlertTitle>
                 <AlertDescription>
-                  <p>Obraćanja se čuvaju na blockchain-u i biće vidljiva svim korisnicima sistema.</p>
-                  <p className="mt-1">Samo administratori mogu da kreiraju obraćanja.</p>
+                  <p>
+                    Obraćanja se čuvaju na blockchain-u i biće vidljiva svim
+                    korisnicima sistema.
+                  </p>
+                  <p className="mt-1">
+                    Samo administratori mogu da kreiraju obraćanja.
+                  </p>
                 </AlertDescription>
               </Alert>
             </div>
             <DialogFooter>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 onClick={handleSubmit}
                 disabled={submitting}
                 className="bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2"
@@ -193,4 +216,4 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
       </DialogContent>
     </Dialog>
   );
-} 
+}

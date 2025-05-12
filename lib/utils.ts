@@ -1,6 +1,13 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Proposal, VoteOption, VoteResult } from "../types/proposal";
+import {
+  Proposal,
+  ProposalService,
+  VotableItem,
+  VoteEvent,
+  VoteOption,
+  VoteResult,
+} from "../types/proposal";
 import { addressNameMap } from "./address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
@@ -113,12 +120,19 @@ export const isVotingComplete = (proposal: Proposal) => {
   return proposal.status === "closed";
 };
 
-export function isQuorumReached(proposal: Proposal) {
-  return countTotalVotes(proposal) > QUORUM;
+export function isQuorumReached(voteItem: VotableItem) {
+  return countTotalVotes(voteItem) > QUORUM;
 }
 
-export function countTotalVotes(proposal: Proposal) {
-  return proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain;
+export function isQuorumReachedForAllPoints(proposal: Proposal) {
+  return (
+    proposal.itemsToVote.filter((voteItem) => !isQuorumReached(voteItem))
+      .length > 0
+  );
+}
+
+export function countTotalVotes(voteItem: VotableItem) {
+  return voteItem.votesFor + voteItem.votesAgainst + voteItem.votesAbstain;
 }
 export function tryParseAsBigInt(value: string): bigint | undefined {
   try {
@@ -126,4 +140,32 @@ export function tryParseAsBigInt(value: string): bigint | undefined {
   } catch {
     return undefined;
   }
+}
+export function getUserVotingHistory(
+  proposals: Proposal[],
+  userAddress: string
+) {
+  return proposals.reduce<{ event: VoteEvent; item: VotableItem }[]>(
+    (acc, proposal) => {
+      const votesForProposal = proposal.itemsToVote.reduce<
+        { event: VoteEvent; item: VotableItem }[]
+      >((acc, item) => {
+        if (userAddress in item.votesForAddress) {
+          acc.push({ event: item.votesForAddress[userAddress], item });
+        }
+        return acc;
+      }, []);
+      return acc.concat(votesForProposal);
+    },
+    []
+  );
+}
+
+export function countUserRemainingItemsToVote(
+  proposal: Proposal,
+  userAddress: string
+) {
+  return proposal.itemsToVote.filter(
+    (voteItem) => !(userAddress in voteItem.votesForAddress)
+  ).length;
 }
