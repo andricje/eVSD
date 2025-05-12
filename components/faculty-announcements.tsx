@@ -28,7 +28,7 @@ export function FacultyAnnouncements() {
       <div className="space-y-4">
         <h2 className="text-base font-semibold text-foreground mb-2">Обавештења факултета</h2>
         {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index} className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
+          <Card key={`skeleton-${index}`} className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
             <div className="flex justify-between items-start mb-3">
               <Skeleton className="h-6 w-48" />
               <Skeleton className="h-5 w-28" />
@@ -64,8 +64,11 @@ export function FacultyAnnouncements() {
   return (
     <div className="space-y-4">
       <h2 className="text-base font-semibold text-foreground mb-2">Обавештења факултета</h2>
-      {sortedAnnouncements.map((announcement) => (
-        <Card key={announcement.id} className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+      {sortedAnnouncements.map((announcement, index) => (
+        <Card 
+          key={`announcement-${announcement.id}-${index}-${announcement.timestamp}`} 
+          className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+        >
           <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-2">
               <Megaphone className="h-4 w-4 text-indigo-500" />

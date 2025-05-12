@@ -228,8 +228,11 @@ export async function getActiveAnnouncements(
     
     // Mapiramo rezultate u naš tip Announcement
     const parsedAnnouncements = activeAnnouncementsList.map((announcement, index) => {
+      // Generišemo jedinstveni ID koji sadrži adresu i timestamp za potpunu jedinstvenost
+      const uniqueId = `${announcement.announcer.substring(0, 6)}-${announcement.timestamp}-${index}`;
+      
       return {
-        id: (index + 1).toString(),
+        id: uniqueId, // Koristimo kompozitni ključ umesto rednog broja
         content: announcement.content,
         announcer: convertAddressToName(announcement.announcer),
         timestamp: Number(announcement.timestamp),

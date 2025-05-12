@@ -42,6 +42,20 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     return allAnnouncements.filter(announcement => !seenIds.includes(announcement.id));
   };
 
+  // Pomoćna funkcija za obradu i deduplikaciju obraćanja
+  const processAnnouncements = (fetchedAnnouncements: Announcement[]) => {
+    // Kreiramo Map koristeći kompozitni ključ od ID + timestamp + announcer da izbegnemo duplikate
+    const uniqueAnnouncementsMap = new Map<string, Announcement>();
+    
+    fetchedAnnouncements.forEach(announcement => {
+      const uniqueKey = `${announcement.id}-${announcement.timestamp}-${announcement.announcer}`;
+      uniqueAnnouncementsMap.set(uniqueKey, announcement);
+    });
+    
+    // Vraćamo niz jedinstvenih obraćanja
+    return Array.from(uniqueAnnouncementsMap.values());
+  };
+
   useEffect(() => {
     if (!signer) {
       setIsLoading(false);
@@ -54,8 +68,11 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
         const { announcements: announcementsContract } = getDeployedContracts(signer);
         const fetchedAnnouncements = await getActiveAnnouncements(announcementsContract);
         
-        setAnnouncements(fetchedAnnouncements);
-        setUnseenAnnouncements(filterUnseenAnnouncements(fetchedAnnouncements));
+        // Obradujemo obraćanja pre setovanja stanja
+        const uniqueAnnouncements = processAnnouncements(fetchedAnnouncements);
+        
+        setAnnouncements(uniqueAnnouncements);
+        setUnseenAnnouncements(filterUnseenAnnouncements(uniqueAnnouncements));
       } catch (error) {
         console.error("Greška pri dohvatanju obraćanja:", error);
       } finally {
@@ -81,8 +98,28 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
           isActive: true,
         };
         
-        setAnnouncements(prev => [...prev, newAnnouncement]);
-        setUnseenAnnouncements(prev => [...prev, newAnnouncement]);
+        // Provjeravamo da li već imamo ovo obraćanje pre dodavanja
+        setAnnouncements(prev => {
+          const exists = prev.some(a => 
+            a.id === announcementId.toString() && 
+            a.timestamp === Number(timestamp) && 
+            a.announcer === announcer
+          );
+          
+          if (exists) return prev;
+          return [...prev, newAnnouncement];
+        });
+        
+        setUnseenAnnouncements(prev => {
+          const exists = prev.some(a => 
+            a.id === announcementId.toString() && 
+            a.timestamp === Number(timestamp) && 
+            a.announcer === announcer
+          );
+          
+          if (exists) return prev;
+          return [...prev, newAnnouncement];
+        });
       }
     );
     
