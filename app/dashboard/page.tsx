@@ -35,6 +35,7 @@ import {
   isQuorumReachedForAllPoints,
 } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
+import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 
 // Compact WalletInfo Component
 const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
@@ -118,6 +119,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
           }
         />
       )}
+      <NewVoterDialog />
       <Button
         variant="outline"
         className="flex-1 border border-primary/20 hover:bg-primary/5 text-primary font-medium py-3 text-sm h-full"

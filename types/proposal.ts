@@ -1,9 +1,11 @@
+import { addressNameMap } from "@/lib/address-name-map";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
 import { fileToDigestHex, ProposalFileService } from "@/lib/file-upload";
 import {
   convertAddressToName,
   convertVoteOptionToGovernor,
+  getNewVoterProposalDescription,
   governorVoteMap,
 } from "@/lib/utils";
 import { ethers, EventLog } from "ethers";
@@ -137,6 +139,8 @@ export class BlockchainProposalService implements ProposalService {
         } as Proposal;
         proposals.push(proposal);
       } else {
+        // TODO: Verify args[3] is values or even better unpack the event in a better way
+        this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
         // Create a VotableItem
         const proposalIdStr = proposalId.toString();
         // Convert an array of VoteEvents into a map of voter -> voteEvent
@@ -234,6 +238,91 @@ export class BlockchainProposalService implements ProposalService {
     return JSON.stringify(serializationData);
   }
 
+  // Checks whether this is a proposal to add a voter based on the calldata and the address
+  private async isProposalAddVoter(
+    callDatas: string[],
+    targets: string[],
+    values: bigint[]
+  ) {
+    // There should be only one element which is zero in the values array
+    if (values.length !== 1 || values[0] !== BigInt(0)) {
+      return false;
+    }
+
+    // The only address should be the token address
+    const targetsCorrect =
+      targets.length === 1 && targets[0] === evsdTokenArtifacts.address;
+    if (!targetsCorrect) {
+      return false;
+    }
+
+    // There should be only one call data
+    const numberOfCalldatasCorrect = callDatas.length === 1;
+    if (!numberOfCalldatasCorrect) {
+      return false;
+    }
+    // The call data should be the transfer method and have 2 args - the address and amount
+    const args = this.token.interface.decodeFunctionData(
+      "transfer",
+      callDatas[0]
+    );
+    const numberOfArgsCorrect = args.length === 2;
+    if (!numberOfArgsCorrect) {
+      return false;
+    }
+    const addr = args[0];
+    // Use this address to construct the correct calldata and compare
+    const correctCalldata = await this.getTransferTokenCalldata(addr);
+
+    return callDatas[0] === correctCalldata;
+  }
+
+  private async getTransferTokenCalldata(newVoterAddress: string) {
+    const decimals = await this.token.decimals();
+    const oneToken = ethers.parseUnits("1", decimals);
+    const transferCalldata = this.token.interface.encodeFunctionData(
+      "transfer",
+      [newVoterAddress, oneToken]
+    );
+    return transferCalldata;
+  }
+
+  async createProposalAddVoter(
+    item: UIAddVoterVotableItem,
+    parentProposalId: bigint
+  ): Promise<bigint> {
+    const tokenAddress = evsdTokenArtifacts.address;
+    const newVoterAddress = item.newVoterAddress;
+    const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
+
+    const serializationData: VotableItemSerializationData = {
+      ...getNewVoterProposalDescription(newVoterAddress),
+      type: "voteItem",
+      parentProposalId: parentProposalId.toString(),
+    };
+    const descriptionSerialized = JSON.stringify(serializationData);
+
+    const tx = await this.governor.propose(
+      [tokenAddress],
+      [0],
+      [transferCalldata],
+      descriptionSerialized
+    );
+    const receipt = await tx.wait();
+    for (const log of receipt.logs) {
+      try {
+        const parsed = this.governor.interface.parseLog(log);
+        if (parsed?.name === "ProposalCreated") {
+          return parsed.args.proposalId;
+        }
+      } catch (err) {
+        // This log might not match the contract interface, ignore it
+        console.log(err);
+      }
+    }
+    throw new Error("Failed to find proposalId in the transaction receipt");
+  }
+
   // Creates a proposal on-chain that invokes the do nothing method of the contract. Returns the proposal id
   private async createProposalDoNothing(description: string): Promise<bigint> {
     const governorAddress = await this.governor.getAddress();
@@ -261,19 +350,23 @@ export class BlockchainProposalService implements ProposalService {
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
 
-  async uploadVotableItem(item: UIVotableItem, parentId: bigint) {
-    await this.createProposalDoNothing(
-      this.serializeVotableItem(item, parentId)
-    );
+  async uploadVotableItem(
+    item: UIVotableItem | UIAddVoterVotableItem,
+    parentId: bigint
+  ) {
+    if (IsUIAddVoterVotableItem(item)) {
+      await this.createProposalAddVoter(item, parentId);
+    } else {
+      await this.createProposalDoNothing(
+        this.serializeVotableItem(item, parentId)
+      );
+    }
   }
   async uploadProposal(proposal: UIProposal) {
     const serializedProposal = await this.serializeProposal(proposal);
-    console.log("Креирање предлога: " + serializedProposal);
 
     try {
-      console.log("Креирање предлога...");
       const proposalId = await this.createProposalDoNothing(serializedProposal);
-      console.log("Додавање тачака за гласање...");
       const uploadPromises = proposal.voteItems.map((voteItem) =>
         this.uploadVotableItem(voteItem, proposalId)
       );
@@ -293,11 +386,22 @@ export class BlockchainProposalService implements ProposalService {
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
   UIOnlyId: string;
 };
+
+export type UIAddVoterVotableItem = {
+  newVoterAddress: string;
+};
+
+function IsUIAddVoterVotableItem(
+  votableItem: UIVotableItem | UIAddVoterVotableItem
+): votableItem is UIAddVoterVotableItem {
+  return (votableItem as UIAddVoterVotableItem).newVoterAddress !== undefined;
+}
+
 export interface UIProposal {
   title: string;
   description: string;
   file?: File;
-  voteItems: UIVotableItem[];
+  voteItems: (UIVotableItem | UIAddVoterVotableItem)[];
 }
 
 export interface VotableItem {
@@ -309,6 +413,10 @@ export interface VotableItem {
   votesAgainst: number;
   votesAbstain: number;
   votesForAddress: Record<string, VoteEvent>;
+}
+
+export interface VotableItemAddVoter extends VotableItem {
+  newVoterAddress: string;
 }
 
 export interface Proposal {

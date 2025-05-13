@@ -24,7 +24,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, ReactElement } from "react";
-import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { UIProposal, UIVotableItem } from "@/types/proposal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -102,7 +101,9 @@ export function NewProposalDialog({
     const currentIndex = newProposal.voteItems.findIndex(
       (item) => item === itemToMove
     );
-    if (currentIndex === -1) return;
+    if (currentIndex === -1) {
+      return;
+    }
 
     const newSubItems = [...newProposal.voteItems];
 
@@ -130,7 +131,9 @@ export function NewProposalDialog({
     const originalItem = newProposal.voteItems.find(
       (item) => item === itemToDuplicate
     );
-    if (!originalItem) return;
+    if (!originalItem) {
+      return;
+    }
 
     const newVoteItem: UIVotableItem = {
       ...originalItem,
@@ -249,7 +252,9 @@ export function NewProposalDialog({
 
   // "Анимација" обраде кроз тачкице
   useEffect(() => {
-    if (!infoMessage) return;
+    if (!infoMessage) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setInfoDots((prev) => (prev.length < 3 ? prev + "." : ""));
