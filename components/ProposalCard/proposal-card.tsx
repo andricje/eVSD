@@ -20,8 +20,8 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
   const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
   const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
 
-  const totalVotingPoints = proposal.itemsToVote.length;
-  const pointsWithQuorum = proposal.itemsToVote.filter((votableItem) =>
+  const totalVotingPoints = proposal.voteItems.length;
+  const pointsWithQuorum = proposal.voteItems.filter((votableItem) =>
     isQuorumReached(votableItem)
   ).length;
   const percentPointsWithQuorum = (pointsWithQuorum / totalVotingPoints) * 100;

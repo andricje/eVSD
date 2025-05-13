@@ -126,8 +126,8 @@ export function isQuorumReached(voteItem: VotableItem) {
 
 export function isQuorumReachedForAllPoints(proposal: Proposal) {
   return (
-    proposal.itemsToVote.filter((voteItem) => !isQuorumReached(voteItem))
-      .length > 0
+    proposal.voteItems.filter((voteItem) => !isQuorumReached(voteItem)).length >
+    0
   );
 }
 
@@ -147,7 +147,7 @@ export function getUserVotingHistory(
 ) {
   return proposals.reduce<{ event: VoteEvent; item: VotableItem }[]>(
     (acc, proposal) => {
-      const votesForProposal = proposal.itemsToVote.reduce<
+      const votesForProposal = proposal.voteItems.reduce<
         { event: VoteEvent; item: VotableItem }[]
       >((acc, item) => {
         if (userAddress in item.votesForAddress) {
@@ -165,7 +165,7 @@ export function countUserRemainingItemsToVote(
   proposal: Proposal,
   userAddress: string
 ) {
-  return proposal.itemsToVote.filter(
+  return proposal.voteItems.filter(
     (voteItem) => !(userAddress in voteItem.votesForAddress)
   ).length;
 }

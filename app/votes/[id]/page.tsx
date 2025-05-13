@@ -365,7 +365,7 @@ export default function ProposalDetails() {
       votePrompt += selectedSubItemId ? "podtačku predloga" : "predlog";
       console.log(votePrompt);
 
-      const voteItem = proposal.itemsToVote.find(
+      const voteItem = proposal.voteItems.find(
         (voteItem) => voteItem.id.toString() === selectedSubItemId
       );
 
@@ -374,7 +374,7 @@ export default function ProposalDetails() {
 
         // Osvežavamo podatke
         refreshProposals();
-        const updatedItem = proposal.itemsToVote.find(
+        const updatedItem = proposal.voteItems.find(
           (item) => item.id.toString() == selectedSubItemId
         );
         if (updatedItem && signerAddress) {
@@ -388,13 +388,13 @@ export default function ProposalDetails() {
 
         // Ažuriramo lokalni predlog
         if (selectedSubItemId && updatedItem) {
-          const updatedSubItems = proposal.itemsToVote.map((item) =>
+          const updatedSubItems = proposal.voteItems.map((item) =>
             item.id.toString() === selectedSubItemId ? updatedItem : item
           );
 
           setProposal({
             ...proposal,
-            itemsToVote: updatedSubItems,
+            voteItems: updatedSubItems,
           });
         }
       } else {
@@ -495,7 +495,7 @@ export default function ProposalDetails() {
 
             {/* Prikazujemo sve podtačke jednu ispod druge */}
             <div className="space-y-6">
-              {proposal.itemsToVote.map((subItem) => (
+              {proposal.voteItems.map((subItem) => (
                 <SubItemVoting
                   key={subItem.id}
                   subItem={subItem}

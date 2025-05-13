@@ -13,10 +13,87 @@ import { ethers, EventLog } from "ethers";
 export interface ProposalService {
   getProposals: () => Promise<Proposal[]>;
   uploadProposal: (proposal: UIProposal) => Promise<bigint>;
-  getProposal: (id: bigint) => Promise<Proposal>;
   voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
   cancelProposal(proposal: Proposal): Promise<boolean>;
-  getCurrentUserVote(voteItem: VotableItem): Promise<VoteOption>;
+}
+
+export class InMemoryProposalService implements ProposalService {
+  private readonly signerAddress: string;
+  private proposals: Proposal[] = [];
+
+  constructor(signerAddress: string) {
+    this.signerAddress = signerAddress;
+  }
+
+  async getProposals(): Promise<Proposal[]> {
+    return this.proposals;
+  }
+
+  async uploadProposal(proposal: UIProposal): Promise<bigint> {
+    const newProposal = this.proposalFromUIProposal(proposal);
+    this.proposals.push(newProposal);
+    return newProposal.id;
+  }
+
+  async getProposal(id: bigint): Promise<Proposal> {
+    const proposal = this.proposals.find((p) => p.id === id);
+    if (!proposal) {
+      throw new Error("Invalid proposal id");
+    }
+    return proposal;
+  }
+
+  async voteForItem(item: VotableItem, vote: VoteOption) {
+    const proposal = this.proposals.find((p) =>
+      p.voteItems.some((i) => i.id === item.id)
+    );
+    if (!proposal) {
+      throw new Error("Invalid proposal id");
+    }
+    const votableItem = proposal.voteItems.find((i) => i.id === item.id);
+    if (!votableItem) {
+      throw new Error("Invalid votable item id");
+    }
+    votableItem.votesForAddress[this.signerAddress] = {
+      vote,
+      date: new Date(),
+      voterAddress: this.signerAddress,
+    };
+  }
+
+  async cancelProposal(proposal: Proposal): Promise<boolean> {
+    const proposalToCancel = this.proposals.find((p) => p.id === proposal.id);
+    if (!proposalToCancel) {
+      throw new Error("Invalid proposal id");
+    }
+
+    proposalToCancel.status = "cancelled";
+    return true;
+  }
+
+  private randomId(): bigint {
+    return BigInt(Math.floor(Math.random() * 1000000));
+  }
+
+  private votableItemFromUIVotableItem(item: UIVotableItem): VotableItem {
+    return {
+      ...item,
+      id: this.randomId(),
+      votesForAddress: {},
+    };
+  }
+
+  private proposalFromUIProposal(proposal: UIProposal): Proposal {
+    return {
+      ...proposal,
+      id: this.randomId(),
+      author: this.signerAddress,
+      dateAdded: new Date(),
+      status: "open",
+      closesAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      voteItems: proposal.voteItems.map(this.votableItemFromUIVotableItem),
+    };
+  }
 }
 
 export class BlockchainProposalService implements ProposalService {
@@ -135,7 +212,7 @@ export class BlockchainProposalService implements ProposalService {
           dateAdded: voteStart,
           status: "open",
           closesAt: closesAt,
-          itemsToVote: [],
+          voteItems: [],
         } as Proposal;
         proposals.push(proposal);
       } else {
@@ -177,7 +254,7 @@ export class BlockchainProposalService implements ProposalService {
     // Pair child VoteItems with Proposals
     for (const proposal of proposals) {
       const proposalId = proposal.id.toString();
-      proposal.itemsToVote =
+      proposal.voteItems =
         proposalId in voteItemsForProposalId
           ? voteItemsForProposalId[proposalId]
           : [];
@@ -408,10 +485,6 @@ export interface VotableItem {
   id: bigint;
   title: string;
   description: string;
-  author: string;
-  votesFor: number;
-  votesAgainst: number;
-  votesAbstain: number;
   votesForAddress: Record<string, VoteEvent>;
 }
 
@@ -426,9 +499,9 @@ export interface Proposal {
   author: string;
   file?: File;
   dateAdded: Date;
-  status: "open" | "closed";
+  status: "open" | "closed" | "cancelled";
   closesAt: Date;
-  itemsToVote: VotableItem[];
+  voteItems: VotableItem[];
 }
 
 export interface VoteEvent {
