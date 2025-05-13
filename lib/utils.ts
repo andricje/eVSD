@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
+  countVoteForOption,
   Proposal,
   ProposalService,
   VotableItem,
@@ -132,7 +133,11 @@ export function isQuorumReachedForAllPoints(proposal: Proposal) {
 }
 
 export function countTotalVotes(voteItem: VotableItem) {
-  return voteItem.votesFor + voteItem.votesAgainst + voteItem.votesAbstain;
+  return (
+    countVoteForOption(voteItem, "for") +
+    countVoteForOption(voteItem, "against") +
+    countVoteForOption(voteItem, "abstain")
+  );
 }
 export function tryParseAsBigInt(value: string): bigint | undefined {
   try {

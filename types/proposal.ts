@@ -1,4 +1,3 @@
-import { addressNameMap } from "@/lib/address-name-map";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
 import { fileToDigestHex, ProposalFileService } from "@/lib/file-upload";
@@ -10,15 +9,22 @@ import {
 } from "@/lib/utils";
 import { ethers, EventLog } from "ethers";
 
+type onProposalsChangedUnsubscribe = () => void;
+
 export interface ProposalService {
   getProposals: () => Promise<Proposal[]>;
   uploadProposal: (proposal: UIProposal) => Promise<bigint>;
   voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
   cancelProposal(proposal: Proposal): Promise<boolean>;
+  onProposalsChanged(
+    callback: (newProposals: Proposal[]) => void
+  ): onProposalsChangedUnsubscribe;
 }
 
 export class InMemoryProposalService implements ProposalService {
   private readonly signerAddress: string;
+  private onProposalsChangedCallback: (newProposals: Proposal[]) => void =
+    () => {};
   private proposals: Proposal[] = [];
 
   constructor(signerAddress: string) {
@@ -32,6 +38,7 @@ export class InMemoryProposalService implements ProposalService {
   async uploadProposal(proposal: UIProposal): Promise<bigint> {
     const newProposal = this.proposalFromUIProposal(proposal);
     this.proposals.push(newProposal);
+    this.onProposalsChangedCallback(this.proposals);
     return newProposal.id;
   }
 
@@ -59,6 +66,7 @@ export class InMemoryProposalService implements ProposalService {
       date: new Date(),
       voterAddress: this.signerAddress,
     };
+    this.onProposalsChangedCallback(this.proposals);
   }
 
   async cancelProposal(proposal: Proposal): Promise<boolean> {
@@ -68,7 +76,17 @@ export class InMemoryProposalService implements ProposalService {
     }
 
     proposalToCancel.status = "cancelled";
+    this.onProposalsChangedCallback(this.proposals);
     return true;
+  }
+
+  onProposalsChanged(
+    callback: (newProposals: Proposal[]) => void
+  ): onProposalsChangedUnsubscribe {
+    this.onProposalsChangedCallback = callback;
+    return () => {
+      this.onProposalsChangedCallback = () => {};
+    };
   }
 
   private randomId(): bigint {
@@ -97,11 +115,13 @@ export class InMemoryProposalService implements ProposalService {
     return {
       ...proposal,
       id: this.randomId(),
-      author: this.signerAddress,
+      author: convertAddressToName(this.signerAddress),
       dateAdded: new Date(),
       status: "open",
       closesAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      voteItems: proposal.voteItems.map(this.votableItemFromUIVotableItem),
+      voteItems: proposal.voteItems.map((v) =>
+        this.votableItemFromUIVotableItem(v)
+      ),
     };
   }
 }
@@ -131,6 +151,19 @@ export class BlockchainProposalService implements ProposalService {
     this.fileService = fileService;
     this.signer = signer;
     this.provider = provider;
+  }
+  onProposalsChanged(
+    callback: (newProposals: Proposal[]) => void
+  ): onProposalsChangedUnsubscribe {
+    const onProposalChangedCallback = async () => {
+      const proposals = await this.getProposals();
+      callback(proposals);
+    };
+    this.governor.on("ProposalCreated", onProposalChangedCallback);
+    this.governor.on("VoteCast", onProposalChangedCallback);
+    this.governor.on("ProposalCanceled", onProposalChangedCallback);
+    this.governor.on("ProposalExecuted", onProposalChangedCallback);
+    return () => this.governor.removeAllListeners();
   }
   async getCurrentUserVote(voteItem: VotableItem): Promise<VoteOption> {
     return voteItem.votesForAddress[await this.signer.getAddress()].vote;
@@ -496,6 +529,15 @@ export interface VotableItem {
   title: string;
   description: string;
   votesForAddress: Record<string, VoteEvent>;
+}
+
+export function countVoteForOption(
+  votableItem: VotableItem,
+  option: VoteOption
+) {
+  return Object.values(votableItem.votesForAddress).filter(
+    (v) => v.vote === option
+  ).length;
 }
 
 export interface AddVoterVotableItem extends VotableItem {

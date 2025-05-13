@@ -27,7 +27,13 @@ import {
 
 import { useProposals } from "@/hooks/use-proposals";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
-import { Proposal, VotableItem, VoteEvent, VoteOption } from "@/types/proposal";
+import {
+  countVoteForOption,
+  Proposal,
+  VotableItem,
+  VoteEvent,
+  VoteOption,
+} from "@/types/proposal";
 import {
   convertAddressToName,
   formatDate,
@@ -237,9 +243,9 @@ const SubItemVoting: React.FC<{
       </CardHeader>
       <CardContent>
         <VoteResultBar
-          votesFor={subItem.votesFor || 0}
-          votesAgainst={subItem.votesAgainst || 0}
-          votesAbstain={subItem.votesAbstain || 0}
+          votesFor={countVoteForOption(subItem, "for")}
+          votesAgainst={countVoteForOption(subItem, "against")}
+          votesAbstain={countVoteForOption(subItem, "abstain")}
         />
       </CardContent>
       {isVotingEnabled && yourVote === "didntVote" && (
