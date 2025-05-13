@@ -75,11 +75,21 @@ export class InMemoryProposalService implements ProposalService {
     return BigInt(Math.floor(Math.random() * 1000000));
   }
 
-  private votableItemFromUIVotableItem(item: UIVotableItem): VotableItem {
+  private votableItemFromUIVotableItem(
+    item: UIVotableItem | UIAddVoterVotableItem
+  ): VotableItem {
+    if (IsUIAddVoterVotableItem(item)) {
+      return {
+        id: this.randomId(),
+        votesForAddress: {},
+        ...item,
+        ...getNewVoterProposalDescription(item.newVoterAddress),
+      };
+    }
     return {
-      ...item,
       id: this.randomId(),
       votesForAddress: {},
+      ...item,
     };
   }
 
@@ -488,7 +498,7 @@ export interface VotableItem {
   votesForAddress: Record<string, VoteEvent>;
 }
 
-export interface VotableItemAddVoter extends VotableItem {
+export interface AddVoterVotableItem extends VotableItem {
   newVoterAddress: string;
 }
 
