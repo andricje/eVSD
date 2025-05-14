@@ -16,7 +16,7 @@ import {
   X,
   History,
   Megaphone,
-  User,
+  User as UserIcon,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
@@ -25,7 +25,7 @@ import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
 import { UserActivity } from "@/components/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
-import { Proposal } from "@/types/proposal";
+import { Proposal, User } from "@/types/proposal";
 import {
   hasVotingTimeExpired,
   isVotingComplete,
@@ -36,6 +36,7 @@ import {
 } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
+import { useUser } from "@/hooks/use-user";
 
 // Compact WalletInfo Component
 const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
@@ -67,7 +68,7 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
             <p className="text-sm text-muted-foreground">Повезан новчаник</p>
             <div className="mt-1 flex items-center gap-2">
               <Badge variant="secondary" className="px-2 py-0.5">
-                <User className="h-3.5 w-3.5 mr-1" />
+                <UserIcon className="h-3.5 w-3.5 mr-1" />
                 {userFaculty}
               </Badge>
             </div>
@@ -135,26 +136,25 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
 };
 
 // Function to categorize proposals
-function categorizeProposals(proposals: Proposal[], userAddress: string) {
+function categorizeProposals(proposals: Proposal[], user: User) {
   // Aktivni predlozi za koje korisnik NIJE glasao
   const activeProposalsToVote = proposals.filter(
     (proposal: Proposal) =>
       proposal.status === "open" &&
       !hasVotingTimeExpired(proposal) &&
-      countUserRemainingItemsToVote(proposal, userAddress) > 0
+      countUserRemainingItemsToVote(proposal, user) > 0
   );
 
   // Predlozi za koje je korisnik glasao i glasanje je završeno
   const votedCompletedProposals = proposals.filter(
     (proposal: Proposal) =>
-      countUserRemainingItemsToVote(proposal, userAddress) === 0 &&
+      countUserRemainingItemsToVote(proposal, user) === 0 &&
       isVotingComplete(proposal)
   );
 
   // Svi predlozi za koje je korisnik glasao
   const votedProposals = proposals.filter(
-    (proposal: Proposal) =>
-      countUserRemainingItemsToVote(proposal, userAddress) === 0
+    (proposal: Proposal) => countUserRemainingItemsToVote(proposal, user) === 0
   );
 
   // Predlozi gde korisnik treba da glasa, sa dostupnim kvorumom
@@ -271,10 +271,11 @@ const FacultyAnnouncements: React.FC = () => {
 // Dashboard component
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
-  const { proposals, signerAddress } = useProposals();
+  const user = useUser();
+  const { proposals } = useProposals();
   const { proposalsWithQuorum, proposalsWithoutQuorum } = categorizeProposals(
     proposals,
-    signerAddress ? signerAddress : ""
+    user ?? { address: "", name: "" }
   );
 
   // Status plenuma
@@ -325,8 +326,8 @@ export default function Dashboard() {
           {/* Wallet info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="md:col-span-2">
-              {signerAddress ? (
-                <CompactWalletInfo address={signerAddress} />
+              {user ? (
+                <CompactWalletInfo address={user.address} />
               ) : (
                 <OriginalWalletInfo />
               )}

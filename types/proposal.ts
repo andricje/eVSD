@@ -11,6 +11,11 @@ import { ethers, EventLog } from "ethers";
 
 type onProposalsChangedUnsubscribe = () => void;
 
+export interface User {
+  address: string;
+  name: string;
+}
+
 export interface ProposalService {
   getProposals: () => Promise<Proposal[]>;
   uploadProposal: (proposal: UIProposal) => Promise<bigint>;
@@ -22,13 +27,13 @@ export interface ProposalService {
 }
 
 export class InMemoryProposalService implements ProposalService {
-  private readonly signerAddress: string;
+  private readonly user: User;
   private onProposalsChangedCallback: (newProposals: Proposal[]) => void =
     () => {};
   private proposals: Proposal[] = [];
 
-  constructor(signerAddress: string) {
-    this.signerAddress = signerAddress;
+  constructor(user: User) {
+    this.user = user;
   }
 
   async getProposals(): Promise<Proposal[]> {
@@ -61,11 +66,14 @@ export class InMemoryProposalService implements ProposalService {
     if (!votableItem) {
       throw new Error("Invalid votable item id");
     }
-    votableItem.votesForAddress[this.signerAddress] = {
+    if (votableItem.userVotes.has(this.user)) {
+      throw new Error("Already voted");
+    }
+    votableItem.userVotes.set(this.user, {
       vote,
       date: new Date(),
-      voterAddress: this.signerAddress,
-    };
+      voter: this.user,
+    });
     this.onProposalsChangedCallback(this.proposals);
   }
 
@@ -99,14 +107,14 @@ export class InMemoryProposalService implements ProposalService {
     if (IsUIAddVoterVotableItem(item)) {
       return {
         id: this.randomId(),
-        votesForAddress: {},
+        userVotes: new Map(),
         ...item,
         ...getNewVoterProposalDescription(item.newVoterAddress),
       };
     }
     return {
       id: this.randomId(),
-      votesForAddress: {},
+      userVotes: new Map(),
       ...item,
     };
   }
@@ -115,7 +123,7 @@ export class InMemoryProposalService implements ProposalService {
     return {
       ...proposal,
       id: this.randomId(),
-      author: convertAddressToName(this.signerAddress),
+      author: this.user,
       dateAdded: new Date(),
       status: "open",
       closesAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
@@ -165,9 +173,7 @@ export class BlockchainProposalService implements ProposalService {
     this.governor.on("ProposalExecuted", onProposalChangedCallback);
     return () => this.governor.removeAllListeners();
   }
-  async getCurrentUserVote(voteItem: VotableItem): Promise<VoteOption> {
-    return voteItem.votesForAddress[await this.signer.getAddress()].vote;
-  }
+
   async cancelProposal(proposal: Proposal): Promise<boolean> {
     try {
       const description = await this.serializeProposal(proposal);
@@ -247,7 +253,10 @@ export class BlockchainProposalService implements ProposalService {
           id: proposalId,
           title: proposalData.title,
           description: proposalData.description,
-          author: convertAddressToName(args.proposer),
+          author: {
+            address: args.proposer,
+            name: convertAddressToName(args.proposer),
+          },
           file:
             proposalData.fileHash !== ""
               ? await this.fileService.fetch(proposalData.fileHash)
@@ -266,12 +275,12 @@ export class BlockchainProposalService implements ProposalService {
         // Convert an array of VoteEvents into a map of voter -> voteEvent
         const votesForAddress =
           proposalIdStr in voteEventsForId
-            ? voteEventsForId[proposalIdStr].reduce<Record<string, VoteEvent>>(
+            ? voteEventsForId[proposalIdStr].reduce<Map<User, VoteEvent>>(
                 (acc, item) => {
-                  acc[item.voterAddress] = item;
+                  acc.set(item.voter, item);
                   return acc;
                 },
-                {}
+                new Map()
               )
             : [];
         // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
@@ -280,12 +289,15 @@ export class BlockchainProposalService implements ProposalService {
           id: proposalId,
           title: voteItemData.title,
           description: voteItemData.description,
-          author: convertAddressToName(args.proposer),
+          author: {
+            address: args.proposer,
+            name: convertAddressToName(args.proposer),
+          },
           votesFor: Number(countedVotes.forVotes / oneToken),
           votesAgainst: Number(countedVotes.againstVotes / oneToken),
           votesAbstain: Number(countedVotes.abstainVotes / oneToken),
           status: "open",
-          votesForAddress,
+          userVotes: votesForAddress,
         } as VotableItem;
         // Add to the map
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
@@ -326,7 +338,7 @@ export class BlockchainProposalService implements ProposalService {
       const voteEvent = {
         vote: governorVoteMap[vote],
         date: new Date(block ? block.timestamp * 1000 : 0),
-        voterAddress: args.voter,
+        voter: { address: args.voter, name: convertAddressToName(args.voter) },
       } as VoteEvent;
       return {
         proposalId: args.proposalId.toString(),
@@ -528,16 +540,16 @@ export interface VotableItem {
   id: bigint;
   title: string;
   description: string;
-  votesForAddress: Record<string, VoteEvent>;
+  userVotes: Map<User, VoteEvent>;
 }
 
 export function countVoteForOption(
   votableItem: VotableItem,
   option: VoteOption
 ) {
-  return Object.values(votableItem.votesForAddress).filter(
-    (v) => v.vote === option
-  ).length;
+  return votableItem.userVotes
+    .values()
+    .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
 }
 
 export interface AddVoterVotableItem extends VotableItem {
@@ -548,7 +560,7 @@ export interface Proposal {
   id: bigint;
   title: string;
   description: string;
-  author: string;
+  author: User;
   file?: File;
   dateAdded: Date;
   status: "open" | "closed" | "cancelled";
@@ -559,7 +571,7 @@ export interface Proposal {
 export interface VoteEvent {
   vote: VoteOption;
   date: Date;
-  voterAddress: string;
+  voter: User;
 }
 
 export type VoteOption =

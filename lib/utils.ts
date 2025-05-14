@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import {
   countVoteForOption,
   Proposal,
-  ProposalService,
+  User,
   VotableItem,
   VoteEvent,
   VoteOption,
@@ -146,17 +146,15 @@ export function tryParseAsBigInt(value: string): bigint | undefined {
     return undefined;
   }
 }
-export function getUserVotingHistory(
-  proposals: Proposal[],
-  userAddress: string
-) {
+export function getUserVotingHistory(proposals: Proposal[], user: User) {
   return proposals.reduce<{ event: VoteEvent; item: VotableItem }[]>(
     (acc, proposal) => {
       const votesForProposal = proposal.voteItems.reduce<
         { event: VoteEvent; item: VotableItem }[]
       >((acc, item) => {
-        if (userAddress in item.votesForAddress) {
-          acc.push({ event: item.votesForAddress[userAddress], item });
+        const userVote = item.userVotes.get(user);
+        if (userVote) {
+          acc.push({ event: userVote, item });
         }
         return acc;
       }, []);
@@ -166,13 +164,9 @@ export function getUserVotingHistory(
   );
 }
 
-export function countUserRemainingItemsToVote(
-  proposal: Proposal,
-  userAddress: string
-) {
-  return proposal.voteItems.filter(
-    (voteItem) => !(userAddress in voteItem.votesForAddress)
-  ).length;
+export function countUserRemainingItemsToVote(proposal: Proposal, user: User) {
+  return proposal.voteItems.filter((voteItem) => !voteItem.userVotes.has(user))
+    .length;
 }
 
 // Returns the hardcoded description for proposals that actually move tokens on chain and add new voters

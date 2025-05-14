@@ -26,7 +26,7 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
   ).length;
   const percentPointsWithQuorum = (pointsWithQuorum / totalVotingPoints) * 100;
 
-  const authorName = proposal.author;
+  const authorName = proposal.author.name;
 
   return (
     <Card
@@ -42,7 +42,6 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
               <StatusBadge
                 status={isUrgent ? "expiring" : proposal.status}
                 expiresAt={proposal.closesAt}
-                isUrgent={isUrgent}
               />
             </div>
           </div>

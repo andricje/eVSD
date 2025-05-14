@@ -49,17 +49,15 @@ export function PerFacultyVotes({ voteItem }: { voteItem: VotableItem }) {
         Детаљи гласања по факултетима
       </h3>
       <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
-        {Object.entries(voteItem.votesForAddress).map(
-          ([address, voteEvent]) => (
-            <div
-              key={address}
-              className="flex justify-between py-1 border-b text-sm"
-            >
-              <span>{convertAddressToName(address)}</span>
-              <VoteBadge vote={voteEvent.vote} />
-            </div>
-          )
-        )}
+        {Object.entries(voteItem.userVotes).map(([address, voteEvent]) => (
+          <div
+            key={address}
+            className="flex justify-between py-1 border-b text-sm"
+          >
+            <span>{convertAddressToName(address)}</span>
+            <VoteBadge vote={voteEvent.vote} />
+          </div>
+        ))}
       </div>
     </div>
   );

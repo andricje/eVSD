@@ -5,6 +5,7 @@ import {
   ProposalService,
 } from "@/types/proposal";
 import { createContext, useEffect, useMemo, useState } from "react";
+import { useUser } from "./use-user";
 
 interface ProposalsContextValue {
   proposals: Proposal[];
@@ -21,9 +22,10 @@ export const ProposalsProvider = ({
   children: React.ReactNode;
 }) => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const user = useUser();
   const proposalService = useMemo(
-    () => new InMemoryProposalService("0xdeadbeef"),
-    []
+    () => user && new InMemoryProposalService(user),
+    [user]
   );
 
   useEffect(() => {
