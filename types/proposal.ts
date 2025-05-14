@@ -1,10 +1,6 @@
-export interface ProposalService {
-  getProposals: () => Promise<Proposal[]>;
-  uploadProposal: (proposal: UIProposal) => Promise<bigint>;
-  getProposal: (id: bigint) => Promise<Proposal>;
-  voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
-  cancelProposal(proposal: Proposal): Promise<boolean>;
-  getCurrentUserVote(voteItem: VotableItem): Promise<VoteOption>;
+export interface User {
+  address: string;
+  name: string;
 }
 
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
@@ -32,14 +28,19 @@ export interface VotableItem {
   id: bigint;
   title: string;
   description: string;
-  author: string;
-  votesFor: number;
-  votesAgainst: number;
-  votesAbstain: number;
-  votesForAddress: Record<string, VoteEvent>;
+  userVotes: Map<User, VoteEvent>;
 }
 
-export interface VotableItemAddVoter extends VotableItem {
+export function countVoteForOption(
+  votableItem: VotableItem,
+  option: VoteOption
+) {
+  return votableItem.userVotes
+    .values()
+    .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
+}
+
+export interface AddVoterVotableItem extends VotableItem {
   newVoterAddress: string;
 }
 
@@ -47,18 +48,18 @@ export interface Proposal {
   id: bigint;
   title: string;
   description: string;
-  author: string;
+  author: User;
   file?: File;
   dateAdded: Date;
-  status: "open" | "closed";
+  status: "open" | "closed" | "cancelled";
   closesAt: Date;
-  itemsToVote: VotableItem[];
+  voteItems: VotableItem[];
 }
 
 export interface VoteEvent {
   vote: VoteOption;
   date: Date;
-  voterAddress: string;
+  voter: User;
 }
 
 export type VoteOption =

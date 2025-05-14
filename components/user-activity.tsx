@@ -2,13 +2,8 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import {
-  convertAddressToName,
-  formatDate,
-  getUserVotingHistory,
-} from "@/lib/utils";
+import { formatDate, getUserVotingHistory } from "@/lib/utils";
 import { Proposal } from "@/types/proposal";
-import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays,
@@ -19,25 +14,23 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useProposals } from "@/hooks/use-proposals";
+import { useUser } from "@/hooks/use-user";
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();
-  const { signer, signerAddress } = useBrowserSigner();
+  const user = useUser();
   const { toast } = useToast();
 
-  const userVotingHistory = signerAddress
-    ? getUserVotingHistory(proposals, signerAddress)
-    : [];
-  const signerName = signerAddress && convertAddressToName(signerAddress);
+  const userVotingHistory = getUserVotingHistory(proposals, user);
   const userProposals = proposals.filter(
-    (proposal) => signerAddress && proposal.author === signerName
+    (proposal) => proposal.author === user
   );
   const activeProposals = proposals.filter((p) => p.status === "open");
   const completedProposals = proposals.filter((p) => p.status === "closed");
 
   // Handler za otkazivanje predloga
   const handleCancelProposal = async (proposal: Proposal) => {
-    if (!signer || !proposalService) {
+    if (!proposalService) {
       toast({
         title: "Greška",
         description:
@@ -71,7 +64,7 @@ export function UserActivity() {
     }
   };
 
-  if (!signer) {
+  if (!proposalService) {
     return (
       <div className="rounded-xl bg-gray-50 p-8 text-center">
         <Activity className="mx-auto h-10 w-10 text-gray-400" />

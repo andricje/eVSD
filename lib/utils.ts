@@ -1,8 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
+  countVoteForOption,
   Proposal,
-  ProposalService,
+  User,
   VotableItem,
   VoteEvent,
   VoteOption,
@@ -126,13 +127,17 @@ export function isQuorumReached(voteItem: VotableItem) {
 
 export function isQuorumReachedForAllPoints(proposal: Proposal) {
   return (
-    proposal.itemsToVote.filter((voteItem) => !isQuorumReached(voteItem))
-      .length > 0
+    proposal.voteItems.filter((voteItem) => !isQuorumReached(voteItem)).length >
+    0
   );
 }
 
 export function countTotalVotes(voteItem: VotableItem) {
-  return voteItem.votesFor + voteItem.votesAgainst + voteItem.votesAbstain;
+  return (
+    countVoteForOption(voteItem, "for") +
+    countVoteForOption(voteItem, "against") +
+    countVoteForOption(voteItem, "abstain")
+  );
 }
 export function tryParseAsBigInt(value: string): bigint | undefined {
   try {
@@ -141,17 +146,15 @@ export function tryParseAsBigInt(value: string): bigint | undefined {
     return undefined;
   }
 }
-export function getUserVotingHistory(
-  proposals: Proposal[],
-  userAddress: string
-) {
+export function getUserVotingHistory(proposals: Proposal[], user: User) {
   return proposals.reduce<{ event: VoteEvent; item: VotableItem }[]>(
     (acc, proposal) => {
-      const votesForProposal = proposal.itemsToVote.reduce<
+      const votesForProposal = proposal.voteItems.reduce<
         { event: VoteEvent; item: VotableItem }[]
       >((acc, item) => {
-        if (userAddress in item.votesForAddress) {
-          acc.push({ event: item.votesForAddress[userAddress], item });
+        const userVote = item.userVotes.get(user);
+        if (userVote) {
+          acc.push({ event: userVote, item });
         }
         return acc;
       }, []);
@@ -161,13 +164,9 @@ export function getUserVotingHistory(
   );
 }
 
-export function countUserRemainingItemsToVote(
-  proposal: Proposal,
-  userAddress: string
-) {
-  return proposal.itemsToVote.filter(
-    (voteItem) => !(userAddress in voteItem.votesForAddress)
-  ).length;
+export function countUserRemainingItemsToVote(proposal: Proposal, user: User) {
+  return proposal.voteItems.filter((voteItem) => !voteItem.userVotes.has(user))
+    .length;
 }
 
 // Returns the hardcoded description for proposals that actually move tokens on chain and add new voters

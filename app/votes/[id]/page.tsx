@@ -19,22 +19,27 @@ import {
   UserCheck,
   AlertTriangle,
   Layers,
-  User,
+  User as UserIcon,
   Timer,
   Calendar,
   Clock,
 } from "lucide-react";
 
 import { useProposals } from "@/hooks/use-proposals";
-import { useBrowserSigner } from "@/hooks/use-browser-signer";
-import { Proposal, VotableItem, VoteEvent, VoteOption } from "@/types/proposal";
 import {
-  convertAddressToName,
+  countVoteForOption,
+  Proposal,
+  VotableItem,
+  VoteOption,
+  User,
+} from "@/types/proposal";
+import {
   formatDate,
   getRemainingTime,
   hasVotingTimeExpired,
 } from "@/lib/utils";
 import { addressNameMap } from "@/lib/address-name-map";
+import { useUser } from "@/hooks/use-user";
 
 // VoteConfirm komponenta
 const VoteConfirm: React.FC<{
@@ -216,14 +221,13 @@ const YourVoteBadge = ({ vote }: { vote: string }) => {
 // SubItemVoting komponenta za glasanje na podtačkama
 const SubItemVoting: React.FC<{
   subItem: VotableItem;
-  currentAddress?: string;
-  onVote: (id: string, vote: string, title: string) => void;
-}> = ({ subItem, currentAddress, onVote }) => {
-  const isVotingEnabled = currentAddress && currentAddress in addressNameMap;
-  let yourVote: VoteOption = "didntVote";
-  if (currentAddress && currentAddress in subItem.votesForAddress) {
-    yourVote = subItem.votesForAddress[currentAddress].vote;
-  }
+  currentUser?: User;
+  onVote: (id: string, vote: VoteOption, title: string) => void;
+}> = ({ subItem, currentUser: currentUser, onVote }) => {
+  const isVotingEnabled = currentUser && currentUser.address in addressNameMap;
+  const yourVote =
+    (currentUser && subItem.userVotes.get(currentUser)?.vote) ?? "didntVote";
+
   return (
     <Card className="border-border/40 mb-4">
       <CardHeader>
@@ -237,9 +241,9 @@ const SubItemVoting: React.FC<{
       </CardHeader>
       <CardContent>
         <VoteResultBar
-          votesFor={subItem.votesFor || 0}
-          votesAgainst={subItem.votesAgainst || 0}
-          votesAbstain={subItem.votesAbstain || 0}
+          votesFor={countVoteForOption(subItem, "for")}
+          votesAgainst={countVoteForOption(subItem, "against")}
+          votesAbstain={countVoteForOption(subItem, "abstain")}
         />
       </CardContent>
       {isVotingEnabled && yourVote === "didntVote" && (
@@ -273,7 +277,7 @@ const AuthorBadge = ({ isAuthor }: { isAuthor: boolean }) => {
 
   return (
     <Badge className="bg-blue-500/10 text-blue-700 border-blue-200">
-      <User className="h-3 w-3 mr-1" /> Vaš predlog
+      <UserIcon className="h-3 w-3 mr-1" /> Vaš predlog
     </Badge>
   );
 };
@@ -282,63 +286,25 @@ const AuthorBadge = ({ isAuthor }: { isAuthor: boolean }) => {
 export default function ProposalDetails() {
   const params = useParams();
   const router = useRouter();
-  const { signer, signerAddress } = useBrowserSigner();
+  const user = useUser();
   const { proposals, proposalService } = useProposals();
 
-  const [proposal, setProposal] = useState<Proposal | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   // Stanja za glasanje
-  const [selectedVote, setSelectedVote] = useState<string | null>(null);
+  const [selectedVote, setSelectedVote] = useState<VoteOption | null>(null);
   const [isVoteDialogOpen, setIsVoteDialogOpen] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
   const [selectedSubItemId, setSelectedVoteItemId] = useState<string | null>(
     null
   );
   const [selectedSubItemTitle, setSelectedVoteItemTitle] = useState<string>("");
-  const isAuthor =
-    signerAddress &&
-    proposal &&
-    proposal.author === convertAddressToName(signerAddress);
-
-  const fetchedProposal = proposals.find((p) => p.id.toString() === params.id);
-  // Funkcija za osvežavanje predloga
-  const refreshProposals = () => {
-    if (params.id && proposals.length > 0) {
-      try {
-        const proposalId = BigInt(params.id.toString());
-        const updatedProposal = proposals.find((p) => p.id === proposalId);
-        if (updatedProposal) {
-          setProposal(updatedProposal);
-        }
-      } catch (e) {
-        console.error("Greška pri osvežavanju predloga:", e);
-      }
-    }
-  };
-
-  // Učitavamo predlog na osnovu ID-a iz URL-a
-  useEffect(() => {
-    if (params.id && proposals.length > 0) {
-      try {
-        if (fetchedProposal) {
-          setProposal(fetchedProposal);
-        } else {
-          setError("Predlog nije pronađen.");
-        }
-      } catch (e) {
-        console.error("Greška pri učitavanju predloga:", e);
-        setError("Greška pri učitavanju predloga.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  }, [fetchedProposal, params.id, proposals]);
+  const proposal = proposals.find((p) => p.id.toString() === params.id);
+  const isAuthor = proposal && proposal.author === user;
 
   const handleSubItemVoteSelect = (
     voteItemId: string,
-    vote: string,
+    vote: VoteOption,
     title: string
   ) => {
     setSelectedVote(vote);
@@ -354,7 +320,7 @@ export default function ProposalDetails() {
     setSelectedVoteItemTitle("");
   };
   const handleVoteConfirm = async () => {
-    if (!signer || !proposal || !selectedVote || !proposalService) {
+    if (!proposal || !selectedVote || !proposalService) {
       return;
     }
 
@@ -365,38 +331,12 @@ export default function ProposalDetails() {
       votePrompt += selectedSubItemId ? "podtačku predloga" : "predlog";
       console.log(votePrompt);
 
-      const voteItem = proposal.itemsToVote.find(
+      const voteItem = proposal.voteItems.find(
         (voteItem) => voteItem.id.toString() === selectedSubItemId
       );
 
       if (voteItem) {
         await proposalService.voteForItem(voteItem, selectedVote as VoteOption);
-
-        // Osvežavamo podatke
-        refreshProposals();
-        const updatedItem = proposal.itemsToVote.find(
-          (item) => item.id.toString() == selectedSubItemId
-        );
-        if (updatedItem && signerAddress) {
-          const voteEvent = {
-            vote: selectedVote,
-            voterAddress: signerAddress,
-            date: new Date(),
-          } as VoteEvent;
-          updatedItem.votesForAddress[signerAddress] = voteEvent;
-        }
-
-        // Ažuriramo lokalni predlog
-        if (selectedSubItemId && updatedItem) {
-          const updatedSubItems = proposal.itemsToVote.map((item) =>
-            item.id.toString() === selectedSubItemId ? updatedItem : item
-          );
-
-          setProposal({
-            ...proposal,
-            itemsToVote: updatedSubItems,
-          });
-        }
       } else {
         setError("Neuspešno glasanje. Pokušajte ponovo.");
       }
@@ -411,14 +351,6 @@ export default function ProposalDetails() {
       setSelectedVoteItemTitle("");
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   if (error || !proposal) {
     return (
@@ -465,8 +397,8 @@ export default function ProposalDetails() {
 
                   <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      <span>{proposal.author}</span>
+                      <UserIcon className="h-4 w-4" />
+                      <span>{proposal.author.address}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
@@ -495,11 +427,11 @@ export default function ProposalDetails() {
 
             {/* Prikazujemo sve podtačke jednu ispod druge */}
             <div className="space-y-6">
-              {proposal.itemsToVote.map((subItem) => (
+              {proposal.voteItems.map((subItem) => (
                 <SubItemVoting
                   key={subItem.id}
                   subItem={subItem}
-                  currentAddress={signerAddress}
+                  currentUser={user}
                   onVote={handleSubItemVoteSelect}
                 />
               ))}

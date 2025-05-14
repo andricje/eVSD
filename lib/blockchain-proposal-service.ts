@@ -1,5 +1,4 @@
 import {
-  ProposalService,
   VotableItem,
   VoteOption,
   Proposal,
@@ -19,6 +18,19 @@ import {
 } from "./utils";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
+
+export type onProposalsChangedUnsubscribe = () => void;
+
+export interface ProposalService {
+  getProposals: () => Promise<Proposal[]>;
+  uploadProposal: (proposal: UIProposal) => Promise<bigint>;
+  voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
+  cancelProposal(proposal: Proposal): Promise<boolean>;
+  onProposalsChanged(
+    callback: (newProposals: Proposal[]) => void
+  ): onProposalsChangedUnsubscribe;
+}
+
 export class BlockchainProposalService implements ProposalService {
   private readonly governor: ethers.Contract;
   private readonly token: ethers.Contract;
@@ -41,16 +53,24 @@ export class BlockchainProposalService implements ProposalService {
       evsdTokenArtifacts.abi,
       signer
     );
-    console.log(
-      `BlockchainProposalService has Governor address:${evsdGovernorArtifacts.address}`
-    );
     this.fileService = fileService;
     this.signer = signer;
     this.provider = provider;
   }
-  async getCurrentUserVote(voteItem: VotableItem): Promise<VoteOption> {
-    return voteItem.votesForAddress[await this.signer.getAddress()].vote;
+  onProposalsChanged(
+    callback: (newProposals: Proposal[]) => void
+  ): onProposalsChangedUnsubscribe {
+    const onProposalChangedCallback = async () => {
+      const proposals = await this.getProposals();
+      callback(proposals);
+    };
+    this.governor.on("ProposalCreated", onProposalChangedCallback);
+    this.governor.on("VoteCast", onProposalChangedCallback);
+    this.governor.on("ProposalCanceled", onProposalChangedCallback);
+    this.governor.on("ProposalExecuted", onProposalChangedCallback);
+    return () => this.governor.removeAllListeners();
   }
+
   async cancelProposal(proposal: Proposal): Promise<boolean> {
     try {
       const description = await this.serializeProposal(proposal);
@@ -130,7 +150,10 @@ export class BlockchainProposalService implements ProposalService {
           id: proposalId,
           title: proposalData.title,
           description: proposalData.description,
-          author: convertAddressToName(args.proposer),
+          author: {
+            address: args.proposer,
+            name: convertAddressToName(args.proposer),
+          },
           file:
             proposalData.fileHash !== ""
               ? await this.fileService.fetch(proposalData.fileHash)
@@ -138,7 +161,7 @@ export class BlockchainProposalService implements ProposalService {
           dateAdded: voteStart,
           status: "open",
           closesAt: closesAt,
-          itemsToVote: [],
+          voteItems: [],
         } as Proposal;
         proposals.push(proposal);
       } else {
@@ -149,12 +172,12 @@ export class BlockchainProposalService implements ProposalService {
         // Convert an array of VoteEvents into a map of voter -> voteEvent
         const votesForAddress =
           proposalIdStr in voteEventsForId
-            ? voteEventsForId[proposalIdStr].reduce<Record<string, VoteEvent>>(
+            ? voteEventsForId[proposalIdStr].reduce<Map<User, VoteEvent>>(
                 (acc, item) => {
-                  acc[item.voterAddress] = item;
+                  acc.set(item.voter, item);
                   return acc;
                 },
-                {}
+                new Map()
               )
             : [];
         // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
@@ -163,12 +186,15 @@ export class BlockchainProposalService implements ProposalService {
           id: proposalId,
           title: voteItemData.title,
           description: voteItemData.description,
-          author: convertAddressToName(args.proposer),
+          author: {
+            address: args.proposer,
+            name: convertAddressToName(args.proposer),
+          },
           votesFor: Number(countedVotes.forVotes / oneToken),
           votesAgainst: Number(countedVotes.againstVotes / oneToken),
           votesAbstain: Number(countedVotes.abstainVotes / oneToken),
           status: "open",
-          votesForAddress,
+          userVotes: votesForAddress,
         } as VotableItem;
         // Add to the map
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
@@ -180,7 +206,7 @@ export class BlockchainProposalService implements ProposalService {
     // Pair child VoteItems with Proposals
     for (const proposal of proposals) {
       const proposalId = proposal.id.toString();
-      proposal.itemsToVote =
+      proposal.voteItems =
         proposalId in voteItemsForProposalId
           ? voteItemsForProposalId[proposalId]
           : [];
@@ -209,7 +235,7 @@ export class BlockchainProposalService implements ProposalService {
       const voteEvent = {
         vote: governorVoteMap[vote],
         date: new Date(block ? block.timestamp * 1000 : 0),
-        voterAddress: args.voter,
+        voter: { address: args.voter, name: convertAddressToName(args.voter) },
       } as VoteEvent;
       return {
         proposalId: args.proposalId.toString(),
@@ -385,7 +411,6 @@ export class BlockchainProposalService implements ProposalService {
     await this.governor.castVote(item.id, voteGovernor);
   }
 }
-
 interface SerializationData {
   title: string;
   description: string;
