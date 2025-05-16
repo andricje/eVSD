@@ -16,15 +16,15 @@ import { Loader2, Wallet } from "lucide-react";
 // import QRCodeReact from "qrcode.react"
 
 export function WalletConnectButton() {
-  const { connectMetaMask, connectWalletConnect, connectionStatus } =
-    useWallet();
+  const { connect: connectMetaMask, connectionStatus } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleConnect = async (method: "metamask" | "walletconnect") => {
     if (method === "metamask") {
       await connectMetaMask();
     } else {
-      await connectWalletConnect();
+      // placeholder
+      (() => {})();
     }
 
     // Zatvaramo dijalog samo ako je povezivanje uspešno

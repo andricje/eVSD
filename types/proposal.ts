@@ -43,7 +43,7 @@ export class InMemoryProposalService implements ProposalService {
   async uploadProposal(proposal: UIProposal): Promise<bigint> {
     const newProposal = this.proposalFromUIProposal(proposal);
     this.proposals.push(newProposal);
-    this.onProposalsChangedCallback(this.proposals);
+    this.notifyProposalsChanged();
     return newProposal.id;
   }
 
@@ -66,15 +66,15 @@ export class InMemoryProposalService implements ProposalService {
     if (!votableItem) {
       throw new Error("Invalid votable item id");
     }
-    if (votableItem.userVotes.has(this.user)) {
+    if (votableItem.userVotes.has(this.user.address)) {
       throw new Error("Already voted");
     }
-    votableItem.userVotes.set(this.user, {
+    votableItem.userVotes.set(this.user.address, {
       vote,
       date: new Date(),
       voter: this.user,
     });
-    this.onProposalsChangedCallback(this.proposals);
+    this.notifyProposalsChanged();
   }
 
   async cancelProposal(proposal: Proposal): Promise<boolean> {
@@ -84,7 +84,7 @@ export class InMemoryProposalService implements ProposalService {
     }
 
     proposalToCancel.status = "cancelled";
-    this.onProposalsChangedCallback(this.proposals);
+    this.notifyProposalsChanged();
     return true;
   }
 
@@ -131,6 +131,10 @@ export class InMemoryProposalService implements ProposalService {
         this.votableItemFromUIVotableItem(v)
       ),
     };
+  }
+
+  private notifyProposalsChanged() {
+    this.onProposalsChangedCallback([...this.proposals]);
   }
 }
 
@@ -275,9 +279,9 @@ export class BlockchainProposalService implements ProposalService {
         // Convert an array of VoteEvents into a map of voter -> voteEvent
         const votesForAddress =
           proposalIdStr in voteEventsForId
-            ? voteEventsForId[proposalIdStr].reduce<Map<User, VoteEvent>>(
+            ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
                 (acc, item) => {
-                  acc.set(item.voter, item);
+                  acc.set(item.voter.address, item);
                   return acc;
                 },
                 new Map()
@@ -540,7 +544,7 @@ export interface VotableItem {
   id: bigint;
   title: string;
   description: string;
-  userVotes: Map<User, VoteEvent>;
+  userVotes: Map<string, VoteEvent>;
 }
 
 export function countVoteForOption(

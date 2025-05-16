@@ -34,7 +34,7 @@ export default function RezultatiPage() {
     const matchesSearch =
       proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.author.toLowerCase().includes(searchTerm.toLowerCase());
+      proposal.author.name.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Филтер по датуму
     let matchesDate = true;
@@ -108,7 +108,7 @@ export default function RezultatiPage() {
                         </div>
                       </CardTitle>
                       <CardDescription className="mt-1">
-                        Предложио: {proposal.author}
+                        Предложио: {proposal.author.name}
                         {isVotingComplete(proposal) &&
                           `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
                       </CardDescription>
