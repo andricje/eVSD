@@ -3,6 +3,8 @@ import { twMerge } from "tailwind-merge";
 import {
   countVoteForOption,
   Proposal,
+  ProposalState,
+  ProposalStateMap,
   User,
   VotableItem,
   VoteEvent,
@@ -34,6 +36,25 @@ export function convertVoteOptionToGovernor(vote: VoteOption): bigint {
     throw new Error("didntVote can't be converted to a governor vote");
   }
   return inverseGovernorVoteMap[vote];
+}
+
+export function convertGovernorState(stateId: number): ProposalState {
+  const stateString = ProposalStateMap.get(stateId);
+  if (stateString === "Active" || stateString === "Pending") {
+    return "open";
+  } else if (stateString === "Canceled") {
+    return "cancelled";
+  } else if (
+    stateString === "Defeated" ||
+    stateString === "Succeeded" ||
+    stateString === "Queued" ||
+    stateString === "Expired" ||
+    stateString === "Executed"
+  ) {
+    return "closed";
+  } else {
+    throw new Error("Invalid proposal state id");
+  }
 }
 
 export function convertGovernorToVoteOption(vote: bigint): VoteOption {
@@ -78,6 +99,13 @@ export function getVoteResult(
   } else {
     return "returned";
   }
+}
+
+export function getVoteResultForItem(voteItem: VotableItem) {
+  const votesFor = countVoteForOption(voteItem, "for");
+  const votesAgainst = countVoteForOption(voteItem, "against");
+  const votesAbstain = countVoteForOption(voteItem, "abstain");
+  return getVoteResult(votesFor, votesAgainst, votesAbstain);
 }
 
 // Formatiranje datuma

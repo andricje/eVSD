@@ -7,12 +7,12 @@ import {
   User,
   VotableItem,
   VoteOption,
-} from "../types/proposal";
+} from "../../types/proposal";
 import {
   onProposalsChangedUnsubscribe,
   ProposalService,
 } from "./blockchain-proposal-service";
-import { getNewVoterProposalDescription } from "./utils";
+import { getNewVoterProposalDescription } from "../utils";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;

@@ -7,17 +7,20 @@ import {
   UIVotableItem,
   UIAddVoterVotableItem,
   IsUIAddVoterVotableItem,
-} from "../types/proposal";
+  ProposalState,
+} from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
-import { ProposalFileService, fileToDigestHex } from "./file-upload";
+import { ProposalFileService, fileToDigestHex } from "../file-upload";
 import {
   convertAddressToName,
   governorVoteMap,
   getNewVoterProposalDescription,
   convertVoteOptionToGovernor,
-} from "./utils";
-import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
-import evsdTokenArtifacts from "../contracts/evsd-token.json";
+  convertGovernorState,
+} from "../utils";
+import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
+import evsdTokenArtifacts from "../../contracts/evsd-token.json";
+import { IneligibleVoterError } from "./proposal-service-errors";
 
 export type onProposalsChangedUnsubscribe = () => void;
 
@@ -135,7 +138,10 @@ export class BlockchainProposalService implements ProposalService {
         continue;
       }
       const proposalId = args.proposalId;
-      const proposalState = await this.governor.state(proposalId);
+      const stateIndex = Number(
+        (await this.governor.state(proposalId)) as bigint
+      );
+      const proposalState = convertGovernorState(stateIndex);
       const countedVotes = await this.governor.proposalVotes(args.proposalId);
       const deadline = await this.governor.proposalDeadline(proposalId);
       const closesAt = new Date(Number(deadline) * 1000);
@@ -159,7 +165,7 @@ export class BlockchainProposalService implements ProposalService {
               ? await this.fileService.fetch(proposalData.fileHash)
               : undefined,
           dateAdded: voteStart,
-          status: "open",
+          status: proposalState,
           closesAt: closesAt,
           voteItems: [],
         } as Proposal;
@@ -219,9 +225,7 @@ export class BlockchainProposalService implements ProposalService {
 
   private async getAllVoteEvents() {
     // Filteriramo događaje za glasanje korisnika
-    const filter = this.governor.filters.VoteCast(
-      await this.signer.getAddress()
-    );
+    const filter = this.governor.filters.VoteCast();
     const events = await this.governor.queryFilter(filter, 0, "latest");
 
     // Mapiramo događaje u format za istoriju glasanja
@@ -409,6 +413,14 @@ export class BlockchainProposalService implements ProposalService {
   async voteForItem(item: VotableItem, vote: VoteOption) {
     const voteGovernor = convertVoteOptionToGovernor(vote);
     await this.governor.castVote(item.id, voteGovernor);
+
+    // try {
+
+    // } catch (error) {
+    //   throw new IneligibleVoterError(
+    //     `Address ${await this.signer.getAddress()} is not eligible to vote.`
+    //   );
+    // }
   }
 }
 interface SerializationData {

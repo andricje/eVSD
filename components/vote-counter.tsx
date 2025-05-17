@@ -1,5 +1,5 @@
-import { countTotalVotes, getVoteResult } from "@/lib/utils";
-import { VotableItem } from "@/types/proposal";
+import { countTotalVotes, getVoteResult } from "../lib/utils";
+import { VotableItem } from "../types/proposal";
 import { Progress } from "./ui/progress";
 import { CheckCircle2, CircleHelp, XCircle } from "lucide-react";
 

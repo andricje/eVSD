@@ -51,7 +51,7 @@ export interface Proposal {
   author: User;
   file?: File;
   dateAdded: Date;
-  status: "open" | "closed" | "cancelled";
+  status: ProposalState;
   closesAt: Date;
   voteItems: VotableItem[];
 }
@@ -70,3 +70,14 @@ export type VoteOption =
   | "notEligible";
 
 export type VoteResult = "passed" | "failed" | "returned";
+export type ProposalState = "open" | "closed" | "cancelled";
+export const ProposalStateMap: Map<number, string> = new Map([
+  [0, "Pending"],
+  [1, "Active"],
+  [2, "Canceled"],
+  [3, "Defeated"],
+  [4, "Succeeded"],
+  [5, "Queued"],
+  [6, "Expired"],
+  [7, "Executed"],
+]);
