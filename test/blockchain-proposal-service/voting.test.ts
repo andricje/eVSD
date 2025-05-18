@@ -17,6 +17,7 @@ import {
   getVoteResultForItem,
 } from "../../lib/utils";
 import { assertVoterVoteRecordedCorrectly, castVotes, deployAndCreateMocks, fastForwardTime, getEligibleVoters, getRandomVotes, rng } from "../utils";
+import { ProposalService } from "@/lib/proposal-services/proposal-service";
 
 
 export const voteItems: UIVotableItem[] = [
@@ -73,18 +74,21 @@ describe("BlockchainProposalService integration", function () {
     unregisteredVoterAddress = initData.unregisteredVoterAddress;
   });
 
-  async function deployAndGetProposalOneVoteItem() {
+  async function deployAndGetProposalOneVoteItem(proposer: BlockchainProposalService | undefined = undefined) {
     const generatedProposal: UIProposal = {
       title: "Test proposal",
       description: "Test proposal description",
       voteItems: [voteItems[0]],
     };
+    if (!proposer) {
+      proposer = registeredVoterProposalServices[0];
+    }
     const proposalId =
-      await registeredVoterProposalServices[0].uploadProposal(
+      await proposer.uploadProposal(
         generatedProposal
       );
     const proposal =
-      await registeredVoterProposalServices[0].getProposal(proposalId);
+      await proposer.getProposal(proposalId);
     return proposal;
   }
   async function deployAndGetProposalAddVoter() {
@@ -219,5 +223,13 @@ describe("BlockchainProposalService integration", function () {
       name: "New voter"
     };
     assertVoterVoteRecordedCorrectly(newProposalUpdated.voteItems[0], newVoter, "for");
+  });
+  it("should allow a proposer to cancel the proposal 10 hours after creating and update the proposal state accordingly", async () => {
+    // Take some proposer other than the first account
+    const proposalService = registeredVoterProposalServices[12];
+    const proposal = await deployAndGetProposalOneVoteItem(proposalService);
+
+    await fastForwardTime(0, 10, 0);
+    await expect(proposalService.cancelProposal(proposal)).to.eventually.equal(true);
   });
 });
