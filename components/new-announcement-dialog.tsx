@@ -12,7 +12,7 @@ import { Megaphone, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, ReactElement } from "react";
-import { createAnnouncement } from "@/lib/blockchain-utils";
+import { createAnnouncement, getDeployedContracts } from "@/lib/blockchain-utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -43,6 +43,8 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
     setSubmitting(true);
 
     try {
+      const { governor } = getDeployedContracts(signer);
+      
       // Prikazujemo status izveštaja
       setError("Priprema kreiranje obraćanja...");
       
@@ -50,6 +52,7 @@ export function NewAnnouncementDialog({ customClassName, customText }: NewAnnoun
       setError("Kreiranje obraćanja... (potvrdite transakciju u novčaniku)");
       const result = await createAnnouncement(
         signer,
+        governor,
         announcementContent
       );
 

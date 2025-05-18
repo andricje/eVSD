@@ -40,7 +40,6 @@ import { AnnouncementManager } from "@/components/announcement-manager";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
 import { Header } from "@/components/header";
 import { UserActivity } from "@/components/user-activity";
-import { FacultyAnnouncements } from "@/components/faculty-announcements";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal } from "@/types/proposal";
@@ -55,7 +54,6 @@ import {
   formatDateString,
   convertAddressToName,
 } from "@/lib/utils";
-import { AddFacultyAddress } from "@/components/add-faculty-address";
 
 // Compact WalletInfo Component
 const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
@@ -333,10 +331,59 @@ const UrgentProposals: React.FC<{ proposals: Proposal[] }> = ({ proposals }) => 
   );
 };
 
+// FacultyAnnouncements Component
+const FacultyAnnouncements: React.FC = () => {
+  const announcements = [
+    {
+      id: 1,
+      title: "Важно обавештење декана",
+      date: new Date(),
+      content: "Поштовани студенти, обавештавамо вас да су измењени услови за пријаву испита у јануарском року.",
+      faculty: "Факултет организационих наука"
+    },
+    {
+      id: 2,
+      title: "Промене у распореду наставе",
+      date: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      content: "Због техничких проблема у учионици 201, предавања из предмета Софтверско инжењерство се пребацују у салу 301.",
+      faculty: "Електротехнички факултет"
+    },
+    {
+      id: 3,
+      title: "Позив на ванредну седницу",
+      date: new Date(Date.now() - 48 * 60 * 60 * 1000),
+      content: "Обавештавају се чланови Студентског парламента да ће ванредна седница бити одржана у среду, 15.12. у 18ч.",
+      faculty: "Правни факултет"
+    }
+  ];
+  
+  return (
+    <div className="space-y-4">
+      <h2 className="text-base font-semibold text-foreground mb-2">Обавештења факултета</h2>
+      {announcements.map((announcement) => (
+        <Card key={announcement.id} className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+          <div className="flex justify-between items-start mb-2">
+            <h4 className="text-base font-medium text-foreground">{announcement.title}</h4>
+            <Badge variant="outline" className="text-xs px-2">{announcement.faculty}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">{announcement.content}</p>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-muted-foreground">
+              {formatDate(announcement.date)}
+            </span>
+            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+              Детаљније <ChevronRight className="h-3 w-3 ml-1" />
+            </Button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
 // AdminTools Component
 const AdminTools: React.FC = () => {
   const [showConfirmEndPlenum, setShowConfirmEndPlenum] = useState(false);
-  const [showAddFacultyDialog, setShowAddFacultyDialog] = useState(false);
   
   const handleEndPlenum = () => {
     // Ovde bi se pozivala funkcija za završetak plenuma na blockchain nivou
@@ -348,11 +395,7 @@ const AdminTools: React.FC = () => {
     <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
       <h3 className="text-base font-semibold text-foreground mb-3">Административне опције</h3>
       <div className="space-y-3">
-        <Button 
-          className="w-full justify-start py-2 text-sm" 
-          variant="outline"
-          onClick={() => setShowAddFacultyDialog(true)}
-        >
+        <Button className="w-full justify-start py-2 text-sm" variant="outline">
           <Users className="mr-2 h-4 w-4" />
           Додај нову адресу у систем
         </Button>
@@ -391,25 +434,6 @@ const AdminTools: React.FC = () => {
                   Откажи
                 </Button>
               </div>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {showAddFacultyDialog && (
-          <Alert className="mt-3 bg-background border border-primary/20">
-            <div className="flex justify-between w-full mb-2">
-              <AlertTitle className="text-base font-semibold">Додавање нове адресе факултета</AlertTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowAddFacultyDialog(false)} 
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <AlertDescription>
-              <AddFacultyAddress onSuccess={() => setShowAddFacultyDialog(false)} />
             </AlertDescription>
           </Alert>
         )}

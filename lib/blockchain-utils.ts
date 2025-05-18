@@ -3,12 +3,9 @@ import {
   EvsdGovernor__factory,
   EvsdToken,
   EvsdToken__factory,
-  Announcements,
-  Announcements__factory,
 } from "../typechain-types";
 import evsdGovernorArtifacts from "../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
-import evsdAnnouncementsArtifacts from "../contracts/evsd-announcements.json";
 import {
   Proposal,
   ProposalSerializationData,
@@ -22,18 +19,13 @@ import { addressNameMap } from "./address-name-map";
 export function getDeployedContracts(signer: Signer): {
   governor: EvsdGovernor;
   token: EvsdToken;
-  announcements: Announcements;
 } {
   const governor = EvsdGovernor__factory.connect(
     evsdGovernorArtifacts.address,
     signer
   );
   const token = EvsdToken__factory.connect(evsdTokenArtifacts.address, signer);
-  const announcements = Announcements__factory.connect(
-    evsdAnnouncementsArtifacts.address,
-    signer
-  );
-  return { governor, token, announcements };
+  return { governor, token };
 }
 
 export async function createProposalDoNothing(
@@ -65,14 +57,13 @@ export async function createProposalDoNothing(
     console.log("Креирање предлога...");
     governor = governor.connect(proposer);
     const governorAddress = await governor.getAddress();
-    
-    // Sada koristimo neku drugu funkciju umesto doNothing
-    const emptyCalldata = governor.interface.encodeFunctionData("votingPeriod");
+    const doNothingCalldata =
+      governor.interface.encodeFunctionData("doNothing");
 
     const tx = await governor.propose(
       [governorAddress],
       [0],
-      [emptyCalldata],
+      [doNothingCalldata],
       serializedProposal
     );
 
@@ -220,27 +211,39 @@ function deserializeProposal(
 
 // Funkcija za dohvatanje aktivnih obraćanja
 export async function getActiveAnnouncements(
-  announcements: Announcements
+  governor: EvsdGovernor
 ): Promise<Announcement[]> {
   try {
-    // Pozivamo funkciju iz ugovora za dobijanje aktivnih obraćanja
-    const activeAnnouncementsList = await announcements.getActiveAnnouncements();
+    // Filteriramo događaje za kreirana obraćanja
+    const createdFilter = governor.filters.AnnouncementCreated();
+    const createdEvents = await governor.queryFilter(createdFilter, 0, "latest");
     
-    // Mapiramo rezultate u naš tip Announcement
-    const parsedAnnouncements = activeAnnouncementsList.map((announcement, index) => {
-      // Generišemo jedinstveni ID koji sadrži adresu i timestamp za potpunu jedinstvenost
-      const uniqueId = `${announcement.announcer.substring(0, 6)}-${announcement.timestamp}-${index}`;
-      
-      return {
-        id: uniqueId, // Koristimo kompozitni ključ umesto rednog broja
-        content: announcement.content,
-        announcer: convertAddressToName(announcement.announcer),
-        timestamp: Number(announcement.timestamp),
-        isActive: announcement.isActive,
-      };
-    });
+    // Filteriramo događaje za deaktivirana obraćanja
+    const deactivatedFilter = governor.filters.AnnouncementDeactivated();
+    const deactivatedEvents = await governor.queryFilter(deactivatedFilter, 0, "latest");
     
-    return parsedAnnouncements;
+    // Kreiramo set ID-jeva deaktiviranih obraćanja za brzu proveru
+    const deactivatedIds = new Set(
+      deactivatedEvents.map((event) => event.args.announcementId.toString())
+    );
+    
+    // Mapiramo kreirana obraćanja u niz, isključujući ona koja su deaktivirana
+    const announcements = createdEvents
+      .map((event) => {
+        const id = event.args.announcementId.toString();
+        if (deactivatedIds.has(id)) return null; // Preskačemo deaktivirana obraćanja
+        
+        return {
+          id: id,
+          content: event.args.content,
+          announcer: convertAddressToName(event.args.announcer),
+          timestamp: Number(event.args.timestamp),
+          isActive: true,
+        };
+      })
+      .filter((announcement): announcement is Announcement => announcement !== null);
+    
+    return announcements;
   } catch (error) {
     console.error("Greška pri dohvatanju obraćanja:", error);
     return [];
@@ -250,11 +253,11 @@ export async function getActiveAnnouncements(
 // Funkcija za kreiranje novog obraćanja (samo za vlasnike/administratore)
 export async function createAnnouncement(
   signer: Signer,
+  governor: EvsdGovernor,
   content: string
 ): Promise<string | null> {
   try {
-    const { announcements } = getDeployedContracts(signer);
-    const tx = await announcements.connect(signer).createAnnouncement(content);
+    const tx = await governor.connect(signer).createAnnouncement(content);
     await tx.wait();
     return tx.hash;
   } catch (error) {
@@ -266,11 +269,11 @@ export async function createAnnouncement(
 // Funkcija za deaktiviranje obraćanja
 export async function deactivateAnnouncement(
   signer: Signer,
+  governor: EvsdGovernor,
   announcementId: string
 ): Promise<boolean> {
   try {
-    const { announcements } = getDeployedContracts(signer);
-    const tx = await announcements.connect(signer).deactivateAnnouncement(announcementId);
+    const tx = await governor.connect(signer).deactivateAnnouncement(announcementId);
     await tx.wait();
     return true;
   } catch (error) {
@@ -290,162 +293,27 @@ export async function cancelProposal(
     // iz ProposalCreated događaja, jer cancel funkcija zahteva te podatke
     
     // 1. Pronalazimo originalni ProposalCreated događaj za ovaj proposalId
-    // Ne filtriramo direktno po proposalId u filter pozivu jer nije indeksiran parametar
-    const filter = governor.filters.ProposalCreated();
+    const filter = governor.filters.ProposalCreated(proposalId);
     const events = await governor.queryFilter(filter);
     
-    // Filtriramo događaje u memoriji da pronađemo traženi proposal
-    const matchingEvents = events.filter(event => 
-      event.args.proposalId.toString() === proposalId.toString()
-    );
-    
-    if (matchingEvents.length === 0) {
+    if (events.length === 0) {
       throw new Error("Nije pronađen originalni događaj kreiranja predloga");
     }
     
-    const event = matchingEvents[0];
-    
-    // Direktno koristimo parametre iz događaja bez pokušaja modifikacije
-    const targets = event.args.targets;
-    const values = event.args.values;
-    const calldatas = event.args.calldatas;
-    const description = event.args.description;
+    const event = events[0];
+    const { targets, values, calldatas, description } = event.args;
     
     // 2. Računamo hash opisa za cancel funkciju
     const descriptionHash = ethers.id(description);
     
     // 3. Pozivamo cancel funkciju sa svim potrebnim parametrima
     const governorContract = governor.connect(signer);
-    console.log("Otkazivanje predloga - podaci:", {
-      targets: typeof targets,
-      values: typeof values,
-      calldatas: typeof calldatas
-    });
-    
-    // Direktno koristimo originalne parametre
     const tx = await governorContract.cancel(targets, values, calldatas, descriptionHash);
     await tx.wait();
     
     return true;
   } catch (error) {
     console.error("Greška pri otkazivanju predloga:", error);
-    return false;
-  }
-}
-
-// Alternativna funkcija za otkazivanje korisničkog predloga
-export async function cancelProposalAlternative(
-  signer: Signer,
-  governor: EvsdGovernor,
-  proposalId: BigNumberish
-): Promise<boolean> {
-  try {
-    // 1. Pronalazimo originalni ProposalCreated događaj za ovaj proposalId
-    const filter = governor.filters.ProposalCreated();
-    const events = await governor.queryFilter(filter);
-    
-    // Filtriramo događaje u memoriji da pronađemo traženi proposal
-    const matchingEvents = events.filter(event => 
-      event.args.proposalId.toString() === proposalId.toString()
-    );
-    
-    if (matchingEvents.length === 0) {
-      throw new Error("Nije pronađen originalni događaj kreiranja predloga");
-    }
-    
-    const event = matchingEvents[0];
-    const description = event.args.description;
-    
-    // 2. Računamo hash opisa za cancel funkciju
-    const descriptionHash = ethers.id(description);
-    
-    // 3. Rekonstruišemo podatke koji su prošli kroz propose funkciju
-    // Za jednostavne predloge gde je samo jedna adresa u listi, koristimo ovu metodu
-    const governorAddress = await governor.getAddress();
-    const targets = [governorAddress];
-    const values = [0]; // 0 ETH, promeniti ako je predlog koristio druge vrednosti
-    const emptyCalldata = governor.interface.encodeFunctionData("votingPeriod");
-    const calldatas = [emptyCalldata];
-    
-    // 4. Pozivamo cancel funkciju sa rekonstruisanim parametrima
-    const governorContract = governor.connect(signer);
-    console.log("Otkazivanje predloga (alternativno):", {
-      targets,
-      values,
-      calldatas,
-      descriptionHash
-    });
-    
-    const tx = await governorContract.cancel(targets, values, calldatas, descriptionHash);
-    await tx.wait();
-    
-    return true;
-  } catch (error) {
-    console.error("Greška pri otkazivanju predloga (alternativni način):", error);
-    return false;
-  }
-}
-
-// Nova funkcija za direktno otkazivanje predloga koristeći niži nivo pristupa
-export async function cancelProposalDirect(
-  signer: Signer,
-  governor: EvsdGovernor,
-  proposalId: BigNumberish
-): Promise<boolean> {
-  try {
-    // 1. Pronalazimo originalni ProposalCreated događaj
-    const filter = governor.filters.ProposalCreated();
-    const events = await governor.queryFilter(filter);
-    
-    const matchingEvents = events.filter(event => 
-      event.args.proposalId.toString() === proposalId.toString()
-    );
-    
-    if (matchingEvents.length === 0) {
-      throw new Error("Nije pronađen originalni događaj kreiranja predloga");
-    }
-    
-    const event = matchingEvents[0];
-    const description = event.args.description;
-    const descriptionHash = ethers.id(description);
-    
-    // 2. Dobijamo adresu ugovora
-    const governorAddress = await governor.getAddress();
-    
-    // 3. Direktno kodiramo poziv "cancel" funkcije sa potrebnim parametrima
-    // cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-    
-    // Za jednostavan predlog, koristimo samo jedan target (adresu ugovora)
-    const targets = [governorAddress];
-    const values = ["0"]; // Nikakva vrednost ETH-a se ne šalje
-    
-    // Koristimo jednostavan poziv votingPeriod kao placeholder
-    const calldata = governor.interface.encodeFunctionData("votingPeriod");
-    const calldatas = [calldata];
-    
-    // Funkcija cancel ima sledeći potpis:
-    // function cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-    
-    // Kodiramo poziv funkcije cancel sa našim parametrima
-    const cancelData = governor.interface.encodeFunctionData("cancel", [
-      targets,
-      values,
-      calldatas,
-      descriptionHash
-    ]);
-    
-    // Slanje transakcije
-    const tx = await signer.sendTransaction({
-      to: governorAddress,
-      data: cancelData,
-    });
-    
-    console.log("Direktna transakcija otkazivanja poslata:", tx.hash);
-    await tx.wait();
-    
-    return true;
-  } catch (error) {
-    console.error("Greška pri direktnom otkazivanju predloga:", error);
     return false;
   }
 }
@@ -460,8 +328,7 @@ export async function getUserVotingHistory(
   timestamp: number;
 }[]> {
   try {
-    // Filteriramo događaje za glasanje korisnika, koristimo samo adresu korisnika
-    // jer je voter indeksirani parametar u VoteCast događaju
+    // Filteriramo događaje za glasanje korisnika
     const filter = governor.filters.VoteCast(userAddress);
     const events = await governor.queryFilter(filter, 0, "latest");
     
@@ -479,61 +346,6 @@ export async function getUserVotingHistory(
   } catch (error) {
     console.error("Greška pri dohvatanju istorije glasanja:", error);
     return [];
-  }
-}
-
-// Funkcija za dohvatanje podataka o predlogu po ID-u
-export async function getProposalById(
-  governor: EvsdGovernor,
-  token: EvsdToken,
-  proposalId: string,
-  userAddress: string
-): Promise<Proposal | null> {
-  try {
-    // Dohvatamo sve događaje kreiranja predloga
-    const filter = governor.filters.ProposalCreated();
-    const events = await governor.queryFilter(filter, 0, "latest");
-    
-    // Tražimo događaj za naš proposalId
-    const event = events.find(e => e.args.proposalId.toString() === proposalId);
-    
-    if (!event) {
-      console.error("Predlog sa ID-om", proposalId, "nije pronađen");
-      return null;
-    }
-    
-    // Ako smo našli događaj, dohvatamo sve potrebne podatke
-    const proposalState = await governor.state(proposalId);
-    const countedVotes = await governor.proposalVotes(proposalId);
-    const allVotes = await getVotesForProposal(governor, BigInt(proposalId));
-    const deadline = await governor.proposalDeadline(proposalId);
-    const closesAt = new Date(Number(deadline) * 1000);
-    const voteStart = new Date(Number(event.args.voteStart) * 1000);
-    const decimals = await token.decimals();
-    const oneToken = ethers.parseUnits("1", decimals);
-    
-    // Deserijalizujemo podatke iz opisa predloga
-    const deserializedData = deserializeProposal(event.args.description);
-    
-    const proposal: Proposal = {
-      ...deserializedData,
-      id: BigInt(proposalId),
-      dateAdded: voteStart,
-      author: convertAddressToName(event.args.proposer),
-      votesFor: Number(countedVotes.forVotes / oneToken),
-      votesAgainst: Number(countedVotes.againstVotes / oneToken),
-      votesAbstain: Number(countedVotes.abstainVotes / oneToken),
-      status: Number(proposalState) > 1 ? "closed" : "open",
-      closesAt: closesAt,
-      yourVote: userAddress.toLowerCase() in allVotes ? allVotes[userAddress.toLowerCase()] : "notEligible",
-      votesForAddress: allVotes,
-      canBeCanceled: Number(proposalState) === 0 || Number(proposalState) === 1, // Pending (0) ili Active (1)
-    };
-    
-    return proposal;
-  } catch (error) {
-    console.error("Greška pri dohvatanju predloga:", error);
-    return null;
   }
 }
 
@@ -590,102 +402,5 @@ export async function getUserProposals(
   } catch (error) {
     console.error("Greška pri dohvatanju korisničkih predloga:", error);
     return [];
-  }
-}
-
-// Funkcija za proveru da li je korisnik owner ugovora
-export async function isContractOwner(signer: Signer, governor: EvsdGovernor): Promise<boolean> {
-  try {
-    const signerAddress = await signer.getAddress();
-    const ownerAddress = await governor.owner();
-    return signerAddress.toLowerCase() === ownerAddress.toLowerCase();
-  } catch (error) {
-    console.error("Greška pri proveri vlasništva:", error);
-    return false;
-  }
-}
-
-// Funkcija za proveru da li korisnik ima pravo glasa
-export async function hasVotingRights(signer: Signer, governor: EvsdGovernor): Promise<boolean> {
-  try {
-    const signerAddress = await signer.getAddress();
-    return await governor.hasVotingRights(signerAddress);
-  } catch (error) {
-    console.error("Greška pri proveri prava glasa:", error);
-    return false;
-  }
-}
-
-// Funkcija za registrovanje nove adrese fakulteta
-export async function registerNewVoter(
-  signer: Signer,
-  voterAddress: string
-): Promise<{ success: boolean; txHash?: string; error?: string }> {
-  try {
-    const { governor } = getDeployedContracts(signer);
-    
-    // Provera da li trenutni korisnik ima pravo glasa
-    const hasRights = await hasVotingRights(signer, governor);
-    
-    if (!hasRights) {
-      return { 
-        success: false, 
-        error: "Nemate dozvolu za registraciju novih adresa. Samo članovi sa pravom glasa mogu registrovati nove fakultete." 
-      };
-    }
-    
-    // Proveravamo da li adresa već ima pravo glasa
-    const targetHasRights = await governor.hasVotingRights(voterAddress);
-    if (targetHasRights) {
-      return { 
-        success: false, 
-        error: "Ova adresa već ima pravo glasa." 
-      };
-    }
-    
-    try {
-      // Pokušaj registracije direktno preko regularnog poziva
-      console.log(`Registracija nove adrese fakulteta: ${voterAddress}`);
-      const governorAddress = await governor.getAddress();
-      
-      // Direktno kodiramo poziv "registerVoter" funkcije
-      const data = governor.interface.encodeFunctionData("registerVoter", [voterAddress]);
-      
-      // Šaljemo transakciju direktno
-      const tx = await signer.sendTransaction({
-        to: governorAddress,
-        data: data
-      });
-      
-      await tx.wait();
-      
-      return { 
-        success: true, 
-        txHash: tx.hash 
-      };
-    } catch (error) {
-      console.error("Greška pri direktnoj registraciji:", error);
-      // Ako direktan pristup ne uspe, prijavimo grešku
-      return {
-        success: false,
-        error: "Greška pri registraciji nove adrese. Proverite da li imate dovoljno ETH za gas."
-      };
-    }
-  } catch (error) {
-    console.error("Greška pri registraciji nove adrese:", error);
-    
-    // Obrada specifičnih grešaka
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    if (errorMessage.includes("execution reverted") || errorMessage.includes("CALL_EXCEPTION")) {
-      return {
-        success: false,
-        error: "Greška pri registraciji. Proverite dozvole i pokušajte ponovo."
-      };
-    }
-    
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Nepoznata greška" 
-    };
   }
 }

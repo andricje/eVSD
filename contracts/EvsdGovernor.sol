@@ -8,55 +8,40 @@ import {GovernorSettings} from "@openzeppelin/contracts/governance/extensions/Go
 import {GovernorVotes} from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+
+// Definišemo strukturu za obraćanje
+struct Announcement {
+    address announcer;
+    string content;
+    uint256 timestamp;
+    bool isActive; // Da znamo da li je obraćanje aktivno/vidljivo
+}
 
 contract EvsdGovernor is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, Ownable {
-    // Broj registrovanih adresa koje imaju pristup
-    uint256 public totalVoters;
-    
-    // Mapa adresa koje imaju pravo glasa
-    mapping(address => bool) public hasVotingRights;
-    
-    // Događaj za praćenje registracije glasača
-    event VoterRegistered(address indexed voter);
-    event VoterRemoved(address indexed voter);
+    // Mapiranje za čuvanje obraćanja i brojač
+    mapping(uint256 => Announcement) public announcements;
+    uint256 public announcementCounter;
+
+    // Događaj za kreiranje obraćanja
+    event AnnouncementCreated(
+        uint256 indexed announcementId,
+        address indexed announcer,
+        string content,
+        uint256 timestamp
+    );
+
+    // Događaj za deaktiviranje obraćanja
+    event AnnouncementDeactivated(uint256 indexed announcementId);
 
     constructor(IVotes _token, address initialOwner)
         Governor("EvsdGovernor")
         GovernorSettings(0 minutes, 1 days, 1e18)
         GovernorVotes(_token)
         Ownable(initialOwner)
-    {
-        totalVoters = 0;
-    }
+    {}
 
-    // Funkcija za registraciju novog glasača
-    function registerVoter(address voter) public onlyOwner {
-        require(!hasVotingRights[voter], "Voter already registered");
-        hasVotingRights[voter] = true;
-        totalVoters++;
-        emit VoterRegistered(voter);
-    }
-    
-    // Funkcija za uklanjanje glasača
-    function removeVoter(address voter) public onlyOwner {
-        require(hasVotingRights[voter], "Voter not registered");
-        hasVotingRights[voter] = false;
-        totalVoters--;
-        emit VoterRemoved(voter);
-    }
-
-    // Funkcija za računanje kvoruma - 50% + 1 od ukupnog broja glasača
-    function quorum(uint256) public view override returns (uint256) {
-        if (totalVoters == 0) {
-            return 1e18; // Default vrednost ako nema registrovanih glasača
-        }
-        
-        // 50% + 1 = (totalVoters / 2) + 1
-        uint256 minimumVoters = (totalVoters / 2) + 1;
-        
-        // Vraćamo broj glasova potreban za kvorum (1 token = 1 glas)
-        return minimumVoters * 1e18;
+    function quorum(uint256 blockNumber) public pure override returns (uint256) {
+        return 3e18;
     }
 
     // The following functions are overrides required by Solidity.
@@ -68,6 +53,11 @@ contract EvsdGovernor is Governor, GovernorSettings, GovernorCountingSimple, Gov
         returns (uint256)
     {
         return super.votingDelay();
+    }
+
+    function doNothing() public pure
+    {
+        return;
     }
 
     function votingPeriod()
@@ -86,5 +76,47 @@ contract EvsdGovernor is Governor, GovernorSettings, GovernorCountingSimple, Gov
         returns (uint256)
     {
         return super.proposalThreshold();
+    }
+
+    // Funkcija za kreiranje novog obraćanja
+    function createAnnouncement(string calldata content) public onlyOwner {
+        announcementCounter++;
+        uint256 newAnnouncementId = announcementCounter;
+        announcements[newAnnouncementId] = Announcement({
+            announcer: msg.sender,
+            content: content,
+            timestamp: block.timestamp,
+            isActive: true
+        });
+        emit AnnouncementCreated(newAnnouncementId, msg.sender, content, block.timestamp);
+    }
+
+    // Funkcija za deaktiviranje obraćanja (npr. da se ne prikazuje više)
+    function deactivateAnnouncement(uint256 announcementId) public onlyOwner {
+        require(announcements[announcementId].isActive, "Announcement is already inactive");
+        require(announcements[announcementId].timestamp != 0, "Announcement does not exist"); // Provera da li obraćanje postoji
+        announcements[announcementId].isActive = false;
+        emit AnnouncementDeactivated(announcementId);
+    }
+
+    // Funkcija za dobijanje aktivnih obraćanja - primer, možda će trebati drugačiji pristup za frontend
+    // Ovo je samo ilustracija, verovatno će frontend čitati događaje ili koristiti efikasniji način
+    function getActiveAnnouncements() public view returns (Announcement[] memory) {
+        uint activeCount = 0;
+        for (uint i = 1; i <= announcementCounter; i++) {
+            if (announcements[i].isActive) {
+                activeCount++;
+            }
+        }
+
+        Announcement[] memory activeAnnouncementsList = new Announcement[](activeCount);
+        uint currentIndex = 0;
+        for (uint i = 1; i <= announcementCounter; i++) {
+            if (announcements[i].isActive) {
+                activeAnnouncementsList[currentIndex] = announcements[i];
+                currentIndex++;
+            }
+        }
+        return activeAnnouncementsList;
     }
 }

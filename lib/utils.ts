@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Proposal, VoteOption, VoteResult } from "../types/proposal";
-import { addressNameMap, getAddressNameMap } from "./address-name-map";
+import { addressNameMap } from "./address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -37,13 +37,9 @@ export function convertGovernorToVoteOption(vote: bigint): VoteOption {
 }
 
 export function convertAddressToName(address: string): string {
-  const currentAddressMap = getAddressNameMap();
-  
-  if (currentAddressMap[address]) {
-    return currentAddressMap[address];
-  }
-
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return address in addressNameMap
+    ? (addressNameMap[address] as string)
+    : "Nepoznato";
 }
 
 export function convertVoteOptionToString(vote: VoteOption): string {
@@ -57,24 +53,7 @@ export function convertVoteOptionToString(vote: VoteOption): string {
   return voteOptionMap[vote];
 }
 
-// Broj adresa koje su registrovane u sistemu
-export function getTotalVoters(): number {
-  const currentMap = getAddressNameMap();
-  return Object.keys(currentMap).length;
-}
-
-// Inicijalni broj adresa za kvorumu
-export const INITIAL_VOTERS_COUNT = Object.keys(addressNameMap).length;
-
-// Dinamički kvorumu - 50% + 1 registrovanih adresa
-export function getQuorum(): number {
-  // Koristimo dinamičko računanje broja glasača umesto konstante
-  const totalVoters = getTotalVoters();
-  return Math.floor(totalVoters / 2) + 1;
-}
-
-// Originalni konstantni kvorumu - ovo zadržavamo za kompatibilnost sa postojećim kodom
-export let QUORUM = Math.floor(INITIAL_VOTERS_COUNT / 2) + 1;
+export const QUORUM = 20;
 
 export function getVoteResult(
   votesFor: number,
@@ -82,9 +61,7 @@ export function getVoteResult(
   votesAbstain: number
 ): VoteResult {
   const totalVotes = votesFor + votesAgainst + votesAbstain;
-  const currentQuorum = getQuorum();
-  
-  if (totalVotes >= currentQuorum) {
+  if (totalVotes >= QUORUM) {
     if (votesFor > votesAgainst) {
       return "passed";
     } else {
@@ -137,7 +114,7 @@ export const isVotingComplete = (proposal: Proposal) => {
 };
 
 export function isQuorumReached(proposal: Proposal) {
-  return countTotalVotes(proposal) >= getQuorum();
+  return countTotalVotes(proposal) > QUORUM;
 }
 
 export function countTotalVotes(proposal: Proposal) {
