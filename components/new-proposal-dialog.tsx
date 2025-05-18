@@ -18,20 +18,13 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
-  Copy
+  Copy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, ReactElement } from "react";
-import {
-  createProposalDoNothing,
-  getDeployedContracts,
-} from "@/lib/blockchain-utils";
-import { useBrowserSigner } from "@/hooks/use-browser-signer";
-import { ethers } from "ethers";
-import { ProposalSubItem } from "@/types/proposal";
-import { Switch } from "@/components/ui/switch";
+import { UIProposal, UIVotableItem } from "@/types/proposal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
@@ -39,21 +32,23 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useProposals } from "@/hooks/use-proposals";
 
 interface NewProposalDialogProps {
   customClassName?: string;
   customText?: ReactElement;
 }
 
-export function NewProposalDialog({ customClassName, customText }: NewProposalDialogProps) {
-  const { signer } = useBrowserSigner();
-  const [newProposal, setNewProposal] = useState({
+export function NewProposalDialog({
+  customClassName,
+  customText,
+}: NewProposalDialogProps) {
+  const { proposalService } = useProposals();
+  const [newProposal, setNewProposal] = useState<UIProposal>({
     title: "",
     description: "",
-    urgent: false,
-    document: null as File | null,
-    isMultilayered: false,
-    subItems: [] as ProposalSubItem[],
+    file: undefined,
+    voteItems: [],
   });
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
   const [documentName, setDocumentName] = useState("");
@@ -61,141 +56,98 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [infoDots, setInfoDots] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [needsTokens, setNeedsTokens] = useState(false);
-  const [expandedSubItem, setExpandedSubItem] = useState<string | null>(null);
-
-  // Проверавамо стање токена при отварању дијалога
-  useEffect(() => {
-    if (!signer) {
-      return;
-    }
-
-    const checkTokenBalance = async () => {
-      try {
-        const deployedContracts = getDeployedContracts(signer);
-        const governor = deployedContracts.governor;
-        const tokenAddress = await governor.token();
-        const token = new ethers.Contract(
-          tokenAddress,
-          [
-            "function balanceOf(address) view returns (uint256)",
-            "function proposalThreshold() view returns (uint256)",
-          ],
-          signer
-        );
-
-        const address = await signer.getAddress();
-        const balance = await token.balanceOf(address);
-        const threshold = await governor.proposalThreshold();
-
-        setNeedsTokens(balance < threshold);
-      } catch (e) {
-        console.error("Грешка при провери стања токена:", e);
-      }
-    };
-
-    checkTokenBalance();
-  }, [signer]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setNewProposal({ ...newProposal, document: e.target.files[0] });
+      setNewProposal({ ...newProposal, file: e.target.files[0] });
       setDocumentName(e.target.files[0].name);
     }
   };
 
   const addSubItem = () => {
-    const newSubItem: ProposalSubItem = {
-      id: crypto.randomUUID(),
+    const newVoteItem: UIVotableItem = {
       title: "",
       description: "",
-      votesFor: 0,
-      votesAgainst: 0,
-      votesAbstain: 0,
-      yourVote: "didntVote",
-      votesForAddress: {},
+      UIOnlyId: crypto.randomUUID(),
     };
-    
+
     setNewProposal({
       ...newProposal,
-      subItems: [...newProposal.subItems, newSubItem],
+      voteItems: [...newProposal.voteItems, newVoteItem],
     });
-
-    // Automatski proširimo novi podtačku
-    setExpandedSubItem(newSubItem.id);
   };
 
-  const updateSubItem = (id: string, field: keyof ProposalSubItem, value: string) => {
+  const updateSubItem = (
+    itemToUpdate: UIVotableItem,
+    field: keyof UIVotableItem,
+    value: string
+  ) => {
     setNewProposal({
       ...newProposal,
-      subItems: newProposal.subItems.map(item => 
-        item.id === id ? { ...item, [field]: value } : item
+      voteItems: newProposal.voteItems.map((item) =>
+        item === itemToUpdate ? { ...item, [field]: value } : item
       ),
     });
   };
 
-  const removeSubItem = (id: string) => {
+  const removeSubItem = (itemToRemove: UIVotableItem) => {
     setNewProposal({
       ...newProposal,
-      subItems: newProposal.subItems.filter(item => item.id !== id),
+      voteItems: newProposal.voteItems.filter((item) => item !== itemToRemove),
     });
-    
-    if (expandedSubItem === id) {
-      setExpandedSubItem(null);
-    }
-  };
-  
-  const moveSubItem = (id: string, direction: 'up' | 'down') => {
-    const currentIndex = newProposal.subItems.findIndex(item => item.id === id);
-    if (currentIndex === -1) return;
-    
-    const newSubItems = [...newProposal.subItems];
-    
-    if (direction === 'up' && currentIndex > 0) {
-      // Zamena sa prethodnim elementom
-      [newSubItems[currentIndex], newSubItems[currentIndex - 1]] = 
-      [newSubItems[currentIndex - 1], newSubItems[currentIndex]];
-    } else if (direction === 'down' && currentIndex < newSubItems.length - 1) {
-      // Zamena sa sledećim elementom
-      [newSubItems[currentIndex], newSubItems[currentIndex + 1]] = 
-      [newSubItems[currentIndex + 1], newSubItems[currentIndex]];
-    }
-    
-    setNewProposal({
-      ...newProposal,
-      subItems: newSubItems,
-    });
-  };
-  
-  const duplicateSubItem = (id: string) => {
-    const originalItem = newProposal.subItems.find(item => item.id === id);
-    if (!originalItem) return;
-    
-    const newSubItem: ProposalSubItem = {
-      ...originalItem,
-      id: crypto.randomUUID(),
-      yourVote: "didntVote",
-      votesFor: 0, 
-      votesAgainst: 0, 
-      votesAbstain: 0,
-      title: `${originalItem.title} (kopija)`,
-    };
-    
-    setNewProposal({
-      ...newProposal,
-      subItems: [...newProposal.subItems, newSubItem],
-    });
-    
-    // Automatski proširimo novu podtačku
-    setExpandedSubItem(newSubItem.id);
   };
 
-  const handleProposalSubmit = async () => {
-    if (!signer) {
-      setError("Новчаник није повезан.");
+  const moveSubItem = (itemToMove: UIVotableItem, direction: "up" | "down") => {
+    const currentIndex = newProposal.voteItems.findIndex(
+      (item) => item === itemToMove
+    );
+    if (currentIndex === -1) {
       return;
     }
 
+    const newSubItems = [...newProposal.voteItems];
+
+    if (direction === "up" && currentIndex > 0) {
+      // Zamena sa prethodnim elementom
+      [newSubItems[currentIndex], newSubItems[currentIndex - 1]] = [
+        newSubItems[currentIndex - 1],
+        newSubItems[currentIndex],
+      ];
+    } else if (direction === "down" && currentIndex < newSubItems.length - 1) {
+      // Zamena sa sledećim elementom
+      [newSubItems[currentIndex], newSubItems[currentIndex + 1]] = [
+        newSubItems[currentIndex + 1],
+        newSubItems[currentIndex],
+      ];
+    }
+
+    setNewProposal({
+      ...newProposal,
+      voteItems: newSubItems,
+    });
+  };
+
+  const duplicateSubItem = (itemToDuplicate: UIVotableItem) => {
+    const originalItem = newProposal.voteItems.find(
+      (item) => item === itemToDuplicate
+    );
+    if (!originalItem) {
+      return;
+    }
+
+    const newVoteItem: UIVotableItem = {
+      ...originalItem,
+      title: `${originalItem.title} (kopija)`,
+      UIOnlyId: crypto.randomUUID(),
+    };
+
+    setNewProposal({
+      ...newProposal,
+      voteItems: [...newProposal.voteItems, newVoteItem],
+    });
+  };
+
+  const handleProposalSubmit = async () => {
     if (!newProposal.description.trim()) {
       setError("Опис предлога је обавезан.");
       return;
@@ -206,18 +158,16 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
       return;
     }
 
-    if (newProposal.isMultilayered) {
-      // Проверавамо да ли су сви подпредлози попуњени
-      if (newProposal.subItems.length === 0) {
-        setError("За вишеслојни предлог морате додати најмање једну подтачку.");
-        return;
-      }
+    // Проверавамо да ли су сви подпредлози попуњени
+    if (newProposal.voteItems.length === 0) {
+      setError("За вишеслојни предлог морате додати најмање једну подтачку.");
+      return;
+    }
 
-      for (const item of newProposal.subItems) {
-        if (!item.title.trim() || !item.description.trim()) {
-          setError("Сви наслови и описи подтачака су обавезни.");
-          return;
-        }
+    for (const item of newProposal.voteItems) {
+      if (!item.title.trim() || !item.description.trim()) {
+        setError("Сви наслови и описи подтачака су обавезни.");
+        return;
       }
     }
 
@@ -226,59 +176,15 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
     setLoading(true);
 
     try {
-      const deployedContracts = getDeployedContracts(signer);
-      const token = deployedContracts.token;
-      const governor = deployedContracts.governor;
-
       // Прво приказујемо информацију да проверавамо стање
       setInfoMessage("Провера стања токена и делегација гласова...");
-
-      // Проверавамо адресу корисника за лакше праћење
-      const signerAddress = await signer.getAddress();
-      console.log("Корисник:", signerAddress);
-
-      // Добављамо информације о стању токена и гласовима
-      const balance = await token.balanceOf(signerAddress);
-      const votes = await token.getVotes(signerAddress);
-      const threshold = await governor.proposalThreshold();
-
-      console.log(`Баланс токена: ${ethers.formatUnits(balance, 18)}`);
-      console.log(`Гласачка моћ: ${ethers.formatUnits(votes, 18)}`);
-      console.log(`Потребно за предлог: ${ethers.formatUnits(threshold, 18)}`);
-
-      // Ако корисник нема довољно токена или гласачке моћи, покушавамо то да решимо
-      if (balance < threshold || votes < threshold) {
-        // Прво проверавамо да ли има токена али их није делегирао
-        if (balance >= threshold && votes < threshold) {
-          setInfoMessage(
-            "Делегирање токена... (потврдите трансакцију у новчанику)"
-          );
-          await token.delegate(signerAddress);
-          console.log("Токени успешно делегирани");
-        }
-
-        // Добављамо нову гласачку моћ
-        const newVotes = await token.getVotes(signerAddress);
-        console.log(`Нова гласачка моћ: ${ethers.formatUnits(newVotes, 18)}`);
-
-        // Ако и даље нема довољно гласачке моћи, не можемо креирати предлог
-        if (newVotes < threshold) {
-          throw new Error("GovernorInsufficientProposerVotes");
-        }
-      }
 
       // Креирамо предлог
       setInfoMessage(
         "Креирање предлога... (потврдите трансакцију у новчанику)"
       );
-      const result = await createProposalDoNothing(
-        signer,
-        deployedContracts.governor,
-        newProposal.description,
-        newProposal.title,
-        newProposal.isMultilayered,
-        newProposal.subItems
-      );
+
+      const result = await proposalService?.uploadProposal(newProposal);
 
       console.log("Предлог послат:", newProposal, "Hash:", result);
       setError(null);
@@ -290,10 +196,7 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
         setNewProposal({
           title: "",
           description: "",
-          urgent: false,
-          document: null,
-          isMultilayered: false,
-          subItems: [],
+          voteItems: [],
         });
         setDocumentName("");
       }, 3000);
@@ -349,7 +252,9 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
 
   // "Анимација" обраде кроз тачкице
   useEffect(() => {
-    if (!infoMessage) return;
+    if (!infoMessage) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setInfoDots((prev) => (prev.length < 3 ? prev + "." : ""));
@@ -382,7 +287,7 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium">Предлог успешно послат!</h3>
             <p className="text-sm text-muted-foreground mt-2">
-              Ваш предлог је додат на временску линију и доступан је за гласање.
+              Ваш предлог је додат и доступан је за гласање.
             </p>
           </div>
         ) : (
@@ -408,20 +313,6 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
                   </h3>
                   <p className="text-sm break-words whitespace-pre-wrap">
                     {infoMessage}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {needsTokens && (
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 text-amber-700 flex items-start gap-2">
-                <Info className="h-5 w-5 mt-0.5" />
-                <div>
-                  <h3 className="font-medium">Потребни су токени</h3>
-                  <p className="text-sm">
-                    За креирање предлога потребно је најмање 1 EVSD токен.
-                    Токени ће бити аутоматски додати када кликнете на
-                    &quot;Додај предлог&quot;.
                   </p>
                 </div>
               </div>
@@ -458,157 +349,177 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
                 />
               </div>
 
-              {/* Опција за вишеслојни предлог */}
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
-                  <Label htmlFor="multilayered-proposal" className="mb-1">Вишеслојни предлог</Label>
+                  <Label htmlFor="multilayered-proposal" className="mb-1">
+                    Тачке за гласање
+                  </Label>
                   <span className="text-xs text-muted-foreground">
-                    Омогућава гласање о предлогу у начелу и појединачним тачкама
+                    Додајте све тачке за које желите да се гласа
                   </span>
                 </div>
-                <Switch
-                  id="multilayered-proposal"
-                  checked={newProposal.isMultilayered}
-                  onCheckedChange={(checked) =>
-                    setNewProposal({
-                      ...newProposal,
-                      isMultilayered: checked,
-                      subItems: checked ? newProposal.subItems : []
-                    })
-                  }
-                />
               </div>
 
-              {/* Подтачке предлога - видљиве само ако је вишеслојни предлог */}
-              {newProposal.isMultilayered && (
-                <div className="space-y-4 mt-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="flex items-center gap-2">
-                      <Layers className="h-4 w-4" />
-                      <span>Подтачке предлога ({newProposal.subItems.length})</span>
-                    </Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addSubItem}
-                      className="flex items-center gap-1"
-                    >
-                      <PlusCircle className="h-3.5 w-3.5" />
-                      <span>Додај подтачку</span>
-                    </Button>
-                  </div>
-
-                  {newProposal.subItems.length === 0 && (
-                    <div className="bg-muted p-4 text-center rounded-md">
-                      <Layers className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
-                      <p className="text-sm text-muted-foreground">
-                        Додајте подтачке предлога на које ће се гласати појединачно
-                      </p>
-                    </div>
-                  )}
-
-                  <ScrollArea className={newProposal.subItems.length > 2 ? "h-[300px] pr-4" : ""}>
-                    {newProposal.subItems.map((item, index) => (
-                      <div 
-                        key={item.id}
-                        className="bg-slate-50 border rounded-lg mb-3 overflow-hidden"
-                      >
-                        <div className="flex items-center justify-between p-3 bg-slate-100 border-b">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
-                              {index + 1}
-                            </span>
-                            <h4 className="font-medium truncate">
-                              {item.title || `Подтачка ${index + 1}`}
-                            </h4>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => moveSubItem(item.id, 'up')}
-                              disabled={index === 0}
-                              className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
-                            >
-                              <ChevronUp className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => moveSubItem(item.id, 'down')}
-                              disabled={index === newProposal.subItems.length - 1}
-                              className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
-                            >
-                              <ChevronDown className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => duplicateSubItem(item.id)}
-                              className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeSubItem(item.id)}
-                              className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        <Accordion
-                          type="single"
-                          collapsible
-                          value={expandedSubItem === item.id ? item.id : undefined}
-                          onValueChange={(value) => setExpandedSubItem(value || null)}
-                        >
-                          <AccordionItem value={item.id} className="border-b-0">
-                            <AccordionContent className="p-3">
-                              <div className="space-y-3">
-                                <div>
-                                  <Label htmlFor={`title-${item.id}`} className="text-xs font-medium mb-1 block">
-                                    Наслов подтачке
-                                  </Label>
-                                  <Input
-                                    id={`title-${item.id}`}
-                                    placeholder="Унесите наслов подtaчке"
-                                    value={item.title}
-                                    onChange={(e) => updateSubItem(item.id, 'title', e.target.value)}
-                                  />
-                                </div>
-                                
-                                <div>
-                                  <Label htmlFor={`description-${item.id}`} className="text-xs font-medium mb-1 block">
-                                    Опис подtaчке предлога
-                                  </Label>
-                                  <Textarea
-                                    id={`description-${item.id}`}
-                                    placeholder="Опис подtaчке предлога"
-                                    value={item.description}
-                                    onChange={(e) => updateSubItem(item.id, 'description', e.target.value)}
-                                    rows={3}
-                                  />
-                                </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </div>
-                    ))}
-                  </ScrollArea>
+              <div className="space-y-4 mt-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    <span>
+                      Тачке за гласање ({newProposal.voteItems.length})
+                    </span>
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addSubItem}
+                    className="flex items-center gap-1"
+                  >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span>Додај подтачку</span>
+                  </Button>
                 </div>
-              )}
 
-              <div className="flex items-center gap-2">
+                {newProposal.voteItems.length === 0 && (
+                  <div className="bg-muted p-4 text-center rounded-md">
+                    <Layers className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
+                    <p className="text-sm text-muted-foreground">
+                      Додајте подтачке предлога за које ће се гласати
+                      појединачно
+                    </p>
+                  </div>
+                )}
+
+                <ScrollArea
+                  className={
+                    newProposal.voteItems.length > 2 ? "h-[300px] pr-4" : ""
+                  }
+                >
+                  {newProposal.voteItems.map((item, index) => (
+                    <div
+                      key={item.UIOnlyId}
+                      className="bg-slate-50 border rounded-lg mb-3 overflow-hidden"
+                    >
+                      <Accordion
+                        type="single"
+                        collapsible
+                        defaultValue={
+                          newProposal.voteItems.length > 0
+                            ? newProposal.voteItems[
+                                newProposal.voteItems.length - 1
+                              ].UIOnlyId
+                            : ""
+                        }
+                      >
+                        <AccordionItem
+                          value={item.UIOnlyId}
+                          className="border-b-0"
+                        >
+                          <div className="flex items-center justify-between p-3 bg-slate-100 border-b">
+                            <AccordionTrigger>
+                              <div className="flex items-center gap-2">
+                                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                                  {index + 1}
+                                </span>
+                                <h4 className="font-medium truncate">
+                                  {item.title || `Подтачка ${index + 1}`}
+                                </h4>
+                              </div>
+                            </AccordionTrigger>
+                            <div className="flex items-center space-x-1">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => moveSubItem(item, "up")}
+                                disabled={index === 0}
+                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+                              >
+                                <ChevronUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => moveSubItem(item, "down")}
+                                disabled={
+                                  index === newProposal.voteItems.length - 1
+                                }
+                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+                              >
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => duplicateSubItem(item)}
+                                className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeSubItem(item)}
+                                className="h-7 w-7 p-0 text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <AccordionContent className="p-3">
+                            <div className="space-y-3">
+                              <div>
+                                <Label
+                                  htmlFor={`title-${item.UIOnlyId}`}
+                                  className="text-xs font-medium mb-1 block"
+                                >
+                                  Наслов подтачке
+                                </Label>
+                                <Input
+                                  id={`title-${item.UIOnlyId}`}
+                                  placeholder="Унесите наслов подtaчке"
+                                  value={item.title}
+                                  onChange={(e) =>
+                                    updateSubItem(item, "title", e.target.value)
+                                  }
+                                />
+                              </div>
+
+                              <div>
+                                <Label
+                                  htmlFor={`description-${item.UIOnlyId}`}
+                                  className="text-xs font-medium mb-1 block"
+                                >
+                                  Опис подtaчке предлога
+                                </Label>
+                                <Textarea
+                                  id={`description-${item.UIOnlyId}`}
+                                  placeholder="Опис подtaчке предлога"
+                                  value={item.description}
+                                  onChange={(e) =>
+                                    updateSubItem(
+                                      item,
+                                      "description",
+                                      e.target.value
+                                    )
+                                  }
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </div>
+                  ))}
+                </ScrollArea>
+              </div>
+
+              {/* <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   id="urgent"
@@ -622,7 +533,7 @@ export function NewProposalDialog({ customClassName, customText }: NewProposalDi
                   className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <Label htmlFor="urgent">Означите као хитно</Label>
-              </div>
+              </div> */}
               <div className="grid gap-2">
                 <Label htmlFor="document">Приложите документ (опционо)</Label>
                 <div className="flex items-center gap-2">

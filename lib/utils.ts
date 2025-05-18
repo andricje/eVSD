@@ -1,6 +1,16 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Proposal, VoteOption, VoteResult } from "../types/proposal";
+import {
+  countVoteForOption,
+  Proposal,
+  ProposalState,
+  ProposalStateMap,
+  User,
+  VotableItem,
+  VoteEvent,
+  VoteOption,
+  VoteResult,
+} from "../types/proposal";
 import { addressNameMap } from "./address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
@@ -26,6 +36,25 @@ export function convertVoteOptionToGovernor(vote: VoteOption): bigint {
     throw new Error("didntVote can't be converted to a governor vote");
   }
   return inverseGovernorVoteMap[vote];
+}
+
+export function convertGovernorState(stateId: number): ProposalState {
+  const stateString = ProposalStateMap.get(stateId);
+  if (stateString === "Active" || stateString === "Pending") {
+    return "open";
+  } else if (stateString === "Canceled") {
+    return "cancelled";
+  } else if (
+    stateString === "Defeated" ||
+    stateString === "Succeeded" ||
+    stateString === "Queued" ||
+    stateString === "Expired" ||
+    stateString === "Executed"
+  ) {
+    return "closed";
+  } else {
+    throw new Error("Invalid proposal state id");
+  }
 }
 
 export function convertGovernorToVoteOption(vote: bigint): VoteOption {
@@ -72,6 +101,13 @@ export function getVoteResult(
   }
 }
 
+export function getVoteResultForItem(voteItem: VotableItem) {
+  const votesFor = countVoteForOption(voteItem, "for");
+  const votesAgainst = countVoteForOption(voteItem, "against");
+  const votesAbstain = countVoteForOption(voteItem, "abstain");
+  return getVoteResult(votesFor, votesAgainst, votesAbstain);
+}
+
 // Formatiranje datuma
 export const formatDateString = (dateString: string) => {
   const date = new Date(dateString);
@@ -113,12 +149,23 @@ export const isVotingComplete = (proposal: Proposal) => {
   return proposal.status === "closed";
 };
 
-export function isQuorumReached(proposal: Proposal) {
-  return countTotalVotes(proposal) > QUORUM;
+export function isQuorumReached(voteItem: VotableItem) {
+  return countTotalVotes(voteItem) > QUORUM;
 }
 
-export function countTotalVotes(proposal: Proposal) {
-  return proposal.votesFor + proposal.votesAgainst + proposal.votesAbstain;
+export function isQuorumReachedForAllPoints(proposal: Proposal) {
+  return (
+    proposal.voteItems.filter((voteItem) => !isQuorumReached(voteItem)).length >
+    0
+  );
+}
+
+export function countTotalVotes(voteItem: VotableItem) {
+  return (
+    countVoteForOption(voteItem, "for") +
+    countVoteForOption(voteItem, "against") +
+    countVoteForOption(voteItem, "abstain")
+  );
 }
 export function tryParseAsBigInt(value: string): bigint | undefined {
   try {
@@ -126,4 +173,35 @@ export function tryParseAsBigInt(value: string): bigint | undefined {
   } catch {
     return undefined;
   }
+}
+export function getUserVotingHistory(proposals: Proposal[], user: User) {
+  return proposals.reduce<{ event: VoteEvent; item: VotableItem }[]>(
+    (acc, proposal) => {
+      const votesForProposal = proposal.voteItems.reduce<
+        { event: VoteEvent; item: VotableItem }[]
+      >((acc, item) => {
+        const userVote = item.userVotes.get(user);
+        if (userVote) {
+          acc.push({ event: userVote, item });
+        }
+        return acc;
+      }, []);
+      return acc.concat(votesForProposal);
+    },
+    []
+  );
+}
+
+export function countUserRemainingItemsToVote(proposal: Proposal, user: User) {
+  return proposal.voteItems.filter((voteItem) => !voteItem.userVotes.has(user))
+    .length;
+}
+
+// Returns the hardcoded description for proposals that actually move tokens on chain and add new voters
+// Always ignore the description on chain as it may be deceptive instead always use this one and read the address from the proposal calldata!
+export function getNewVoterProposalDescription(newVoterAddress: string) {
+  return {
+    title: `Додавање ${convertAddressToName(newVoterAddress)} као новог члана Е-ВСД`,
+    description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress} (${convertAddressToName(newVoterAddress)})`,
+  };
 }

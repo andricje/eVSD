@@ -1,10 +1,10 @@
-import { countTotalVotes, getVoteResult } from "@/lib/utils";
-import { Proposal } from "@/types/proposal";
+import { countTotalVotes, getVoteResult } from "../lib/utils";
+import { VotableItem } from "../types/proposal";
 import { Progress } from "./ui/progress";
 import { CheckCircle2, CircleHelp, XCircle } from "lucide-react";
 
 export interface VoteCounterProps {
-  proposal: Proposal;
+  voteItem: VotableItem;
 }
 
 interface SingleOptionCounterProps {
@@ -37,18 +37,18 @@ function SingleOptionCounter({
   );
 }
 
-export function VoteCounter({ proposal }: VoteCounterProps) {
-  const totalVotes = Number(countTotalVotes(proposal));
-  const forVotesPercent = (Number(proposal.votesFor) / totalVotes) * 100;
+export function VoteCounter({ voteItem }: VoteCounterProps) {
+  const totalVotes = Number(countTotalVotes(voteItem));
+  const forVotesPercent = (Number(voteItem.votesFor) / totalVotes) * 100;
   const againstVotesPercent =
-    (Number(proposal.votesAgainst) / totalVotes) * 100;
+    (Number(voteItem.votesAgainst) / totalVotes) * 100;
   const abstainVotesPercent =
-    (Number(proposal.votesAbstain) / totalVotes) * 100;
+    (Number(voteItem.votesAbstain) / totalVotes) * 100;
 
   const result = getVoteResult(
-    Number(proposal.votesFor),
-    Number(proposal.votesAgainst),
-    Number(proposal.votesAbstain),
+    Number(voteItem.votesFor),
+    Number(voteItem.votesAgainst),
+    Number(voteItem.votesAbstain)
   );
   return (
     <div className="space-y-4">
@@ -60,19 +60,19 @@ export function VoteCounter({ proposal }: VoteCounterProps) {
         <div className="space-y-2">
           <SingleOptionCounter
             title="За"
-            voteCount={Number(proposal.votesFor)}
+            voteCount={Number(voteItem.votesFor)}
             votePercent={forVotesPercent}
             indicatorClassName="bg-green-500"
           />
           <SingleOptionCounter
             title="Против"
-            voteCount={Number(proposal.votesAgainst)}
+            voteCount={Number(voteItem.votesAgainst)}
             votePercent={againstVotesPercent}
             indicatorClassName="bg-red-500"
           />
           <SingleOptionCounter
             title="Уздржан"
-            voteCount={Number(proposal.votesAbstain)}
+            voteCount={Number(voteItem.votesAbstain)}
             votePercent={abstainVotesPercent}
             indicatorClassName=""
           />
