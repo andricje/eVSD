@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "target": "es2020",
     "module": "commonjs",
@@ -13,14 +17,16 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "plugins": [
       {
         "name": "next"
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./*"
+      ]
     },
     "moduleResolution": "node"
   },
@@ -33,6 +39,11 @@
     "./src",
     "./scripts"
   ],
-  "files": ["./hardhat.config.ts", "lib/blockchain-utils.ts"],
-  "exclude": ["node_modules"]
+  "files": [
+    "./hardhat.config.ts",
+    "lib/blockchain-utils.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -21,18 +21,9 @@ import {
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
 import { IneligibleVoterError } from "./proposal-service-errors";
+import { ProposalService } from "./proposal-service";
 
 export type onProposalsChangedUnsubscribe = () => void;
-
-export interface ProposalService {
-  getProposals: () => Promise<Proposal[]>;
-  uploadProposal: (proposal: UIProposal) => Promise<bigint>;
-  voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
-  cancelProposal(proposal: Proposal): Promise<boolean>;
-  onProposalsChanged(
-    callback: (newProposals: Proposal[]) => void
-  ): onProposalsChangedUnsubscribe;
-}
 
 export class BlockchainProposalService implements ProposalService {
   private readonly governor: ethers.Contract;
@@ -179,12 +170,12 @@ export class BlockchainProposalService implements ProposalService {
         const votesForAddress =
           proposalIdStr in voteEventsForId
             ? voteEventsForId[proposalIdStr].reduce<Map<User, VoteEvent>>(
-                (acc, item) => {
-                  acc.set(item.voter, item);
-                  return acc;
-                },
-                new Map()
-              )
+              (acc, item) => {
+                acc.set(item.voter, item);
+                return acc;
+              },
+              new Map()
+            )
             : [];
         // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
         const voteItemData = deserializedData as VotableItemSerializationData;

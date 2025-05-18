@@ -1,11 +1,11 @@
 "use client";
 import {
-  InMemoryProposalService,
   Proposal,
-  ProposalService,
 } from "@/types/proposal";
 import { createContext, useEffect, useMemo, useState } from "react";
 import { useUser } from "./use-user";
+import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { InMemoryProposalService } from "@/lib/proposal-services/in-memory-proposal-service";
 
 interface ProposalsContextValue {
   proposals: Proposal[];

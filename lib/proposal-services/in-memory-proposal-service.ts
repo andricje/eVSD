@@ -10,14 +10,14 @@ import {
 } from "../../types/proposal";
 import {
   onProposalsChangedUnsubscribe,
-  ProposalService,
 } from "./blockchain-proposal-service";
 import { getNewVoterProposalDescription } from "../utils";
+import { ProposalService } from "./proposal-service";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;
   private onProposalsChangedCallback: (newProposals: Proposal[]) => void =
-    () => {};
+    () => { };
   private proposals: Proposal[] = [];
 
   constructor(user: User) {
@@ -81,7 +81,7 @@ export class InMemoryProposalService implements ProposalService {
   ): onProposalsChangedUnsubscribe {
     this.onProposalsChangedCallback = callback;
     return () => {
-      this.onProposalsChangedCallback = () => {};
+      this.onProposalsChangedCallback = () => { };
     };
   }
 
