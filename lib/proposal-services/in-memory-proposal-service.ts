@@ -8,9 +8,7 @@ import {
   VotableItem,
   VoteOption,
 } from "../../types/proposal";
-import {
-  onProposalsChangedUnsubscribe,
-} from "./blockchain-proposal-service";
+import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
 import { getNewVoterProposalDescription } from "../utils";
 import { ProposalService } from "./proposal-service";
 

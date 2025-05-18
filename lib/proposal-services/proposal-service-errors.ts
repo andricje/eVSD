@@ -23,5 +23,5 @@ export class DuplicateProposalError extends Error {
     this.name = "DuplicateProposalError";
 
     Object.setPrototypeOf(this, DuplicateProposalError.prototype);
-  } 
+  }
 }

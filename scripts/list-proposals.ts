@@ -1,14 +1,12 @@
 import { ethers } from "hardhat";
 import governorArtifacts from "../contracts/evsd-governor.json";
-import {
-  EvsdGovernor__factory,
-} from "../typechain-types";
+import { EvsdGovernor__factory } from "../typechain-types";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
   const governor = EvsdGovernor__factory.connect(
     governorArtifacts.address,
-    deployer,
+    deployer
   );
 
   console.log("Листа свих предлога:");
@@ -53,15 +51,19 @@ async function main() {
       4: "Успешан",
       5: "У реду за извршење",
       6: "Извршен",
-      7: "Истекао"
+      7: "Истекао",
     };
     console.log(`  Стање: ${proposalStates[Number(state)] || "Непознато"}`);
 
     // Приказујемо тренутне гласове
     const votes = await governor.proposalVotes(proposalId);
     console.log(`  Гласови за: ${ethers.formatUnits(votes.forVotes, 18)}`);
-    console.log(`  Гласови против: ${ethers.formatUnits(votes.againstVotes, 18)}`);
-    console.log(`  Уздржани гласови: ${ethers.formatUnits(votes.abstainVotes, 18)}`);
+    console.log(
+      `  Гласови против: ${ethers.formatUnits(votes.againstVotes, 18)}`
+    );
+    console.log(
+      `  Уздржани гласови: ${ethers.formatUnits(votes.abstainVotes, 18)}`
+    );
 
     console.log("-----------------------------------");
   }
@@ -72,4 +74,4 @@ main()
   .catch((error) => {
     console.error("Грешка:", error);
     process.exit(1);
-  }); 
+  });

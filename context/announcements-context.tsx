@@ -2,16 +2,27 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { Announcement, AnnouncementContextType } from "@/types/announcements";
-import { getActiveAnnouncements, getDeployedContracts } from "@/lib/blockchain-utils";
+import {
+  getActiveAnnouncements,
+  getDeployedContracts,
+} from "@/lib/blockchain-utils";
 import { useBrowserSigner } from "@/hooks/use-browser-signer";
 import { Contract } from "ethers";
 
 // Kreiranje konteksta sa inicijalnim vrednostima
-const AnnouncementsContext = createContext<AnnouncementContextType | undefined>(undefined);
+const AnnouncementsContext = createContext<AnnouncementContextType | undefined>(
+  undefined
+);
 
-export function AnnouncementsProvider({ children }: { children: React.ReactNode }) {
+export function AnnouncementsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [unseenAnnouncements, setUnseenAnnouncements] = useState<Announcement[]>([]);
+  const [unseenAnnouncements, setUnseenAnnouncements] = useState<
+    Announcement[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const { signer } = useBrowserSigner();
 
@@ -28,10 +39,10 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     if (!seenIds.includes(announcementId)) {
       const updatedSeenIds = [...seenIds, announcementId];
       localStorage.setItem("seenAnnouncements", JSON.stringify(updatedSeenIds));
-      
+
       // Ažuriramo stanje neviđenih obraćanja
-      setUnseenAnnouncements(prev => 
-        prev.filter(announcement => announcement.id !== announcementId)
+      setUnseenAnnouncements((prev) =>
+        prev.filter((announcement) => announcement.id !== announcementId)
       );
     }
   };
@@ -39,7 +50,9 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
   // Filtriranje neviđenih obraćanja
   const filterUnseenAnnouncements = (allAnnouncements: Announcement[]) => {
     const seenIds = getSeenAnnouncementIds();
-    return allAnnouncements.filter(announcement => !seenIds.includes(announcement.id));
+    return allAnnouncements.filter(
+      (announcement) => !seenIds.includes(announcement.id)
+    );
   };
 
   useEffect(() => {
@@ -53,7 +66,7 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
         setIsLoading(true);
         const { governor } = getDeployedContracts(signer);
         const fetchedAnnouncements = await getActiveAnnouncements(governor);
-        
+
         setAnnouncements(fetchedAnnouncements);
         setUnseenAnnouncements(filterUnseenAnnouncements(fetchedAnnouncements));
       } catch (error) {
@@ -68,7 +81,7 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
     // Postavka slušaoca za nova obraćanja
     const { governor } = getDeployedContracts(signer);
     const ethersGovernor = governor as unknown as Contract;
-    
+
     // Slušanje novih kreiranja obraćanja
     ethersGovernor.on(
       ethersGovernor.filters.AnnouncementCreated,
@@ -80,24 +93,22 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
           timestamp: Number(timestamp),
           isActive: true,
         };
-        
-        setAnnouncements(prev => [...prev, newAnnouncement]);
-        setUnseenAnnouncements(prev => [...prev, newAnnouncement]);
+
+        setAnnouncements((prev) => [...prev, newAnnouncement]);
+        setUnseenAnnouncements((prev) => [...prev, newAnnouncement]);
       }
     );
-    
+
     // Slušanje deaktiviranja obraćanja
     ethersGovernor.on(
       ethersGovernor.filters.AnnouncementDeactivated,
       (announcementId, event) => {
         const idToDeactivate = announcementId.toString();
-        
+
         // Uklanjamo deaktivirana obraćanja iz obe liste
-        setAnnouncements(prev => 
-          prev.filter(a => a.id !== idToDeactivate)
-        );
-        setUnseenAnnouncements(prev => 
-          prev.filter(a => a.id !== idToDeactivate)
+        setAnnouncements((prev) => prev.filter((a) => a.id !== idToDeactivate));
+        setUnseenAnnouncements((prev) =>
+          prev.filter((a) => a.id !== idToDeactivate)
         );
       }
     );
@@ -108,12 +119,12 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
   }, [signer]);
 
   return (
-    <AnnouncementsContext.Provider 
-      value={{ 
-        announcements, 
-        unseenAnnouncements, 
-        markAnnouncementAsSeen, 
-        isLoading 
+    <AnnouncementsContext.Provider
+      value={{
+        announcements,
+        unseenAnnouncements,
+        markAnnouncementAsSeen,
+        isLoading,
       }}
     >
       {children}
@@ -124,7 +135,9 @@ export function AnnouncementsProvider({ children }: { children: React.ReactNode 
 export function useAnnouncements() {
   const context = useContext(AnnouncementsContext);
   if (context === undefined) {
-    throw new Error("useAnnouncements mora biti korišćen unutar AnnouncementsProvider-a");
+    throw new Error(
+      "useAnnouncements mora biti korišćen unutar AnnouncementsProvider-a"
+    );
   }
   return context;
-} 
+}

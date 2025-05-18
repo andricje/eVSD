@@ -44,4 +44,4 @@ main()
   .catch((error) => {
     console.error("Грешка:", error);
     process.exit(1);
-  }); 
+  });

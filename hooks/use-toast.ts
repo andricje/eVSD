@@ -16,10 +16,10 @@ type ToasterToast = ToastProps & {
 };
 
 type ActionType = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
+  ADD_TOAST: "ADD_TOAST";
+  UPDATE_TOAST: "UPDATE_TOAST";
+  DISMISS_TOAST: "DISMISS_TOAST";
+  REMOVE_TOAST: "REMOVE_TOAST";
 };
 
 let count = 0;
@@ -31,21 +31,21 @@ function genId() {
 
 type Action =
   | {
-    type: ActionType["ADD_TOAST"];
-    toast: ToasterToast;
-  }
+      type: ActionType["ADD_TOAST"];
+      toast: ToasterToast;
+    }
   | {
-    type: ActionType["UPDATE_TOAST"];
-    toast: Partial<ToasterToast>;
-  }
+      type: ActionType["UPDATE_TOAST"];
+      toast: Partial<ToasterToast>;
+    }
   | {
-    type: ActionType["DISMISS_TOAST"];
-    toastId?: ToasterToast["id"];
-  }
+      type: ActionType["DISMISS_TOAST"];
+      toastId?: ToasterToast["id"];
+    }
   | {
-    type: ActionType["REMOVE_TOAST"];
-    toastId?: ToasterToast["id"];
-  };
+      type: ActionType["REMOVE_TOAST"];
+      toastId?: ToasterToast["id"];
+    };
 
 interface State {
   toasts: ToasterToast[];
@@ -81,7 +81,7 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t,
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
         ),
       };
 
@@ -103,10 +103,10 @@ export const reducer = (state: State, action: Action): State => {
         toasts: state.toasts.map((t) =>
           t.id === toastId || toastId === undefined
             ? {
-              ...t,
-              open: false,
-            }
-            : t,
+                ...t,
+                open: false,
+              }
+            : t
         ),
       };
     }
@@ -154,7 +154,9 @@ function toast({ ...props }: Toast) {
       id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) { dismiss(); };
+        if (!open) {
+          dismiss();
+        }
       },
     },
   });

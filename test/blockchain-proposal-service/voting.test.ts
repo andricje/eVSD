@@ -10,15 +10,18 @@ import {
   User,
   VoteOption,
 } from "../../types/proposal";
+import { IneligibleVoterError } from "../../lib/proposal-services/proposal-service-errors";
+import { getVoteResultForItem } from "../../lib/utils";
 import {
-  IneligibleVoterError,
-} from "../../lib/proposal-services/proposal-service-errors";
-import {
-  getVoteResultForItem,
-} from "../../lib/utils";
-import { assertVoterVoteRecordedCorrectly, castVotes, deployAndCreateMocks, fastForwardTime, getEligibleVoters, getRandomVotes, rng } from "../utils";
+  assertVoterVoteRecordedCorrectly,
+  castVotes,
+  deployAndCreateMocks,
+  fastForwardTime,
+  getEligibleVoters,
+  getRandomVotes,
+  rng,
+} from "../utils";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
-
 
 export const voteItems: UIVotableItem[] = [
   {
@@ -44,7 +47,6 @@ export const voteItems: UIVotableItem[] = [
   },
 ];
 
-
 function getVotes(numFor: number, numAgainst: number, numAbstain: number) {
   const result: VoteOption[] = [];
   for (let i = 0; i < numFor; i++) {
@@ -68,13 +70,16 @@ describe("BlockchainProposalService integration", function () {
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
     registeredVoterProposalServices = initData.registeredVoterProposalServices;
-    unregisteredVoterProposalServices = initData.unregisteredVoterProposalServices;
+    unregisteredVoterProposalServices =
+      initData.unregisteredVoterProposalServices;
     addVoterVoteItem = initData.addVoterVoteItem;
     votingPeriod = initData.votingPeriod;
     unregisteredVoterAddress = initData.unregisteredVoterAddress;
   });
 
-  async function deployAndGetProposalOneVoteItem(proposer: BlockchainProposalService | undefined = undefined) {
+  async function deployAndGetProposalOneVoteItem(
+    proposer: BlockchainProposalService | undefined = undefined
+  ) {
     const generatedProposal: UIProposal = {
       title: "Test proposal",
       description: "Test proposal description",
@@ -83,12 +88,8 @@ describe("BlockchainProposalService integration", function () {
     if (!proposer) {
       proposer = registeredVoterProposalServices[0];
     }
-    const proposalId =
-      await proposer.uploadProposal(
-        generatedProposal
-      );
-    const proposal =
-      await proposer.getProposal(proposalId);
+    const proposalId = await proposer.uploadProposal(generatedProposal);
+    const proposal = await proposer.getProposal(proposalId);
     return proposal;
   }
   async function deployAndGetProposalAddVoter() {
@@ -125,8 +126,7 @@ describe("BlockchainProposalService integration", function () {
         proposal.voteItems[0],
         "for"
       );
-    }
-    ).to.be.rejectedWith(IneligibleVoterError);
+    }).to.be.rejectedWith(IneligibleVoterError);
   });
   it("should correctly record the votes for all addresses when everyone has voted", async () => {
     const proposal = await deployAndGetProposalOneVoteItem();
@@ -151,7 +151,11 @@ describe("BlockchainProposalService integration", function () {
           address: voterAddress,
           name: "Test user name",
         };
-        assertVoterVoteRecordedCorrectly(updatedProposal.voteItems[voteItemIndex], user, votes[i]);
+        assertVoterVoteRecordedCorrectly(
+          updatedProposal.voteItems[voteItemIndex],
+          user,
+          votes[i]
+        );
       }
     }
   });
@@ -189,7 +193,11 @@ describe("BlockchainProposalService integration", function () {
           address: voterAddress,
           name: "Test user name",
         };
-        assertVoterVoteRecordedCorrectly(updatedProposal.voteItems[voteItemIndex], user, votes[i]);
+        assertVoterVoteRecordedCorrectly(
+          updatedProposal.voteItems[voteItemIndex],
+          user,
+          votes[i]
+        );
       }
     }
   });
@@ -198,7 +206,11 @@ describe("BlockchainProposalService integration", function () {
     const voteItem = proposal.voteItems[0];
     const numVoters = registeredVoterProposalServices.length;
 
-    await castVotes(registeredVoterProposalServices, voteItem, getVotes(numVoters, 0, 0));
+    await castVotes(
+      registeredVoterProposalServices,
+      voteItem,
+      getVotes(numVoters, 0, 0)
+    );
     await fastForwardTime(0, 0, votingPeriod + 10);
     const updatedProposal =
       await registeredVoterProposalServices[0].getProposal(proposal.id);
@@ -211,18 +223,28 @@ describe("BlockchainProposalService integration", function () {
     const proposal = await deployAndGetProposalAddVoter();
     const voteItem = proposal.voteItems[0];
     const numVoters = registeredVoterProposalServices.length;
-    await castVotes(registeredVoterProposalServices, voteItem, getVotes(numVoters, 0, 0));
+    await castVotes(
+      registeredVoterProposalServices,
+      voteItem,
+      getVotes(numVoters, 0, 0)
+    );
     await fastForwardTime(0, 0, votingPeriod + 10);
 
     const newProposal = await deployAndGetProposalOneVoteItem();
     const newVoterProposalService = unregisteredVoterProposalServices[0];
     newVoterProposalService.voteForItem(newProposal.voteItems[0], "for");
-    const newProposalUpdated = await newVoterProposalService.getProposal(newProposal.id);
+    const newProposalUpdated = await newVoterProposalService.getProposal(
+      newProposal.id
+    );
     const newVoter: User = {
       address: unregisteredVoterAddress,
-      name: "New voter"
+      name: "New voter",
     };
-    assertVoterVoteRecordedCorrectly(newProposalUpdated.voteItems[0], newVoter, "for");
+    assertVoterVoteRecordedCorrectly(
+      newProposalUpdated.voteItems[0],
+      newVoter,
+      "for"
+    );
   });
   it("should allow a proposer to cancel the proposal 10 hours after creating and update the proposal state accordingly", async () => {
     // Take some proposer other than the first account
@@ -230,6 +252,8 @@ describe("BlockchainProposalService integration", function () {
     const proposal = await deployAndGetProposalOneVoteItem(proposalService);
 
     await fastForwardTime(0, 10, 0);
-    await expect(proposalService.cancelProposal(proposal)).to.eventually.equal(true);
+    await expect(proposalService.cancelProposal(proposal)).to.eventually.equal(
+      true
+    );
   });
 });
