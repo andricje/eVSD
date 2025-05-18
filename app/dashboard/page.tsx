@@ -36,7 +36,6 @@ import {
 } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
-import { useUser } from "@/hooks/use-user";
 
 // Compact WalletInfo Component
 const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
@@ -109,7 +108,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
           </>
         }
       />
-      {isAdmin && (
+      {/* {isAdmin && (
         <NewAnnouncementDialog
           customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
           customText={
@@ -119,7 +118,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
             </>
           }
         />
-      )}
+      )} */}
       <NewVoterDialog />
       <Button
         variant="outline"
@@ -131,75 +130,6 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
           Резултати
         </Link>
       </Button>
-    </div>
-  );
-};
-
-// Function to categorize proposals
-function categorizeProposals(proposals: Proposal[], user: User) {
-  // Aktivni predlozi za koje korisnik NIJE glasao
-  const activeProposalsToVote = proposals.filter(
-    (proposal: Proposal) =>
-      proposal.status === "open" &&
-      !hasVotingTimeExpired(proposal) &&
-      countUserRemainingItemsToVote(proposal, user) > 0
-  );
-
-  // Predlozi za koje je korisnik glasao i glasanje je završeno
-  const votedCompletedProposals = proposals.filter(
-    (proposal: Proposal) =>
-      countUserRemainingItemsToVote(proposal, user) === 0 &&
-      isVotingComplete(proposal)
-  );
-
-  // Svi predlozi za koje je korisnik glasao
-  const votedProposals = proposals.filter(
-    (proposal: Proposal) => countUserRemainingItemsToVote(proposal, user) === 0
-  );
-
-  // Predlozi gde korisnik treba da glasa, sa dostupnim kvorumom
-  const proposalsWithQuorum = activeProposalsToVote.filter(
-    isQuorumReachedForAllPoints
-  );
-
-  const proposalsWithoutQuorum = activeProposalsToVote.filter(
-    (p: Proposal) => !isQuorumReachedForAllPoints(p)
-  );
-
-  return {
-    activeProposalsToVote,
-    votedCompletedProposals,
-    votedProposals,
-    proposalsWithQuorum,
-    proposalsWithoutQuorum,
-  };
-}
-
-// UrgentProposals Component
-const UrgentProposals: React.FC<{ proposals: Proposal[] }> = ({
-  proposals,
-}) => {
-  if (proposals.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-6">
-      {/* <Alert className="bg-destructive/10 border-destructive/30 text-foreground py-3 px-5">
-        <AlertTriangle className="h-5 w-5 text-destructive" />
-        <AlertTitle className="text-base font-semibold">
-          Хитни предлози
-        </AlertTitle>
-        <AlertDescription className="text-sm">
-          Следећи предлози су достигли кворум и захтевају хитно гласање
-        </AlertDescription>
-      </Alert> */}
-
-      <div className="space-y-4 mt-4">
-        {proposals.map((proposal) => (
-          <ProposalCard key={proposal.id} proposal={proposal} isUrgent={true} />
-        ))}
-      </div>
     </div>
   );
 };
@@ -268,26 +198,27 @@ const FacultyAnnouncements: React.FC = () => {
   );
 };
 
+function getProposalsToVote(proposals: Proposal[], user: User) {
+  return proposals.filter(
+    (proposal) =>
+      proposal.voteItems.some((item) => !item.userVotes.has(user.address)) &&
+      !isVotingComplete(proposal)
+  );
+}
+
 // Dashboard component
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
-  const user = useUser();
+  const { user } = useWallet();
   const { proposals } = useProposals();
-  const { proposalsWithQuorum, proposalsWithoutQuorum } = categorizeProposals(
-    proposals,
-    user ?? { address: "", name: "" }
-  );
-
-  // Status plenuma
-  const totalActiveProposals =
-    proposalsWithQuorum.length + proposalsWithoutQuorum.length;
+  const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
       <main className="flex-1 w-full px-5 py-8">
         <div className="flex flex-col gap-7 max-w-full">
           {/* Platform stats */}
-          <div className="grid grid-cols-3 gap-4">
+          {/* <div className="grid grid-cols-3 gap-4">
             <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
               <div className="p-2.5 bg-blue-100 rounded-full">
                 <FileText className="h-5 w-5 text-blue-600" />
@@ -303,12 +234,6 @@ export default function Dashboard() {
               <div className="p-2.5 bg-green-100 rounded-full">
                 <Vote className="h-5 w-5 text-green-600" />
               </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Достигли кворум</p>
-                <p className="text-lg font-bold">
-                  {proposalsWithQuorum.length}
-                </p>
-              </div>
             </Card>
             <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
               <div className="p-2.5 bg-amber-100 rounded-full">
@@ -321,7 +246,7 @@ export default function Dashboard() {
                 <p className="text-lg font-bold">{QUORUM} гласова</p>
               </div>
             </Card>
-          </div>
+          </div> */}
 
           {/* Wallet info */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -336,9 +261,6 @@ export default function Dashboard() {
               <ActionButtons isAdmin={false} />
             </div>
           </div>
-
-          {/* Urgent Proposals */}
-          <UrgentProposals proposals={proposalsWithQuorum} />
 
           {/* Main tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
@@ -368,9 +290,9 @@ export default function Dashboard() {
                 </Badge>
               </div>
 
-              {proposalsWithoutQuorum.length > 0 ? (
+              {proposalToVote.length > 0 ? (
                 <div className="space-y-4 mt-5">
-                  {proposalsWithoutQuorum.map((proposal) => (
+                  {proposalToVote.map((proposal) => (
                     <ProposalCard
                       key={proposal.id}
                       proposal={proposal}

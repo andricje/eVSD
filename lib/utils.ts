@@ -154,10 +154,7 @@ export function isQuorumReached(voteItem: VotableItem) {
 }
 
 export function isQuorumReachedForAllPoints(proposal: Proposal) {
-  return (
-    proposal.voteItems.filter((voteItem) => !isQuorumReached(voteItem)).length >
-    0
-  );
+  return proposal.voteItems.every((item) => isQuorumReached(item));
 }
 
 export function countTotalVotes(voteItem: VotableItem) {
@@ -180,7 +177,7 @@ export function getUserVotingHistory(proposals: Proposal[], user: User) {
       const votesForProposal = proposal.voteItems.reduce<
         { event: VoteEvent; item: VotableItem }[]
       >((acc, item) => {
-        const userVote = item.userVotes.get(user);
+        const userVote = item.userVotes.get(user.address);
         if (userVote) {
           acc.push({ event: userVote, item });
         }
@@ -193,8 +190,9 @@ export function getUserVotingHistory(proposals: Proposal[], user: User) {
 }
 
 export function countUserRemainingItemsToVote(proposal: Proposal, user: User) {
-  return proposal.voteItems.filter((voteItem) => !voteItem.userVotes.has(user))
-    .length;
+  return proposal.voteItems.filter(
+    (voteItem) => !voteItem.userVotes.has(user.address)
+  ).length;
 }
 
 // Returns the hardcoded description for proposals that actually move tokens on chain and add new voters

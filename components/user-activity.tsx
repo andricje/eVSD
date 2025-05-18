@@ -14,11 +14,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useProposals } from "@/hooks/use-proposals";
-import { useUser } from "@/hooks/use-user";
+import { useWallet } from "@/context/wallet-context";
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();
-  const user = useUser();
+  const { user } = useWallet();
   const { toast } = useToast();
 
   const userVotingHistory = getUserVotingHistory(proposals, user);

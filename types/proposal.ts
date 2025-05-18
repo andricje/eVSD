@@ -28,7 +28,7 @@ export interface VotableItem {
   id: bigint;
   title: string;
   description: string;
-  userVotes: Map<User, VoteEvent>;
+  userVotes: Map<string, VoteEvent>;
 }
 
 export function countVoteForOption(

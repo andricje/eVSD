@@ -39,7 +39,7 @@ import {
   hasVotingTimeExpired,
 } from "@/lib/utils";
 import { addressNameMap } from "@/lib/address-name-map";
-import { useUser } from "@/hooks/use-user";
+import { useWallet } from "@/context/wallet-context";
 
 // VoteConfirm komponenta
 const VoteConfirm: React.FC<{
@@ -221,12 +221,13 @@ const YourVoteBadge = ({ vote }: { vote: string }) => {
 // SubItemVoting komponenta za glasanje na podtačkama
 const SubItemVoting: React.FC<{
   subItem: VotableItem;
-  currentUser?: User;
+  currentUser: User | null;
   onVote: (id: string, vote: VoteOption, title: string) => void;
 }> = ({ subItem, currentUser: currentUser, onVote }) => {
   const isVotingEnabled = currentUser && currentUser.address in addressNameMap;
   const yourVote =
-    (currentUser && subItem.userVotes.get(currentUser)?.vote) ?? "didntVote";
+    (currentUser && subItem.userVotes.get(currentUser.address)?.vote) ??
+    "didntVote";
 
   return (
     <Card className="border-border/40 mb-4">
@@ -286,7 +287,7 @@ const AuthorBadge = ({ isAuthor }: { isAuthor: boolean }) => {
 export default function ProposalDetails() {
   const params = useParams();
   const router = useRouter();
-  const user = useUser();
+  const { user } = useWallet();
   const { proposals, proposalService } = useProposals();
 
   const [error, setError] = useState("");

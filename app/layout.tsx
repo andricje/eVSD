@@ -4,8 +4,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { WalletProvider } from "@/context/wallet-context";
 import { Toaster } from "@/components/ui/toaster";
-import { ProposalsProvider } from "@/hooks/proposals-context";
-import { AnnouncementsProvider } from "@/context/announcements-context";
+import { ProposalsProvider } from "@/context/proposals-context";
+// import { AnnouncementsProvider } from "@/context/announcements-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,16 +16,22 @@ export const metadata: Metadata = {
   generator: "Marko Andric",
 };
 
+// TODO: get this from some config
+function getProposalServiceType(): "mock" | "blockchain" {
+  return "mock";
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const type = getProposalServiceType();
   return (
     <html lang="sr">
       <body className={inter.className}>
-        <WalletProvider>
-          <ProposalsProvider>{children}</ProposalsProvider>
+        <WalletProvider type={type}>
+          <ProposalsProvider type={type}>{children}</ProposalsProvider>
         </WalletProvider>
         <Toaster />
       </body>

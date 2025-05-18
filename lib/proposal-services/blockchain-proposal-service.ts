@@ -167,13 +167,13 @@ export class BlockchainProposalService implements ProposalService {
         // Convert an array of VoteEvents into a map of voter -> voteEvent
         const votesForAddress =
           proposalIdStr in voteEventsForId
-            ? voteEventsForId[proposalIdStr].reduce<Map<User, VoteEvent>>(
-              (acc, item) => {
-                acc.set(item.voter, item);
-                return acc;
-              },
-              new Map()
-            )
+            ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
+                (acc, item) => {
+                  acc.set(item.voter.address, item);
+                  return acc;
+                },
+                new Map()
+              )
             : [];
         // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
         const voteItemData = deserializedData as VotableItemSerializationData;
@@ -402,14 +402,6 @@ export class BlockchainProposalService implements ProposalService {
   async voteForItem(item: VotableItem, vote: VoteOption) {
     const voteGovernor = convertVoteOptionToGovernor(vote);
     await this.governor.castVote(item.id, voteGovernor);
-
-    // try {
-
-    // } catch (error) {
-    //   throw new IneligibleVoterError(
-    //     `Address ${await this.signer.getAddress()} is not eligible to vote.`
-    //   );
-    // }
   }
 }
 interface SerializationData {
