@@ -8,8 +8,9 @@ import { EvsdToken, EvsdGovernor } from "../typechain-types";
 import evsdTokenArtifacts from "../contracts/evsd-token.json";
 import { UIVotableItem, UIAddVoterVotableItem, VotableItem, AddVoterVotableItem, IsUIAddVoterVotableItem, UIProposal, Proposal, User, VoteOption } from "../types/proposal";
 import seedrandom from "seedrandom";
-import { BlockchainProposalService, ProposalService } from "../lib/proposal-services/blockchain-proposal-service";
+import { BlockchainProposalService } from "../lib/proposal-services/blockchain-proposal-service";
 import { InMemoryProposalFileService } from "../lib/file-upload";
+import { ProposalService } from "@/lib/proposal-services/proposal-service";
 export const rng = seedrandom("42");
 export interface TestInitData {
     registeredVoterProposalServices: BlockchainProposalService[],
@@ -124,13 +125,13 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     return initData;
 }
 export async function getEligibleVoters() {
-    const [deployer, unregisteredVoter, ...voters] =
+    const [, , ...voters] =
         await hardhat.ethers.getSigners();
 
     return voters;
 }
 async function getUnregisteredVoter() {
-    const [deployer, unregisteredVoter, ...voters] =
+    const [, unregisteredVoter] =
         await hardhat.ethers.getSigners();
     return unregisteredVoter;
 }

@@ -7,7 +7,6 @@ import {
   UIVotableItem,
   UIAddVoterVotableItem,
   IsUIAddVoterVotableItem,
-  ProposalState,
 } from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
 import { ProposalFileService, fileToDigestHex } from "../file-upload";
@@ -20,7 +19,6 @@ import {
 } from "../utils";
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
-import { IneligibleVoterError } from "./proposal-service-errors";
 import { ProposalService } from "./proposal-service";
 
 export type onProposalsChangedUnsubscribe = () => void;

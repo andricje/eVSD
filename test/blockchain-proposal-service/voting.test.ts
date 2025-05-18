@@ -8,10 +8,8 @@ import {
   UIProposal,
   UIVotableItem,
   User,
-  VotableItem,
   VoteOption,
 } from "../../types/proposal";
-import { network } from "hardhat";
 import {
   IneligibleVoterError,
 } from "../../lib/proposal-services/proposal-service-errors";

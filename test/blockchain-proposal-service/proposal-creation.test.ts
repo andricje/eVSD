@@ -3,8 +3,8 @@ import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
 import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
-import { DuplicateProposalError, IneligibleProposerError, IneligibleVoterError } from "../../lib/proposal-services/proposal-service-errors";
-import { UIAddVoterVotableItem, UIProposal, User } from "../../types/proposal";
+import { DuplicateProposalError, IneligibleProposerError } from "../../lib/proposal-services/proposal-service-errors";
+import { UIAddVoterVotableItem, UIProposal } from "../../types/proposal";
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
 
@@ -119,4 +119,4 @@ describe("BlockchainProposalService integration", function () {
             proposal2
         );
     });
-})
+});
