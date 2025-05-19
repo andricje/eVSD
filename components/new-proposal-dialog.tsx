@@ -39,6 +39,17 @@ interface NewProposalDialogProps {
   customText?: ReactElement;
 }
 
+const allowedFileTypes = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+];
+const maxFileSize = 5 * 1024 * 1024;
+
 export function NewProposalDialog({
   customClassName,
   customText,
@@ -59,6 +70,17 @@ export function NewProposalDialog({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (!allowedFileTypes.includes(file.type)) {
+        setError(
+          "Неподржани тип фајла. Подржани типови су: PDF, DOC, XLS, PPT."
+        );
+        return;
+      }
+      if (file.size > maxFileSize) {
+        setError("Фајл је превелики. Максимална величина је 5 MB.");
+        return;
+      }
       setNewProposal({ ...newProposal, file: e.target.files[0] });
       setDocumentName(e.target.files[0].name);
     }

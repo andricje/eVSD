@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useEffect, useMemo, useState } from "react";
 import { useWallet } from "@/context/wallet-context";
-import { InMemoryProposalFileService } from "@/lib/file-upload";
+import { PinataProposalFileService } from "@/lib/file-upload";
 import { BlockchainProposalService } from "@/lib/proposal-services/blockchain-proposal-service";
 import { InMemoryProposalService } from "@/lib/proposal-services/in-memory-proposal-service";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
@@ -27,7 +27,7 @@ function useBlockchainProposalService(): ProposalService | null {
     if (signer && provider) {
       return new BlockchainProposalService(
         signer,
-        new InMemoryProposalFileService(),
+        new PinataProposalFileService(),
         provider
       );
     }
