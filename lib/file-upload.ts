@@ -20,6 +20,42 @@ export class InMemoryProposalFileService implements ProposalFileService {
   }
 }
 
+export class PinataProposalFileService implements ProposalFileService {
+  async upload(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/pinata-upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to upload file to Pinata");
+    }
+
+    const data = await res.json();
+    const ipfsHash = data.IpfsHash;
+
+    console.log("Uploaded to IPFS:", ipfsHash);
+
+    return ipfsHash;
+  }
+
+  async fetch(digestHex: string): Promise<File> {
+    const response = await fetch(
+      `https://gateway.pinata.cloud/ipfs/${digestHex}`
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch file from IPFS");
+    }
+
+    const blob = await response.blob();
+
+    return new File([blob], digestHex);
+  }
+}
+
 export async function fileToDigestHex(file: File) {
   const buffer = await window.crypto.subtle.digest(
     "SHA-256",
