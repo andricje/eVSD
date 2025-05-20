@@ -22,37 +22,38 @@ export class InMemoryProposalFileService implements ProposalFileService {
 
 export class PinataProposalFileService implements ProposalFileService {
   async upload(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", file);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
 
-    const res = await fetch("/api/pinata-upload", {
-      method: "POST",
-      body: formData,
-    });
+      const { uploadToPinata } = await import("@/app/actions/pinata-upload");
+      const data = await uploadToPinata(formData.get("file")!);
 
-    if (!res.ok) {
+      const ipfsHash = data.IpfsHash;
+
+      return ipfsHash;
+    } catch (error) {
+      console.error("Error uploading file to Pinata:", error);
       throw new Error("Failed to upload file to Pinata");
     }
-
-    const data = await res.json();
-    const ipfsHash = data.IpfsHash;
-
-    console.log("Uploaded to IPFS:", ipfsHash);
-
-    return ipfsHash;
   }
 
   async fetch(digestHex: string): Promise<File> {
-    const response = await fetch(
-      `https://gateway.pinata.cloud/ipfs/${digestHex}`
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch file from IPFS");
+    try {
+      const response = await fetch(
+        `https://gateway.pinata.cloud/ipfs/${digestHex}`
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch file from IPFS");
+      }
+
+      const blob = await response.blob();
+
+      return new File([blob], digestHex);
+    } catch (error) {
+      console.error("Error fetching file from Pinata:", error);
+      throw new Error("Failed to fetch file from Pinata");
     }
-
-    const blob = await response.blob();
-
-    return new File([blob], digestHex);
   }
 }
 
