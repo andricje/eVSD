@@ -7,6 +7,7 @@ import {
   UIVotableItem,
   UIAddVoterVotableItem,
   IsUIAddVoterVotableItem,
+  AddVoterVotableItem,
 } from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
 import { ProposalFileService, fileToDigestHex } from "../file-upload";
@@ -96,6 +97,76 @@ export class BlockchainProposalService implements ProposalService {
     return proposal;
   }
 
+
+  private async parseProposal(deserializedData: SerializationData, args: ethers.Result) : Promise<Proposal | undefined>
+  {
+    const proposalId = args.proposalId;
+    const voteStart = new Date(Number(args.voteStart) * 1000);
+    const stateIndex = Number(
+      (await this.governor.state(proposalId)) as bigint
+    );
+    const proposalState = convertGovernorState(stateIndex);
+    const deadline = await this.governor.proposalDeadline(proposalId);
+    const closesAt = new Date(Number(deadline) * 1000);
+    // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
+    const proposalData = deserializedData as ProposalSerializationData;
+    return {
+      id: proposalId,
+      title: proposalData.title,
+      description: proposalData.description,
+      author: {
+        address: args.proposer,
+        name: convertAddressToName(args.proposer),
+      },
+      file:
+        proposalData.fileHash !== ""
+          ? await this.fileService.fetch(proposalData.fileHash)
+          : undefined,
+      dateAdded: voteStart,
+      status: proposalState,
+      closesAt: closesAt,
+      voteItems: [],
+    };
+  }
+
+  private async parseVotableItem(deserializedData: VotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>) : Promise<VotableItem | undefined>
+  {
+    const proposalId = args.proposalId;
+    const proposalIdStr = proposalId.toString();
+
+    // Convert an array of VoteEvents into a map of voter -> voteEvent
+    const votesForAddress =
+      proposalIdStr in voteEventsForId
+        ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
+            (acc, item) => {
+              acc.set(item.voter.address, item);
+              return acc;
+            },
+            new Map()
+          )
+        : new Map<string, VoteEvent>();
+    
+    return {
+      id: proposalId,
+      title: deserializedData.title,
+      description: deserializedData.description,
+      userVotes: votesForAddress,
+    };
+  }
+
+  private async parseAddVoterVotableItem(deserializedData: AddVoterVotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>): Promise<AddVoterVotableItem | undefined>
+  {
+    const votableItem = await this.parseVotableItem(deserializedData, args, voteEventsForId);
+    if(!votableItem)
+    {
+      return undefined;
+    }
+    return {
+      ...votableItem,
+      newVoterAddress: deserializedData.newVoterAddress
+    };
+  }
+
   async getProposals(): Promise<Proposal[]> {
     const proposalCreatedFilter = this.governor.filters.ProposalCreated();
     const events = await this.governor.queryFilter(
@@ -103,11 +174,9 @@ export class BlockchainProposalService implements ProposalService {
       0,
       "latest"
     );
-    const decimals = await this.token.decimals();
-    const oneToken = ethers.parseUnits("1", decimals);
 
     const proposals: Proposal[] = [];
-    const voteItemsForProposalId: Record<string, VotableItem[]> = {};
+    const voteItemsForProposalId: Record<string, (VotableItem|AddVoterVotableItem)[]> = {};
     const allVoteEvents = await this.getAllVoteEvents();
     const voteEventsForId = allVoteEvents.reduce<Record<string, VoteEvent[]>>(
       (acc, item) => {
@@ -126,76 +195,44 @@ export class BlockchainProposalService implements ProposalService {
       if (!args) {
         continue;
       }
-      const proposalId = args.proposalId;
-      const stateIndex = Number(
-        (await this.governor.state(proposalId)) as bigint
-      );
-      const proposalState = convertGovernorState(stateIndex);
-      const countedVotes = await this.governor.proposalVotes(args.proposalId);
-      const deadline = await this.governor.proposalDeadline(proposalId);
-      const closesAt = new Date(Number(deadline) * 1000);
-      const voteStart = new Date(Number(args.voteStart) * 1000);
 
       // All serializable data is stored as a json string inside the proposal description
       const deserializedData = this.deserializeChainData(args.description);
       if (deserializedData.type === "proposal") {
-        // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
-        const proposalData = deserializedData as ProposalSerializationData;
-        const proposal = {
-          id: proposalId,
-          title: proposalData.title,
-          description: proposalData.description,
-          author: {
-            address: args.proposer,
-            name: convertAddressToName(args.proposer),
-          },
-          file:
-            proposalData.fileHash !== ""
-              ? await this.fileService.fetch(proposalData.fileHash)
-              : undefined,
-          dateAdded: voteStart,
-          status: proposalState,
-          closesAt: closesAt,
-          voteItems: [],
-        } as Proposal;
+        const proposal = await this.parseProposal(deserializedData, args);
+        if(!proposal)
+        {
+          continue;
+        }
         proposals.push(proposal);
-      } else {
-        // TODO: Verify args[3] is values or even better unpack the event in a better way
-        this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
-        // Create a VotableItem
-        const proposalIdStr = proposalId.toString();
-        // Convert an array of VoteEvents into a map of voter -> voteEvent
-        const votesForAddress =
-          proposalIdStr in voteEventsForId
-            ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
-                (acc, item) => {
-                  acc.set(item.voter.address, item);
-                  return acc;
-                },
-                new Map()
-              )
-            : [];
-        // Note that the code below removes decimals from the counted votes and therefore will not work properly if we allow decimal votes in the future
+      } else if(deserializedData.type === "voteItem"){
         const voteItemData = deserializedData as VotableItemSerializationData;
-        const votableItem = {
-          id: proposalId,
-          title: voteItemData.title,
-          description: voteItemData.description,
-          author: {
-            address: args.proposer,
-            name: convertAddressToName(args.proposer),
-          },
-          votesFor: Number(countedVotes.forVotes / oneToken),
-          votesAgainst: Number(countedVotes.againstVotes / oneToken),
-          votesAbstain: Number(countedVotes.abstainVotes / oneToken),
-          status: "open",
-          userVotes: votesForAddress,
-        } as VotableItem;
+        const votableItem = await this.parseVotableItem(voteItemData,args,voteEventsForId);
+        if(!votableItem)
+        {
+          continue;
+        }
         // Add to the map
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
           voteItemsForProposalId[voteItemData.parentProposalId] = [];
         }
         voteItemsForProposalId[voteItemData.parentProposalId].push(votableItem);
+      }
+      else if(deserializedData.type === "addVoterVoteItem")
+      {
+        // TODO: Verify args[3] is values or even better unpack the event in a better way
+        this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
+        const voteItemData = deserializedData as AddVoterVotableItemSerializationData;
+        const addVoterItem = await this.parseAddVoterVotableItem(voteItemData,args,voteEventsForId);
+        if(!addVoterItem)
+        {
+          continue;
+        }
+        // Add to the map
+        if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
+          voteItemsForProposalId[voteItemData.parentProposalId] = [];
+        }
+        voteItemsForProposalId[voteItemData.parentProposalId].push(addVoterItem);
       }
     }
     // Pair child VoteItems with Proposals
@@ -317,10 +354,11 @@ export class BlockchainProposalService implements ProposalService {
     const newVoterAddress = item.newVoterAddress;
     const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
 
-    const serializationData: VotableItemSerializationData = {
+    const serializationData: AddVoterVotableItemSerializationData = {
       ...getNewVoterProposalDescription(newVoterAddress),
-      type: "voteItem",
+      type: "addVoterVoteItem",
       parentProposalId: parentProposalId.toString(),
+      newVoterAddress
     };
     const descriptionSerialized = JSON.stringify(serializationData);
 
@@ -407,7 +445,7 @@ export class BlockchainProposalService implements ProposalService {
 interface SerializationData {
   title: string;
   description: string;
-  type: "proposal" | "voteItem";
+  type: "proposal" | "voteItem" | "addVoterVoteItem";
 }
 
 interface ProposalSerializationData extends SerializationData {
@@ -415,4 +453,7 @@ interface ProposalSerializationData extends SerializationData {
 }
 interface VotableItemSerializationData extends SerializationData {
   parentProposalId: string;
+}
+interface AddVoterVotableItemSerializationData extends VotableItemSerializationData {
+  newVoterAddress: string;
 }

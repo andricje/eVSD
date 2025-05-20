@@ -7,9 +7,28 @@ import {
   DuplicateProposalError,
   IneligibleProposerError,
 } from "../../lib/proposal-services/proposal-service-errors";
-import { UIAddVoterVotableItem, UIProposal } from "../../types/proposal";
+import { UIAddVoterVotableItem, UIProposal, UIVotableItem } from "../../types/proposal";
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
+import { v4 as uuidv4 } from 'uuid';
+function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal
+{
+  const items: UIVotableItem[] = [];
+  for(let i = 0; i < numVoteItems; i++)
+  {
+    items.push({
+      title: `Vote item ${i}`,
+      description: `Test description ${uuidv4()}`,
+      UIOnlyId: `${i}`
+    });
+  }
+
+  return {
+    title: `Test proposal ${uuidv4()}`,
+    description: "Test proposal description",
+    voteItems: items,
+  };
+}
 
 describe("BlockchainProposalService integration", function () {
   let registeredVoterProposalServices: BlockchainProposalService[];
@@ -61,6 +80,20 @@ describe("BlockchainProposalService integration", function () {
         generatedProposal
       );
     await assertProposalSameForEveryone(generatedProposal, proposalId);
+  });
+  it("should preserve the order of vote items of a proposal", async () => {
+    const generatedProposal1 = getProposalLargeNumberOfVoteItems(20);
+    const generatedProposal2 = getProposalLargeNumberOfVoteItems(10);
+
+    const proposalId1 =
+      await registeredVoterProposalServices[0].uploadProposal(
+        generatedProposal1
+      );
+    const proposalId2 = await registeredVoterProposalServices[0].uploadProposal(
+      generatedProposal2
+    );
+    await assertProposalSameForEveryone(generatedProposal1, proposalId1);
+    await assertProposalSameForEveryone(generatedProposal2, proposalId2);
   });
   it("should create a proposal on-chain with correct title and description when there is a vote item to add a voter and fetch it", async () => {
     const generatedProposal: UIProposal = {

@@ -21,7 +21,6 @@ import {
   getRandomVotes,
   rng,
 } from "../utils";
-import { ProposalService } from "@/lib/proposal-services/proposal-service";
 
 export const voteItems: UIVotableItem[] = [
   {
@@ -232,7 +231,7 @@ describe("BlockchainProposalService integration", function () {
 
     const newProposal = await deployAndGetProposalOneVoteItem();
     const newVoterProposalService = unregisteredVoterProposalServices[0];
-    newVoterProposalService.voteForItem(newProposal.voteItems[0], "for");
+    await newVoterProposalService.voteForItem(newProposal.voteItems[0], "for");
     const newProposalUpdated = await newVoterProposalService.getProposal(
       newProposal.id
     );
