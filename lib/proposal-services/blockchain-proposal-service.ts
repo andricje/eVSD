@@ -176,7 +176,7 @@ export class BlockchainProposalService implements ProposalService {
     );
 
     const proposals: Proposal[] = [];
-    const voteItemsForProposalId: Record<string, (VotableItem|AddVoterVotableItem)[]> = {};
+    const voteItemsForProposalId: Record<string, {item: VotableItem|AddVoterVotableItem, index: number}[]> = {};
     const allVoteEvents = await this.getAllVoteEvents();
     const voteEventsForId = allVoteEvents.reduce<Record<string, VoteEvent[]>>(
       (acc, item) => {
@@ -216,7 +216,7 @@ export class BlockchainProposalService implements ProposalService {
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
           voteItemsForProposalId[voteItemData.parentProposalId] = [];
         }
-        voteItemsForProposalId[voteItemData.parentProposalId].push(votableItem);
+        voteItemsForProposalId[voteItemData.parentProposalId].push({item:votableItem, index:voteItemData.index});
       }
       else if(deserializedData.type === "addVoterVoteItem")
       {
@@ -232,16 +232,21 @@ export class BlockchainProposalService implements ProposalService {
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
           voteItemsForProposalId[voteItemData.parentProposalId] = [];
         }
-        voteItemsForProposalId[voteItemData.parentProposalId].push(addVoterItem);
+        voteItemsForProposalId[voteItemData.parentProposalId].push({item:addVoterItem, index:voteItemData.index});
       }
     }
     // Pair child VoteItems with Proposals
     for (const proposal of proposals) {
       const proposalId = proposal.id.toString();
-      proposal.voteItems =
-        proposalId in voteItemsForProposalId
-          ? voteItemsForProposalId[proposalId]
-          : [];
+      
+      proposal.voteItems = []
+      if(proposalId in voteItemsForProposalId)
+      {
+        // Ensure the vote items are ordered correctly
+        const voteItemsCorrectOrder =  voteItemsForProposalId[proposalId].sort((lhs,rhs)=>{return lhs.index - rhs.index});
+        proposal.voteItems = voteItemsCorrectOrder.map((x) => x.item);
+      }
+
     }
     return proposals;
   }
@@ -287,12 +292,13 @@ export class BlockchainProposalService implements ProposalService {
     return JSON.stringify(serializationData);
   }
 
-  private serializeVotableItem(item: UIVotableItem, parentId: bigint): string {
+  private serializeVotableItem(item: UIVotableItem, parentId: bigint, index: number): string {
     const serializationData: VotableItemSerializationData = {
       type: "voteItem",
       title: item.title,
       description: item.description,
       parentProposalId: parentId.toString(),
+      index
     };
     return JSON.stringify(serializationData);
   }
@@ -412,13 +418,14 @@ export class BlockchainProposalService implements ProposalService {
 
   async uploadVotableItem(
     item: UIVotableItem | UIAddVoterVotableItem,
-    parentId: bigint
+    parentId: bigint,
+    index: number
   ) {
     if (IsUIAddVoterVotableItem(item)) {
       await this.createProposalAddVoter(item, parentId);
     } else {
       await this.createProposalDoNothing(
-        this.serializeVotableItem(item, parentId)
+        this.serializeVotableItem(item, parentId, index)
       );
     }
   }
@@ -427,8 +434,8 @@ export class BlockchainProposalService implements ProposalService {
 
     try {
       const proposalId = await this.createProposalDoNothing(serializedProposal);
-      const uploadPromises = proposal.voteItems.map((voteItem) =>
-        this.uploadVotableItem(voteItem, proposalId)
+      const uploadPromises = proposal.voteItems.map((voteItem, index) =>
+        this.uploadVotableItem(voteItem, proposalId, index)
       );
       await Promise.all(uploadPromises);
       return proposalId;
@@ -453,6 +460,7 @@ interface ProposalSerializationData extends SerializationData {
 }
 interface VotableItemSerializationData extends SerializationData {
   parentProposalId: string;
+  index: number;
 }
 interface AddVoterVotableItemSerializationData extends VotableItemSerializationData {
   newVoterAddress: string;
