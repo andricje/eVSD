@@ -6,7 +6,7 @@ import { BlockchainProposalService } from "../../lib/proposal-services/blockchai
 import {
   DuplicateProposalError,
   IneligibleProposerError,
-} from "../../lib/proposal-services/proposal-service-errors";
+} from "../../types/proposal-service-errors";
 import { UIAddVoterVotableItem, UIProposal, UIVotableItem } from "../../types/proposal";
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";

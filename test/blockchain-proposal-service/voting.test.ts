@@ -10,7 +10,7 @@ import {
   User,
   VoteOption,
 } from "../../types/proposal";
-import { IneligibleVoterError } from "../../lib/proposal-services/proposal-service-errors";
+import { IneligibleVoterError } from "../../types/proposal-service-errors";
 import { getVoteResultForItem } from "../../lib/utils";
 import {
   assertVoterVoteRecordedCorrectly,
@@ -120,12 +120,12 @@ describe("BlockchainProposalService integration", function () {
     const proposal =
       await unregisteredVoterProposalServices[0].getProposal(proposalId);
 
-    await expect(function () {
+    await expect(
       unregisteredVoterProposalServices[0].voteForItem(
         proposal.voteItems[0],
         "for"
-      );
-    }).to.be.rejectedWith(IneligibleVoterError);
+      )
+    ).to.be.rejectedWith(IneligibleVoterError);
   });
   it("should correctly record the votes for all addresses when everyone has voted", async () => {
     const proposal = await deployAndGetProposalOneVoteItem();

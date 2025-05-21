@@ -21,6 +21,7 @@ import {
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
 import { ProposalService } from "./proposal-service";
+import { IneligibleVoterError } from "../../types/proposal-service-errors";
 
 export type onProposalsChangedUnsubscribe = () => void;
 
@@ -364,7 +365,8 @@ export class BlockchainProposalService implements ProposalService {
       ...getNewVoterProposalDescription(newVoterAddress),
       type: "addVoterVoteItem",
       parentProposalId: parentProposalId.toString(),
-      newVoterAddress
+      newVoterAddress,
+      index: 0
     };
     const descriptionSerialized = JSON.stringify(serializationData);
 
@@ -429,6 +431,7 @@ export class BlockchainProposalService implements ProposalService {
       );
     }
   }
+
   async uploadProposal(proposal: UIProposal) {
     const serializedProposal = await this.serializeProposal(proposal);
 
@@ -445,8 +448,17 @@ export class BlockchainProposalService implements ProposalService {
     }
   }
   async voteForItem(item: VotableItem, vote: VoteOption) {
-    const voteGovernor = convertVoteOptionToGovernor(vote);
-    await this.governor.castVote(item.id, voteGovernor);
+    const address =await this.signer.getAddress();
+    const tokenBalance = await this.token.balanceOf(address);
+    if(tokenBalance === BigInt(0))
+    {
+      throw new IneligibleVoterError(address);
+    }
+    else
+    {
+      const voteGovernor = convertVoteOptionToGovernor(vote);
+      await this.governor.castVote(item.id, voteGovernor);
+    }
   }
 }
 interface SerializationData {
