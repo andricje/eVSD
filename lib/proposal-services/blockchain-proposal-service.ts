@@ -18,11 +18,12 @@ import {
   getNewVoterProposalDescription,
   convertVoteOptionToGovernor,
   convertGovernorState,
+  areProposalsEqual,
 } from "../utils";
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
 import { ProposalService } from "./proposal-service";
-import { ExecuteFailedError, IneligibleVoterError } from "../../types/proposal-service-errors";
+import { DuplicateProposalError, ExecuteFailedError, IneligibleProposerError, IneligibleVoterError } from "../../types/proposal-service-errors";
 
 export type onProposalsChangedUnsubscribe = () => void;
 
@@ -65,7 +66,6 @@ export class BlockchainProposalService implements ProposalService {
     this.governor.on("ProposalExecuted", onProposalChangedCallback);
     return () => this.governor.removeAllListeners();
   }
-
   async cancelProposal(proposal: Proposal): Promise<boolean> {
     try {
       const description = await this.serializeProposal(proposal);
@@ -89,7 +89,6 @@ export class BlockchainProposalService implements ProposalService {
       return false;
     }
   }
-
   async getProposal(id: bigint): Promise<Proposal> {
     const allProposals = await this.getProposals();
     const proposal = allProposals.find((proposal) => proposal.id === id);
@@ -98,77 +97,6 @@ export class BlockchainProposalService implements ProposalService {
     }
     return proposal;
   }
-
-
-  private async parseProposal(deserializedData: SerializationData, args: ethers.Result) : Promise<Proposal | undefined>
-  {
-    const proposalId = args.proposalId;
-    const voteStart = new Date(Number(args.voteStart) * 1000);
-    const stateIndex = Number(
-      (await this.governor.state(proposalId)) as bigint
-    );
-    const proposalState = convertGovernorState(stateIndex);
-    const deadline = await this.governor.proposalDeadline(proposalId);
-    const closesAt = new Date(Number(deadline) * 1000);
-    // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
-    const proposalData = deserializedData as ProposalSerializationData;
-    return {
-      id: proposalId,
-      title: proposalData.title,
-      description: proposalData.description,
-      author: {
-        address: args.proposer,
-        name: convertAddressToName(args.proposer),
-      },
-      file:
-        proposalData.fileHash !== ""
-          ? await this.fileService.fetch(proposalData.fileHash)
-          : undefined,
-      dateAdded: voteStart,
-      status: proposalState,
-      closesAt: closesAt,
-      voteItems: [],
-    };
-  }
-
-  private async parseVotableItem(deserializedData: VotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>) : Promise<VotableItem | undefined>
-  {
-    const proposalId = args.proposalId;
-    const proposalIdStr = proposalId.toString();
-
-    // Convert an array of VoteEvents into a map of voter -> voteEvent
-    const votesForAddress =
-      proposalIdStr in voteEventsForId
-        ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
-            (acc, item) => {
-              acc.set(item.voter.address, item);
-              return acc;
-            },
-            new Map()
-          )
-        : new Map<string, VoteEvent>();
-    
-    return {
-      id: proposalId,
-      title: deserializedData.title,
-      description: deserializedData.description,
-      userVotes: votesForAddress,
-    };
-  }
-
-  private async parseAddVoterVotableItem(deserializedData: AddVoterVotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>): Promise<AddVoterVotableItem | undefined>
-  {
-    const votableItem = await this.parseVotableItem(deserializedData, args, voteEventsForId);
-    if(!votableItem)
-    {
-      return undefined;
-    }
-    return {
-      ...votableItem,
-      newVoterAddress: deserializedData.newVoterAddress
-    };
-  }
-
   async getProposals(): Promise<Proposal[]> {
     const proposalCreatedFilter = this.governor.filters.ProposalCreated();
     const events = await this.governor.queryFilter(
@@ -252,10 +180,6 @@ export class BlockchainProposalService implements ProposalService {
     }
     return proposals;
   }
-  deserializeChainData(data: string): SerializationData {
-    return JSON.parse(data) as SerializationData;
-  }
-
   private async getAllVoteEvents() {
     // Filteriramo događaje za glasanje korisnika
     const filter = this.governor.filters.VoteCast();
@@ -283,81 +207,6 @@ export class BlockchainProposalService implements ProposalService {
       (item) => item !== undefined
     );
   }
-
-  private async serializeProposal(proposal: UIProposal | Proposal) {
-    const serializationData: ProposalSerializationData = {
-      type: "proposal",
-      title: proposal.title,
-      description: proposal.description,
-      fileHash: proposal.file ? await fileToDigestHex(proposal.file) : "",
-    };
-    return JSON.stringify(serializationData);
-  }
-
-  private serializeVotableItem(item: UIVotableItem | UIAddVoterVotableItem, parentId: bigint, index: number): string {
-    let serializationData : VotableItemSerializationData | AddVoterVotableItemSerializationData;
-    if(IsUIAddVoterVotableItem(item))
-    {
-      serializationData = {
-        ...getNewVoterProposalDescription(item.newVoterAddress),
-        type: "addVoterVoteItem",
-        parentProposalId: parentId.toString(),
-        newVoterAddress: item.newVoterAddress,
-        index: 0
-      };
-    }
-    else
-    {
-      serializationData = {
-        type: "voteItem",
-        title: item.title,
-        description: item.description,
-        parentProposalId: parentId.toString(),
-        index
-      };
-    }    
-    return JSON.stringify(serializationData);
-  }
-
-  // Checks whether this is a proposal to add a voter based on the calldata and the address
-  private async isProposalAddVoter(
-    callDatas: string[],
-    targets: string[],
-    values: bigint[]
-  ) {
-    // There should be only one element which is zero in the values array
-    if (values.length !== 1 || values[0] !== BigInt(0)) {
-      return false;
-    }
-
-    // The only address should be the token address
-    const targetsCorrect =
-      targets.length === 1 && targets[0] === evsdTokenArtifacts.address;
-    if (!targetsCorrect) {
-      return false;
-    }
-
-    // There should be only one call data
-    const numberOfCalldatasCorrect = callDatas.length === 1;
-    if (!numberOfCalldatasCorrect) {
-      return false;
-    }
-    // The call data should be the transfer method and have 2 args - the address and amount
-    const args = this.token.interface.decodeFunctionData(
-      "transfer",
-      callDatas[0]
-    );
-    const numberOfArgsCorrect = args.length === 2;
-    if (!numberOfArgsCorrect) {
-      return false;
-    }
-    const addr = args[0];
-    // Use this address to construct the correct calldata and compare
-    const correctCalldata = await this.getTransferTokenCalldata(addr);
-
-    return callDatas[0] === correctCalldata;
-  }
-
   private async getTransferTokenCalldata(newVoterAddress: string) {
     const decimals = await this.token.decimals();
     const oneToken = ethers.parseUnits("1", decimals);
@@ -367,7 +216,6 @@ export class BlockchainProposalService implements ProposalService {
     );
     return transferCalldata;
   }
-
   async createProposalAddVoter(
     item: UIAddVoterVotableItem,
     parentProposalId: bigint
@@ -377,54 +225,74 @@ export class BlockchainProposalService implements ProposalService {
     const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
     const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);    
 
-    const tx = await this.governor.propose(
-      [tokenAddress],
-      [0],
-      [transferCalldata],
-      descriptionSerialized
-    );
-    const receipt = await tx.wait();
-    for (const log of receipt.logs) {
-      try {
-        const parsed = this.governor.interface.parseLog(log);
-        if (parsed?.name === "ProposalCreated") {
-          return parsed.args.proposalId;
+    try{
+      const tx = await this.governor.propose(
+        [tokenAddress],
+        [0],
+        [transferCalldata],
+        descriptionSerialized
+      );
+      const receipt = await tx.wait();
+      for (const log of receipt.logs) {
+        try {
+          const parsed = this.governor.interface.parseLog(log);
+          if (parsed?.name === "ProposalCreated") {
+            return parsed.args.proposalId;
+          }
+        } catch (err) {
+          // This log might not match the contract interface, ignore it
+          console.log(err);
         }
-      } catch (err) {
-        // This log might not match the contract interface, ignore it
-        console.log(err);
       }
+    }
+    catch(err)
+    {
+      const x = 5;
     }
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
-
   // Creates a proposal on-chain that invokes the do nothing method of the contract. Returns the proposal id
   private async createProposalDoNothing(description: string): Promise<bigint> {
     const governorAddress = await this.governor.getAddress();
     const doNothingCalldata =
       this.governor.interface.encodeFunctionData("doNothing");
 
-    const tx = await this.governor.propose(
-      [governorAddress],
-      [0],
-      [doNothingCalldata],
-      description
-    );
-    const receipt = await tx.wait();
-    for (const log of receipt.logs) {
-      try {
-        const parsed = this.governor.interface.parseLog(log);
-        if (parsed?.name === "ProposalCreated") {
-          return parsed.args.proposalId;
+    try{
+      const tx = await this.governor.propose(
+        [governorAddress],
+        [0],
+        [doNothingCalldata],
+        description
+      );
+      const receipt = await tx.wait();
+      for (const log of receipt.logs) {
+        try {
+          const parsed = this.governor.interface.parseLog(log);
+          if (parsed?.name === "ProposalCreated") {
+            return parsed.args.proposalId;
+          }
+        } catch (err) {
+          // This log might not match the contract interface, ignore it
+          console.log(err);
         }
-      } catch (err) {
-        // This log might not match the contract interface, ignore it
-        console.log(err);
+      }
+    } catch(err)
+    {
+      if(err instanceof Error)
+      {
+        // Hacky solution todo: find a proper way to do this
+        if(err.message.includes("GovernorInsufficientProposerVotes"))
+        {
+          throw new IneligibleProposerError(await this.signer.getAddress());
+        }
+      }
+      else
+      {
+        throw new Error(`Proposal creation failed with an unknown error: ${err}`)
       }
     }
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
-
   async uploadVotableItem(
     item: UIVotableItem | UIAddVoterVotableItem,
     parentId: bigint,
@@ -438,8 +306,11 @@ export class BlockchainProposalService implements ProposalService {
       );
     }
   }
-
   async uploadProposal(proposal: UIProposal) {
+    if(await this.proposalAlreadyPresent(proposal))
+    {
+      throw new DuplicateProposalError("Proposal already present");
+    }
     const serializedProposal = await this.serializeProposal(proposal);
 
     try {
@@ -505,6 +376,158 @@ export class BlockchainProposalService implements ProposalService {
       {
         throw new ExecuteFailedError("Execute called on an unsupported vote item type.");
       }
+  }
+  private async proposalAlreadyPresent(newProposal: UIProposal)
+  {
+    const allProposals = await this.getProposals();
+    for(const proposal of allProposals)
+    {
+      if(await areProposalsEqual(newProposal, proposal))
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+  deserializeChainData(data: string): SerializationData {
+    return JSON.parse(data) as SerializationData;
+  }
+  private async parseProposal(deserializedData: SerializationData, args: ethers.Result) : Promise<Proposal | undefined>
+  {
+    const proposalId = args.proposalId;
+    const voteStart = new Date(Number(args.voteStart) * 1000);
+    const stateIndex = Number(
+      (await this.governor.state(proposalId)) as bigint
+    );
+    const proposalState = convertGovernorState(stateIndex);
+    const deadline = await this.governor.proposalDeadline(proposalId);
+    const closesAt = new Date(Number(deadline) * 1000);
+    // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
+    const proposalData = deserializedData as ProposalSerializationData;
+    return {
+      id: proposalId,
+      title: proposalData.title,
+      description: proposalData.description,
+      author: {
+        address: args.proposer,
+        name: convertAddressToName(args.proposer),
+      },
+      file:
+        proposalData.fileHash !== ""
+          ? await this.fileService.fetch(proposalData.fileHash)
+          : undefined,
+      dateAdded: voteStart,
+      status: proposalState,
+      closesAt: closesAt,
+      voteItems: [],
+    };
+  }
+  private async parseVotableItem(deserializedData: VotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>) : Promise<VotableItem | undefined>
+  {
+    const proposalId = args.proposalId;
+    const proposalIdStr = proposalId.toString();
+
+    // Convert an array of VoteEvents into a map of voter -> voteEvent
+    const votesForAddress =
+      proposalIdStr in voteEventsForId
+        ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
+            (acc, item) => {
+              acc.set(item.voter.address, item);
+              return acc;
+            },
+            new Map()
+          )
+        : new Map<string, VoteEvent>();
+    
+    return {
+      id: proposalId,
+      title: deserializedData.title,
+      description: deserializedData.description,
+      userVotes: votesForAddress,
+    };
+  }
+  private async parseAddVoterVotableItem(deserializedData: AddVoterVotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>): Promise<AddVoterVotableItem | undefined>
+  {
+    const votableItem = await this.parseVotableItem(deserializedData, args, voteEventsForId);
+    if(!votableItem)
+    {
+      return undefined;
+    }
+    return {
+      ...votableItem,
+      newVoterAddress: deserializedData.newVoterAddress
+    };
+  }
+  private async serializeProposal(proposal: UIProposal | Proposal) {
+    const serializationData: ProposalSerializationData = {
+      type: "proposal",
+      title: proposal.title,
+      description: proposal.description,
+      fileHash: proposal.file ? await fileToDigestHex(proposal.file) : "",
+    };
+    return JSON.stringify(serializationData);
+  }
+  private serializeVotableItem(item: UIVotableItem | UIAddVoterVotableItem, parentId: bigint, index: number): string {
+    let serializationData : VotableItemSerializationData | AddVoterVotableItemSerializationData;
+    if(IsUIAddVoterVotableItem(item))
+    {
+      serializationData = {
+        ...getNewVoterProposalDescription(item.newVoterAddress),
+        type: "addVoterVoteItem",
+        parentProposalId: parentId.toString(),
+        newVoterAddress: item.newVoterAddress,
+        index: 0
+      };
+    }
+    else
+    {
+      serializationData = {
+        type: "voteItem",
+        title: item.title,
+        description: item.description,
+        parentProposalId: parentId.toString(),
+        index
+      };
+    }    
+    return JSON.stringify(serializationData);
+  }
+  // Checks whether this is a proposal to add a voter based on the calldata and the address
+  private async isProposalAddVoter(
+    callDatas: string[],
+    targets: string[],
+    values: bigint[]
+  ) {
+    // There should be only one element which is zero in the values array
+    if (values.length !== 1 || values[0] !== BigInt(0)) {
+      return false;
+    }
+
+    // The only address should be the token address
+    const targetsCorrect =
+      targets.length === 1 && targets[0] === evsdTokenArtifacts.address;
+    if (!targetsCorrect) {
+      return false;
+    }
+
+    // There should be only one call data
+    const numberOfCalldatasCorrect = callDatas.length === 1;
+    if (!numberOfCalldatasCorrect) {
+      return false;
+    }
+    // The call data should be the transfer method and have 2 args - the address and amount
+    const args = this.token.interface.decodeFunctionData(
+      "transfer",
+      callDatas[0]
+    );
+    const numberOfArgsCorrect = args.length === 2;
+    if (!numberOfArgsCorrect) {
+      return false;
+    }
+    const addr = args[0];
+    // Use this address to construct the correct calldata and compare
+    const correctCalldata = await this.getTransferTokenCalldata(addr);
+
+    return callDatas[0] === correctCalldata;
   }
 }
 interface SerializationData {

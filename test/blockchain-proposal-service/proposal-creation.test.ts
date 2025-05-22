@@ -11,7 +11,6 @@ import { UIAddVoterVotableItem, UIProposal, UIVotableItem } from "../../types/pr
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
 import { v4 as uuidv4 } from 'uuid';
-import { ethers } from "ethers";
 function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal
 {
   const items: UIVotableItem[] = [];
@@ -134,7 +133,7 @@ describe("BlockchainProposalService integration", function () {
       registeredVoterProposalServices[0].uploadProposal(generatedProposal)
     ).to.be.rejectedWith(DuplicateProposalError);
   });
-  it("should not throw an error when a proposal with same title and description but different vote items is submitted", async () => {
+  it("should throw an appropriate error when a proposal with same title and description but different vote items is submitted", async () => {
     const proposal1: UIProposal = {
       title: "Test proposal",
       description: "Test proposal description",
@@ -148,6 +147,8 @@ describe("BlockchainProposalService integration", function () {
     };
 
     await registeredVoterProposalServices[0].uploadProposal(proposal1);
-    await registeredVoterProposalServices[0].uploadProposal(proposal2);
+    await expect(
+      registeredVoterProposalServices[1].uploadProposal(proposal2)
+    ).to.be.rejectedWith(DuplicateProposalError);
   });
 });

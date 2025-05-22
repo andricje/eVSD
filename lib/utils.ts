@@ -2,9 +2,12 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
   countVoteForOption,
+  IsAddVoterVotableItem,
+  IsUIAddVoterVotableItem,
   Proposal,
   ProposalState,
   ProposalStateMap,
+  UIProposal,
   User,
   VotableItem,
   VoteEvent,
@@ -202,4 +205,36 @@ export function getNewVoterProposalDescription(newVoterAddress: string) {
     title: `Додавање ${convertAddressToName(newVoterAddress)} као новог члана Е-ВСД`,
     description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress} (${convertAddressToName(newVoterAddress)})`,
   };
+}
+
+async function areFilesEqual(file1? : File, file2? : File) : Promise<boolean> {
+  if(file1 === undefined && file2 === undefined)
+  {
+    return true;
+  }
+  if(file1 && file2)
+  {
+    // Try some early outs
+    if (file1.size !== file2.size) return false;
+    if (file1.name === file2.name && file1 === file2) return true;
+
+    // Read and compare buffers byte by byte
+    const [buffer1, buffer2] = await Promise.all([
+      file1.arrayBuffer(),
+      file2.arrayBuffer()
+    ]);
+    const view1 = new Uint8Array(buffer1);
+    const view2 = new Uint8Array(buffer2);
+    for (let i = 0; i < view1.length; i++) {
+      if (view1[i] !== view2[i]) return false;
+    }
+
+    return true;
+  }
+  return false;
+}
+
+export async function areProposalsEqual(uiProposal: UIProposal, proposal: Proposal)
+{
+  return proposal.title === uiProposal.title && proposal.description === uiProposal.description && await areFilesEqual(proposal.file, uiProposal.file);
 }
