@@ -11,6 +11,7 @@ import { UIAddVoterVotableItem, UIProposal, UIVotableItem } from "../../types/pr
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
 import { v4 as uuidv4 } from 'uuid';
+import { ethers } from "ethers";
 function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal
 {
   const items: UIVotableItem[] = [];
@@ -80,6 +81,7 @@ describe("BlockchainProposalService integration", function () {
         generatedProposal
       );
     await assertProposalSameForEveryone(generatedProposal, proposalId);
+    ;
   });
   it("should preserve the order of vote items of a proposal", async () => {
     const generatedProposal1 = getProposalLargeNumberOfVoteItems(20);

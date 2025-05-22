@@ -8,6 +8,7 @@ import {
   UIAddVoterVotableItem,
   IsUIAddVoterVotableItem,
   AddVoterVotableItem,
+  IsAddVoterVotableItem,
 } from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
 import { ProposalFileService, fileToDigestHex } from "../file-upload";
@@ -21,7 +22,7 @@ import {
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
 import { ProposalService } from "./proposal-service";
-import { IneligibleVoterError } from "../../types/proposal-service-errors";
+import { ExecuteFailedError, IneligibleVoterError } from "../../types/proposal-service-errors";
 
 export type onProposalsChangedUnsubscribe = () => void;
 
@@ -293,14 +294,28 @@ export class BlockchainProposalService implements ProposalService {
     return JSON.stringify(serializationData);
   }
 
-  private serializeVotableItem(item: UIVotableItem, parentId: bigint, index: number): string {
-    const serializationData: VotableItemSerializationData = {
-      type: "voteItem",
-      title: item.title,
-      description: item.description,
-      parentProposalId: parentId.toString(),
-      index
-    };
+  private serializeVotableItem(item: UIVotableItem | UIAddVoterVotableItem, parentId: bigint, index: number): string {
+    let serializationData : VotableItemSerializationData | AddVoterVotableItemSerializationData;
+    if(IsUIAddVoterVotableItem(item))
+    {
+      serializationData = {
+        ...getNewVoterProposalDescription(item.newVoterAddress),
+        type: "addVoterVoteItem",
+        parentProposalId: parentId.toString(),
+        newVoterAddress: item.newVoterAddress,
+        index: 0
+      };
+    }
+    else
+    {
+      serializationData = {
+        type: "voteItem",
+        title: item.title,
+        description: item.description,
+        parentProposalId: parentId.toString(),
+        index
+      };
+    }    
     return JSON.stringify(serializationData);
   }
 
@@ -360,15 +375,7 @@ export class BlockchainProposalService implements ProposalService {
     const tokenAddress = evsdTokenArtifacts.address;
     const newVoterAddress = item.newVoterAddress;
     const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
-
-    const serializationData: AddVoterVotableItemSerializationData = {
-      ...getNewVoterProposalDescription(newVoterAddress),
-      type: "addVoterVoteItem",
-      parentProposalId: parentProposalId.toString(),
-      newVoterAddress,
-      index: 0
-    };
-    const descriptionSerialized = JSON.stringify(serializationData);
+    const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);    
 
     const tx = await this.governor.propose(
       [tokenAddress],
@@ -459,6 +466,45 @@ export class BlockchainProposalService implements ProposalService {
       const voteGovernor = convertVoteOptionToGovernor(vote);
       await this.governor.castVote(item.id, voteGovernor);
     }
+  }
+  // Call to execute a proposal item that has completed with a passed vote status
+  // Currently only executes add voter proposals
+  async executeItem(proposal: Proposal, itemIndex: number)
+  {
+      const item = proposal.voteItems[itemIndex];
+      if(IsAddVoterVotableItem(item))
+      {
+        const description = this.serializeVotableItem(item, proposal.id, itemIndex);
+        const descriptionHash = ethers.id(description);
+  
+        const tokenAddress = await this.token.getAddress();
+        const calldata = await this.getTransferTokenCalldata(item.newVoterAddress);
+  
+        try{
+          const tx = await this.governor.execute(
+            [tokenAddress],
+            [0],
+            [calldata],
+            descriptionHash
+          );
+
+          await tx.wait();
+        } catch(err)
+        {
+          if(err instanceof Error)
+          {
+            throw new ExecuteFailedError(err.message);
+          }
+          else
+          {
+            throw new ExecuteFailedError("Execute failed for an unknown reason");
+          }
+        }
+      }
+      else
+      {
+        throw new ExecuteFailedError("Execute called on an unsupported vote item type.");
+      }
   }
 }
 interface SerializationData {

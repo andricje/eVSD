@@ -21,6 +21,8 @@ import {
   getRandomVotes,
   rng,
 } from "../utils";
+import { EvsdToken } from "@/typechain-types";
+import { ethers } from "ethers";
 
 export const voteItems: UIVotableItem[] = [
   {
@@ -66,6 +68,7 @@ describe("BlockchainProposalService integration", function () {
   let addVoterVoteItem: UIAddVoterVotableItem;
   let votingPeriod: number;
   let unregisteredVoterAddress: string;
+  let token : EvsdToken;
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
     registeredVoterProposalServices = initData.registeredVoterProposalServices;
@@ -74,6 +77,7 @@ describe("BlockchainProposalService integration", function () {
     addVoterVoteItem = initData.addVoterVoteItem;
     votingPeriod = initData.votingPeriod;
     unregisteredVoterAddress = initData.unregisteredVoterAddress;
+    token = initData.evsdToken;
   });
 
   async function deployAndGetProposalOneVoteItem(
@@ -228,9 +232,18 @@ describe("BlockchainProposalService integration", function () {
       getVotes(numVoters, 0, 0)
     );
     await fastForwardTime(0, 0, votingPeriod + 10);
-
-    const newProposal = await deployAndGetProposalOneVoteItem();
+    // Voting has ended now someone must call executeItem in order to actually execute the proposal
     const newVoterProposalService = unregisteredVoterProposalServices[0];
+    await newVoterProposalService.executeItem(proposal, 0);
+
+    // Voter should now have token balance of one token
+    const tokenBalance = await token.balanceOf(unregisteredVoterAddress);
+    const decimals = await token.decimals();
+    const oneToken = ethers.parseUnits("1", decimals);
+    expect(tokenBalance).to.equal(oneToken);
+
+    // Create a new proposal and try voting
+    const newProposal = await deployAndGetProposalOneVoteItem();
     await newVoterProposalService.voteForItem(newProposal.voteItems[0], "for");
     const newProposalUpdated = await newVoterProposalService.getProposal(
       newProposal.id

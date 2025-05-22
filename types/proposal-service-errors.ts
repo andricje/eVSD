@@ -28,3 +28,10 @@ export class DuplicateProposalError extends BlockchainError {
     Object.setPrototypeOf(this, DuplicateProposalError.prototype);
   }
 }
+// Thrown if execute fails for some reason
+export class ExecuteFailedError extends BlockchainError {
+  constructor(message: string) {
+    super(message);
+    Object.setPrototypeOf(this, ExecuteFailedError.prototype);
+  }
+}
