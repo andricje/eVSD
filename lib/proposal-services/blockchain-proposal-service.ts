@@ -313,17 +313,12 @@ export class BlockchainProposalService implements ProposalService {
     }
     const serializedProposal = await this.serializeProposal(proposal);
 
-    try {
-      const proposalId = await this.createProposalDoNothing(serializedProposal);
-      const uploadPromises = proposal.voteItems.map((voteItem, index) =>
-        this.uploadVotableItem(voteItem, proposalId, index)
-      );
-      await Promise.all(uploadPromises);
-      return proposalId;
-    } catch (error) {
-      console.error("Грешка при креирању предлога:", error);
-      throw error;
-    }
+    const proposalId = await this.createProposalDoNothing(serializedProposal);
+    const uploadPromises = proposal.voteItems.map((voteItem, index) =>
+      this.uploadVotableItem(voteItem, proposalId, index)
+    );
+    await Promise.all(uploadPromises);
+    return proposalId;    
   }
   async voteForItem(item: VotableItem, vote: VoteOption) {
     const address =await this.signer.getAddress();
