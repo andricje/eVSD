@@ -43,6 +43,11 @@ export function countVoteForOption(
 export interface AddVoterVotableItem extends VotableItem {
   newVoterAddress: string;
 }
+export function IsAddVoterVotableItem(
+  votableItem: AddVoterVotableItem | VotableItem
+): votableItem is AddVoterVotableItem {
+  return (votableItem as AddVoterVotableItem).newVoterAddress !== undefined;
+}
 
 export interface Proposal {
   id: bigint;
@@ -53,7 +58,7 @@ export interface Proposal {
   dateAdded: Date;
   status: ProposalState;
   closesAt: Date;
-  voteItems: VotableItem[];
+  voteItems: (VotableItem | AddVoterVotableItem)[];
 }
 
 export interface VoteEvent {

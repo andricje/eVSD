@@ -205,7 +205,7 @@ export function assertVoterVoteRecordedCorrectly(
   vote?: VoteOption
 ) {
   if (vote) {
-    expect(voteItem.userVotes.get(voter)).to.be.equal(vote);
+    expect(voteItem.userVotes.get(voter.address)?.vote).to.be.equal(vote);
   } else {
     expect(voteItem.userVotes).to.not.contain(voter);
   }

@@ -6,13 +6,15 @@ import { Governor } from "@openzeppelin/contracts/governance/Governor.sol";
 import { GovernorCountingSimple } from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import { GovernorSettings } from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import { GovernorVotes } from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
+import { GovernorProposalGuardian } from "@openzeppelin/contracts/governance/extensions/GovernorProposalGuardian.sol";
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 contract EvsdGovernor is
   Governor,
   GovernorSettings,
   GovernorCountingSimple,
-  GovernorVotes
+  GovernorVotes,
+  GovernorProposalGuardian
 {
   constructor(
     IVotes _token
@@ -58,4 +60,13 @@ contract EvsdGovernor is
   {
     return super.proposalThreshold();
   }
+  function _validateCancel(uint256 proposalId, address caller)
+    internal
+    view
+    override(Governor, GovernorProposalGuardian)
+    returns(bool)
+  {
+    return super._validateCancel(proposalId, caller);
+  }
+  
 }
