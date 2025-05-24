@@ -160,7 +160,7 @@ export function NewProposalDialog({
 
     // Проверавамо да ли су сви подпредлози попуњени
     if (newProposal.voteItems.length === 0) {
-      setError("За вишеслојни предлог морате додати најмање једну подтачку.");
+      setError("Морате додати барем једну тачку за гласање.");
       return;
     }
 

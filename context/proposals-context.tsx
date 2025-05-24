@@ -7,7 +7,7 @@ import { InMemoryProposalService } from "@/lib/proposal-services/in-memory-propo
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { Proposal } from "@/types/proposal";
 
-interface ProposalsContextValue {
+export interface ProposalsContextValue {
   proposals: Proposal[];
   proposalService: ProposalService | null;
 }

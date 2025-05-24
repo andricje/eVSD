@@ -9,7 +9,8 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write",
     "prepare": "husky install",
-    "test": "npx hardhat test"
+    "ui-test": "jest",
+    "blockchain-test": "npx hardhat test"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
@@ -46,6 +47,7 @@
     "@radix-ui/react-toggle": "^1.1.1",
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
+    "@testing-library/user-event": "^14.6.1",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
