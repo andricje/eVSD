@@ -8,6 +8,7 @@ import { InMemoryProposalService } from '@/lib/proposal-services/in-memory-propo
 import { User } from '@/types/proposal';
 import { NewProposalDialog } from '@/components/new-proposal-dialog';
 import userEvent from '@testing-library/user-event';
+import { STRINGS } from '@/constants/strings';
 
 
 jest.mock('../hooks/use-proposals');
@@ -29,14 +30,14 @@ describe('NewProposalDialog', () => {
   });
   it('Shows an error if proposal title is not filled', async () => {
     render(<NewProposalDialog />);
-    fireEvent.click(screen.getByText('Додај нови предлог'));
+    fireEvent.click(screen.getByText(STRINGS.newProposal.dialog.addNew));
     
-    const titleInput = screen.getByPlaceholderText('Унесите наслов предлога');
+    const titleInput = screen.getByPlaceholderText(STRINGS.newProposal.form.title.placeholder);
     await userEvent.type(titleInput, 'Test naslov');
 
-    const descriptionInput = screen.getByPlaceholderText('Детаљно опишите ваш предлог')
+    const descriptionInput = screen.getByPlaceholderText(STRINGS.newProposal.form.description.placeholder)
 
-    const submitButton = screen.getByText('Додај предлог');
+    const submitButton = screen.getByText(STRINGS.newProposal.form.submit.default);
     fireEvent.click(submitButton);
 
     expect(screen.getByText('Грешка')).toBeInTheDocument();

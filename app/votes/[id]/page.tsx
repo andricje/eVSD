@@ -38,7 +38,7 @@ import {
   getRemainingTime,
   hasVotingTimeExpired,
 } from "@/lib/utils";
-import { addressNameMap } from "@/lib/address-name-map";
+import { addressNameMap } from "@/constants/address-name-map";
 import { useWallet } from "@/context/wallet-context";
 
 // VoteConfirm komponenta

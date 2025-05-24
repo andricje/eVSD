@@ -14,7 +14,7 @@ import {
   VoteOption,
   VoteResult,
 } from "../types/proposal";
-import { addressNameMap } from "./address-name-map";
+import { addressNameMap } from "../constants/address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
