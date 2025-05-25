@@ -21,9 +21,9 @@ export function UserActivity() {
   const { user } = useWallet();
   const { toast } = useToast();
 
-  const userVotingHistory = getUserVotingHistory(proposals, user);
+  const userVotingHistory = user ? getUserVotingHistory(proposals, user) : [];
   const userProposals = proposals.filter(
-    (proposal) => proposal.author === user
+    (proposal) => proposal.author.address === user?.address
   );
   const activeProposals = proposals.filter((p) => p.status === "open");
   const completedProposals = proposals.filter((p) => p.status === "closed");

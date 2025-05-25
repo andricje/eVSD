@@ -30,9 +30,12 @@ export const StatusBadge = ({
   status: string;
   expiresAt?: Date;
 }) => {
-  if (status === "closed") {
-    return <Badge className="bg-green-500">Zatvoreno</Badge>;
-  } else if (status === "expired") {
+  if (status === "cancelled") {
+    return <Badge className="bg-red-500">Povučen</Badge>;
+  } else if(status === "closed"){
+    return <Badge className="bg-red-500">Završeno glasanje</Badge>;
+  } 
+  else if (status === "expired") {
     return <Badge className="bg-gray-500">Isteklo</Badge>;
   } else if (status === "expiring" && expiresAt) {
     return (

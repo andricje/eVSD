@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
-import { NewAnnouncementDialog } from "@/components/new-announcement-dialog";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
 import { UserActivity } from "@/components/user-activity";
 import { useWallet } from "@/context/wallet-context";

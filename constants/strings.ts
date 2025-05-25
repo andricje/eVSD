@@ -72,5 +72,8 @@ export const STRINGS = {
           },
       },
     },
+    proposalCard: {
+      voteButton: 'Гласај'
+    }
   };
   

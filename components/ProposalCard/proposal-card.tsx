@@ -6,6 +6,7 @@ import { Clock, User, Calendar, Vote } from "lucide-react";
 import { StatusBadge } from "../badges";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { STRINGS } from "@/constants/strings";
 
 interface ProposalCardProps {
   proposal: Proposal;
@@ -83,16 +84,16 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
           </div>
           <Progress value={percentPointsWithQuorum} className="h-2" />
         </div>
-        <Button
+        {proposal.status === "open" ? <Button
           size="sm"
           className="text-sm px-4 py-2 h-auto font-medium"
           asChild
         >
           <Link href={`/votes/${proposal.id}`}>
             <Vote className="h-4 w-4 mr-2" />
-            Гласај
+            {STRINGS.proposalCard.voteButton}
           </Link>
-        </Button>
+        </Button> : <></>}
         <div className="pt-1.5 flex items-center justify-between"></div>
       </CardContent>
     </Card>
