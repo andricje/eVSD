@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/accordion";
 import { useProposals } from "@/hooks/use-proposals";
 import { STRINGS } from "@/constants/strings";
+import { v4 as uuidv4 } from 'uuid';
+
 
 interface NewProposalDialogProps {
   customClassName?: string;
@@ -69,7 +71,7 @@ export function NewProposalDialog({
     const newVoteItem: UIVotableItem = {
       title: "",
       description: "",
-      UIOnlyId: crypto.randomUUID(),
+      UIOnlyId: uuidv4(),
     };
 
     setNewProposal({
@@ -358,8 +360,8 @@ export function NewProposalDialog({
                     onClick={addSubItem}
                     className="flex items-center gap-1"
                   >
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span>{STRINGS.newProposal.form.subItem.add}</span>
+                    {/* <PlusCircle className="h-3.5 w-3.5" /> */}
+                    {STRINGS.newProposal.form.subItem.add}
                   </Button>
                 </div>
 

@@ -54,6 +54,7 @@ export const STRINGS = {
           },
           description: {
             label: "Опис подтачке предлога",
+            placeholder: "Опишите детаљније ову подтачку"
           },
           default: "Тачка"
         },
