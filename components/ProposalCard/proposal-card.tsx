@@ -41,7 +41,7 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
             </CardTitle>
             <div className="flex items-center gap-1.5">
               <StatusBadge
-                status={isUrgent ? "expiring" : proposal.status}
+                status={proposal.status}
                 expiresAt={proposal.closesAt}
               />
             </div>
