@@ -6,6 +6,7 @@ import { STRINGS } from '@/constants/strings';
 import { ProposalCard } from '@/components/ProposalCard/proposal-card';
 import { VoteItemInfo } from '@/components/VoteItemInfo/vote-item-info';
 import {v4 as uuidv4} from 'uuid';
+import { getTranslatedVoteOption, getTranslatedVoteOptionWithCount } from '@/lib/utils';
 
 global.ResizeObserver = require('resize-observer-polyfill')
 
@@ -75,6 +76,8 @@ describe('NewProposalDialog', () => {
   it("Shows the correct number of votes", async () => {
     const voteItem = getVoteItem(10,3,5);
     render(<VoteItemInfo voteItem={voteItem} />);
-    
+    expect(await screen.queryByText(getTranslatedVoteOptionWithCount("for",10))).toBeInTheDocument();
+    expect(await screen.queryByText(getTranslatedVoteOptionWithCount("against",3))).toBeInTheDocument();
+    expect(await screen.queryByText(getTranslatedVoteOptionWithCount("abstain",5))).toBeInTheDocument();
   });
 });

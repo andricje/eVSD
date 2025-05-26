@@ -211,6 +211,11 @@ export function getTranslatedVoteOption(voteOption: VoteOption)
   }
 }
 
+export function getTranslatedVoteOptionWithCount(voteOption: VoteOption, count: number)
+{
+  return `${getTranslatedVoteOption(voteOption)}: ${count}`;
+}
+
 async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {
   if (file1 === undefined && file2 === undefined) {
     return true;
