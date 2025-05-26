@@ -21,6 +21,13 @@ export default function LoginPage() {
   const router = useRouter();
   const { user, connectionStatus } = useWallet();
 
+  useEffect(() => {
+    if (connectionStatus === "connected") {
+      if (window.history.length > 1) {
+        router.back();
+      }
+    }
+  }, [connectionStatus]);
   return (
     <div className="w-full max-w-full flex items-center justify-center min-h-screen px-4 py-12">
       <Card className="w-full max-w-md">
