@@ -9,7 +9,8 @@
     "lint": "eslint . --ext .ts",
     "format": "prettier --write",
     "prepare": "husky install",
-    "test": "npx hardhat test"
+    "ui-test": "jest",
+    "blockchain-test": "npx hardhat test"
   },
   "lint-staged": {
     "**/*.{js,jsx,ts,tsx}": [
@@ -75,6 +76,7 @@
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/chai": "^4.3.20",
     "@types/chai-as-promised": "^8.0.2",
     "@types/jest": "^29.5.14",
@@ -96,6 +98,7 @@
     "lint-staged": "^15.5.2",
     "postcss": "^8",
     "prettier": "^3.5.3",
+    "resize-observer-polyfill": "^1.5.1",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",

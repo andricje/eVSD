@@ -7,7 +7,7 @@ import { InMemoryProposalService } from "@/lib/proposal-services/in-memory-propo
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { Proposal } from "@/types/proposal";
 
-interface ProposalsContextValue {
+export interface ProposalsContextValue {
   proposals: Proposal[];
   proposalService: ProposalService | null;
 }
@@ -47,7 +47,17 @@ const AbstractProposalsProvider = ({
     proposalService?.onProposalsChanged((proposals) => {
       setProposals(proposals);
     });
+    
+    const fetchInitialProposals = async () => {
+      if (proposalService) {
+        const initialProposals = await proposalService.getProposals();
+        setProposals(initialProposals);
+      }
+    };
+  
+    fetchInitialProposals();
   }, [proposalService]);
+
 
   return (
     <ProposalsContext.Provider

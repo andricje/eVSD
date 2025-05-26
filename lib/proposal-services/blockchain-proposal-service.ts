@@ -24,6 +24,7 @@ import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
 import { ProposalService } from "./proposal-service";
 import { DuplicateProposalError, ExecuteFailedError, IneligibleProposerError, IneligibleVoterError } from "../../types/proposal-service-errors";
+import { UserActivityEventProposal, UserActivityEventVote } from "@/components/user-activity/user-activity";
 
 export type onProposalsChangedUnsubscribe = () => void;
 
@@ -106,7 +107,7 @@ export class BlockchainProposalService implements ProposalService {
     );
 
     const proposals: Proposal[] = [];
-    const voteItemsForProposalId: Record<string, {item: VotableItem|AddVoterVotableItem, index: number}[]> = {};
+    const voteItemsForProposalId: Record<string, { item: VotableItem | AddVoterVotableItem, index: number }[]> = {};
     const allVoteEvents = await this.getAllVoteEvents();
     const voteEventsForId = allVoteEvents.reduce<Record<string, VoteEvent[]>>(
       (acc, item) => {
@@ -130,55 +131,94 @@ export class BlockchainProposalService implements ProposalService {
       const deserializedData = this.deserializeChainData(args.description);
       if (deserializedData.type === "proposal") {
         const proposal = await this.parseProposal(deserializedData, args);
-        if(!proposal)
-        {
+        if (!proposal) {
           continue;
         }
         proposals.push(proposal);
-      } else if(deserializedData.type === "voteItem"){
+      } else if (deserializedData.type === "voteItem") {
         const voteItemData = deserializedData as VotableItemSerializationData;
-        const votableItem = await this.parseVotableItem(voteItemData,args,voteEventsForId);
-        if(!votableItem)
-        {
+        const votableItem = await this.parseVotableItem(voteItemData, args, voteEventsForId);
+        if (!votableItem) {
           continue;
         }
         // Add to the map
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
           voteItemsForProposalId[voteItemData.parentProposalId] = [];
         }
-        voteItemsForProposalId[voteItemData.parentProposalId].push({item:votableItem, index:voteItemData.index});
+        voteItemsForProposalId[voteItemData.parentProposalId].push({ item: votableItem, index: voteItemData.index });
       }
-      else if(deserializedData.type === "addVoterVoteItem")
-      {
+      else if (deserializedData.type === "addVoterVoteItem") {
         // TODO: Verify args[3] is values or even better unpack the event in a better way
         this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
         const voteItemData = deserializedData as AddVoterVotableItemSerializationData;
-        const addVoterItem = await this.parseAddVoterVotableItem(voteItemData,args,voteEventsForId);
-        if(!addVoterItem)
-        {
+        const addVoterItem = await this.parseAddVoterVotableItem(voteItemData, args, voteEventsForId);
+        if (!addVoterItem) {
           continue;
         }
         // Add to the map
         if (!voteItemsForProposalId[voteItemData.parentProposalId]) {
           voteItemsForProposalId[voteItemData.parentProposalId] = [];
         }
-        voteItemsForProposalId[voteItemData.parentProposalId].push({item:addVoterItem, index:voteItemData.index});
+        voteItemsForProposalId[voteItemData.parentProposalId].push({ item: addVoterItem, index: voteItemData.index });
       }
     }
     // Pair child VoteItems with Proposals
     for (const proposal of proposals) {
       const proposalId = proposal.id.toString();
-      
+
       proposal.voteItems = []
-      if(proposalId in voteItemsForProposalId)
-      {
+      if (proposalId in voteItemsForProposalId) {
         // Ensure the vote items are ordered correctly
-        const voteItemsCorrectOrder =  voteItemsForProposalId[proposalId].sort((lhs,rhs)=>{return lhs.index - rhs.index});
+        const voteItemsCorrectOrder = voteItemsForProposalId[proposalId].sort((lhs, rhs) => { return lhs.index - rhs.index });
         proposal.voteItems = voteItemsCorrectOrder.map((x) => x.item);
       }
 
     }
     return proposals;
+  }
+  async getAllUserActivity(): Promise<(UserActivityEventVote | UserActivityEventProposal)[]> {
+    const proposals = await this.getProposals();
+    const createEvents = proposals.map((proposal) => {
+      const proposalCreateEvt: UserActivityEventProposal = {
+        type: "Create",
+        proposal,
+        date: proposal.dateAdded
+      }
+      return proposalCreateEvt;
+    });
+
+    const voteEventsWithId = await this.getAllVoteEvents();
+    const voteEvents: UserActivityEventVote[] = [];
+    for (const x of voteEventsWithId) {
+      for (const proposal of proposals) {
+        const voteItem = proposal.voteItems.find((voteItem) => voteItem.id === BigInt(x.proposalId));
+        if (voteItem) {
+          const evt: UserActivityEventVote = {
+            voteEvent: x.voteEvent,
+            proposal,
+            voteItem,
+            date: x.voteEvent.date
+          };
+          voteEvents.push(evt);
+        }
+      }
+    }
+
+    const cancelEventsWithId = await this.getAllCancelEvents();
+    const cancelEvents: UserActivityEventProposal[] = []
+    for (const x of cancelEventsWithId) {
+      const proposal = proposals.find((proposal) => proposal.id === BigInt(x.proposalId));
+      if (proposal) {
+        const evt: UserActivityEventProposal = {
+          proposal,
+          type: "Delete",
+          date: x.date
+        };
+        cancelEvents.push(evt);
+      }
+    }
+
+    return [...createEvents, ...voteEvents, ...cancelEvents];
   }
   private async getAllVoteEvents() {
     // Filteriramo događaje za glasanje korisnika
@@ -199,8 +239,29 @@ export class BlockchainProposalService implements ProposalService {
         voter: { address: args.voter, name: convertAddressToName(args.voter) },
       } as VoteEvent;
       return {
-        proposalId: args.proposalId.toString(),
+        proposalId: args.proposalId,
         voteEvent,
+      };
+    });
+    return (await Promise.all(votingHistory)).filter(
+      (item) => item !== undefined
+    );
+  }
+  private async getAllCancelEvents() {
+    const filter = this.governor.filters.ProposalCanceled();
+    const events = await this.governor.queryFilter(filter, 0, "latest");
+
+    const votingHistory = events.map(async (event) => {
+      const args = (event as EventLog).args;
+      if (!args) {
+        return undefined;
+      }
+
+      const block = await this.provider.getBlock(event.blockNumber);
+      const date = new Date(block ? block.timestamp * 1000 : 0);
+      return {
+        proposalId: args.proposalId.toString(),
+        date,
       };
     });
     return (await Promise.all(votingHistory)).filter(
@@ -223,32 +284,27 @@ export class BlockchainProposalService implements ProposalService {
     const tokenAddress = evsdTokenArtifacts.address;
     const newVoterAddress = item.newVoterAddress;
     const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
-    const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);    
+    const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);
 
-    try{
-      const tx = await this.governor.propose(
-        [tokenAddress],
-        [0],
-        [transferCalldata],
-        descriptionSerialized
-      );
-      const receipt = await tx.wait();
-      for (const log of receipt.logs) {
-        try {
-          const parsed = this.governor.interface.parseLog(log);
-          if (parsed?.name === "ProposalCreated") {
-            return parsed.args.proposalId;
-          }
-        } catch (err) {
-          // This log might not match the contract interface, ignore it
-          console.log(err);
+    const tx = await this.governor.propose(
+      [tokenAddress],
+      [0],
+      [transferCalldata],
+      descriptionSerialized
+    );
+    const receipt = await tx.wait();
+    for (const log of receipt.logs) {
+      try {
+        const parsed = this.governor.interface.parseLog(log);
+        if (parsed?.name === "ProposalCreated") {
+          return parsed.args.proposalId;
         }
+      } catch (err) {
+        // This log might not match the contract interface, ignore it
+        console.log(err);
       }
     }
-    catch(err)
-    {
-      const x = 5;
-    }
+
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
   // Creates a proposal on-chain that invokes the do nothing method of the contract. Returns the proposal id
@@ -257,7 +313,7 @@ export class BlockchainProposalService implements ProposalService {
     const doNothingCalldata =
       this.governor.interface.encodeFunctionData("doNothing");
 
-    try{
+    try {
       const tx = await this.governor.propose(
         [governorAddress],
         [0],
@@ -276,18 +332,14 @@ export class BlockchainProposalService implements ProposalService {
           console.log(err);
         }
       }
-    } catch(err)
-    {
-      if(err instanceof Error)
-      {
+    } catch (err) {
+      if (err instanceof Error) {
         // Hacky solution todo: find a proper way to do this
-        if(err.message.includes("GovernorInsufficientProposerVotes"))
-        {
+        if (err.message.includes("GovernorInsufficientProposerVotes")) {
           throw new IneligibleProposerError(await this.signer.getAddress());
         }
       }
-      else
-      {
+      else {
         throw new Error(`Proposal creation failed with an unknown error: ${err}`)
       }
     }
@@ -307,8 +359,7 @@ export class BlockchainProposalService implements ProposalService {
     }
   }
   async uploadProposal(proposal: UIProposal) {
-    if(await this.proposalAlreadyPresent(proposal))
-    {
+    if (await this.proposalAlreadyPresent(proposal)) {
       throw new DuplicateProposalError("Proposal already present");
     }
     const serializedProposal = await this.serializeProposal(proposal);
@@ -318,67 +369,56 @@ export class BlockchainProposalService implements ProposalService {
       this.uploadVotableItem(voteItem, proposalId, index)
     );
     await Promise.all(uploadPromises);
-    return proposalId;    
+    return proposalId;
   }
   async voteForItem(item: VotableItem, vote: VoteOption) {
-    const address =await this.signer.getAddress();
+    const address = await this.signer.getAddress();
     const tokenBalance = await this.token.balanceOf(address);
-    if(tokenBalance === BigInt(0))
-    {
+    if (tokenBalance === BigInt(0)) {
       throw new IneligibleVoterError(address);
     }
-    else
-    {
+    else {
       const voteGovernor = convertVoteOptionToGovernor(vote);
       await this.governor.castVote(item.id, voteGovernor);
     }
   }
   // Call to execute a proposal item that has completed with a passed vote status
   // Currently only executes add voter proposals
-  async executeItem(proposal: Proposal, itemIndex: number)
-  {
-      const item = proposal.voteItems[itemIndex];
-      if(IsAddVoterVotableItem(item))
-      {
-        const description = this.serializeVotableItem(item, proposal.id, itemIndex);
-        const descriptionHash = ethers.id(description);
-  
-        const tokenAddress = await this.token.getAddress();
-        const calldata = await this.getTransferTokenCalldata(item.newVoterAddress);
-  
-        try{
-          const tx = await this.governor.execute(
-            [tokenAddress],
-            [0],
-            [calldata],
-            descriptionHash
-          );
+  async executeItem(proposal: Proposal, itemIndex: number) {
+    const item = proposal.voteItems[itemIndex];
+    if (IsAddVoterVotableItem(item)) {
+      const description = this.serializeVotableItem(item, proposal.id, itemIndex);
+      const descriptionHash = ethers.id(description);
 
-          await tx.wait();
-        } catch(err)
-        {
-          if(err instanceof Error)
-          {
-            throw new ExecuteFailedError(err.message);
-          }
-          else
-          {
-            throw new ExecuteFailedError("Execute failed for an unknown reason");
-          }
+      const tokenAddress = await this.token.getAddress();
+      const calldata = await this.getTransferTokenCalldata(item.newVoterAddress);
+
+      try {
+        const tx = await this.governor.execute(
+          [tokenAddress],
+          [0],
+          [calldata],
+          descriptionHash
+        );
+
+        await tx.wait();
+      } catch (err) {
+        if (err instanceof Error) {
+          throw new ExecuteFailedError(err.message);
+        }
+        else {
+          throw new ExecuteFailedError("Execute failed for an unknown reason");
         }
       }
-      else
-      {
-        throw new ExecuteFailedError("Execute called on an unsupported vote item type.");
-      }
+    }
+    else {
+      throw new ExecuteFailedError("Execute called on an unsupported vote item type.");
+    }
   }
-  private async proposalAlreadyPresent(newProposal: UIProposal)
-  {
+  private async proposalAlreadyPresent(newProposal: UIProposal) {
     const allProposals = await this.getProposals();
-    for(const proposal of allProposals)
-    {
-      if(await areProposalsEqual(newProposal, proposal))
-      {
+    for (const proposal of allProposals) {
+      if (await areProposalsEqual(newProposal, proposal)) {
         return true;
       }
     }
@@ -387,8 +427,7 @@ export class BlockchainProposalService implements ProposalService {
   deserializeChainData(data: string): SerializationData {
     return JSON.parse(data) as SerializationData;
   }
-  private async parseProposal(deserializedData: SerializationData, args: ethers.Result) : Promise<Proposal | undefined>
-  {
+  private async parseProposal(deserializedData: SerializationData, args: ethers.Result): Promise<Proposal | undefined> {
     const proposalId = args.proposalId;
     const voteStart = new Date(Number(args.voteStart) * 1000);
     const stateIndex = Number(
@@ -417,8 +456,7 @@ export class BlockchainProposalService implements ProposalService {
       voteItems: [],
     };
   }
-  private async parseVotableItem(deserializedData: VotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>) : Promise<VotableItem | undefined>
-  {
+  private async parseVotableItem(deserializedData: VotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>): Promise<VotableItem | undefined> {
     const proposalId = args.proposalId;
     const proposalIdStr = proposalId.toString();
 
@@ -426,14 +464,14 @@ export class BlockchainProposalService implements ProposalService {
     const votesForAddress =
       proposalIdStr in voteEventsForId
         ? voteEventsForId[proposalIdStr].reduce<Map<string, VoteEvent>>(
-            (acc, item) => {
-              acc.set(item.voter.address, item);
-              return acc;
-            },
-            new Map()
-          )
+          (acc, item) => {
+            acc.set(item.voter.address, item);
+            return acc;
+          },
+          new Map()
+        )
         : new Map<string, VoteEvent>();
-    
+
     return {
       id: proposalId,
       title: deserializedData.title,
@@ -441,11 +479,9 @@ export class BlockchainProposalService implements ProposalService {
       userVotes: votesForAddress,
     };
   }
-  private async parseAddVoterVotableItem(deserializedData: AddVoterVotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>): Promise<AddVoterVotableItem | undefined>
-  {
+  private async parseAddVoterVotableItem(deserializedData: AddVoterVotableItemSerializationData, args: ethers.Result, voteEventsForId: Record<string, VoteEvent[]>): Promise<AddVoterVotableItem | undefined> {
     const votableItem = await this.parseVotableItem(deserializedData, args, voteEventsForId);
-    if(!votableItem)
-    {
+    if (!votableItem) {
       return undefined;
     }
     return {
@@ -463,9 +499,8 @@ export class BlockchainProposalService implements ProposalService {
     return JSON.stringify(serializationData);
   }
   private serializeVotableItem(item: UIVotableItem | UIAddVoterVotableItem, parentId: bigint, index: number): string {
-    let serializationData : VotableItemSerializationData | AddVoterVotableItemSerializationData;
-    if(IsUIAddVoterVotableItem(item))
-    {
+    let serializationData: VotableItemSerializationData | AddVoterVotableItemSerializationData;
+    if (IsUIAddVoterVotableItem(item)) {
       serializationData = {
         ...getNewVoterProposalDescription(item.newVoterAddress),
         type: "addVoterVoteItem",
@@ -474,8 +509,7 @@ export class BlockchainProposalService implements ProposalService {
         index: 0
       };
     }
-    else
-    {
+    else {
       serializationData = {
         type: "voteItem",
         title: item.title,
@@ -483,7 +517,7 @@ export class BlockchainProposalService implements ProposalService {
         parentProposalId: parentId.toString(),
         index
       };
-    }    
+    }
     return JSON.stringify(serializationData);
   }
   // Checks whether this is a proposal to add a voter based on the calldata and the address

@@ -33,6 +33,6 @@
     "./src",
     "./scripts"
   ],
-  "files": ["./hardhat.config.ts", "lib/blockchain-utils.ts"],
+  "files": ["./hardhat.config.ts"],
   "exclude": ["node_modules"]
 }

@@ -11,15 +11,19 @@ import {
 import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
 import { getNewVoterProposalDescription } from "../utils";
 import { ProposalService } from "./proposal-service";
+import { UserActivityEventVote, UserActivityEventProposal } from "@/components/user-activity/user-activity";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;
   private onProposalsChangedCallback: (newProposals: Proposal[]) => void =
-    () => {};
+    () => { };
   private proposals: Proposal[] = [];
 
   constructor(user: User) {
     this.user = user;
+  }
+  getAllUserActivity(): Promise<(UserActivityEventVote | UserActivityEventProposal)[]> {
+    throw new Error("Method not implemented.");
   }
 
   async getProposals(): Promise<Proposal[]> {
@@ -79,7 +83,7 @@ export class InMemoryProposalService implements ProposalService {
   ): onProposalsChangedUnsubscribe {
     this.onProposalsChangedCallback = callback;
     return () => {
-      this.onProposalsChangedCallback = () => {};
+      this.onProposalsChangedCallback = () => { };
     };
   }
 

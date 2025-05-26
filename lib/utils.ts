@@ -2,8 +2,6 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
   countVoteForOption,
-  IsAddVoterVotableItem,
-  IsUIAddVoterVotableItem,
   Proposal,
   ProposalState,
   ProposalStateMap,
@@ -14,7 +12,7 @@ import {
   VoteOption,
   VoteResult,
 } from "../types/proposal";
-import { addressNameMap } from "./address-name-map";
+import { addressNameMap } from "../constants/address-name-map";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,17 +25,12 @@ export const governorVoteMap: Record<number, VoteOption> = {
 };
 
 const inverseGovernorVoteMap: Record<VoteOption, bigint> = {
-  notEligible: BigInt(-1),
-  didntVote: BigInt(-1),
   against: BigInt(0),
   for: BigInt(1),
   abstain: BigInt(2),
 };
 
 export function convertVoteOptionToGovernor(vote: VoteOption): bigint {
-  if (vote === "didntVote") {
-    throw new Error("didntVote can't be converted to a governor vote");
-  }
   return inverseGovernorVoteMap[vote];
 }
 
@@ -79,8 +72,6 @@ export function convertVoteOptionToString(vote: VoteOption): string {
     for: "за",
     against: "против",
     abstain: "уздржан",
-    didntVote: "нисте гласали",
-    notEligible: "немате право гласа",
   };
   return voteOptionMap[vote];
 }
@@ -207,13 +198,11 @@ export function getNewVoterProposalDescription(newVoterAddress: string) {
   };
 }
 
-async function areFilesEqual(file1? : File, file2? : File) : Promise<boolean> {
-  if(file1 === undefined && file2 === undefined)
-  {
+async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {
+  if (file1 === undefined && file2 === undefined) {
     return true;
   }
-  if(file1 && file2)
-  {
+  if (file1 && file2) {
     // Try some early outs
     if (file1.size !== file2.size) return false;
     if (file1.name === file2.name && file1 === file2) return true;
@@ -234,7 +223,6 @@ async function areFilesEqual(file1? : File, file2? : File) : Promise<boolean> {
   return false;
 }
 
-export async function areProposalsEqual(uiProposal: UIProposal, proposal: Proposal)
-{
+export async function areProposalsEqual(uiProposal: UIProposal, proposal: Proposal) {
   return proposal.title === uiProposal.title && proposal.description === uiProposal.description && await areFilesEqual(proposal.file, uiProposal.file);
 }

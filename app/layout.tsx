@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 // TODO: get this from some config
 function getProposalServiceType(): "mock" | "blockchain" {
-  return "mock";
+  return "blockchain";
 }
 
 export default function RootLayout({
