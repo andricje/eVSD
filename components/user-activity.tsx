@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { formatDate, getUserVotingHistory } from "@/lib/utils";
-import { Proposal } from "@/types/proposal";
+import { Proposal, VotableItem, VoteEvent, VoteOption } from "@/types/proposal";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays,
@@ -15,18 +15,38 @@ import {
 } from "lucide-react";
 import { useProposals } from "@/hooks/use-proposals";
 import { useWallet } from "@/context/wallet-context";
+import Link from "next/link";
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();
   const { user } = useWallet();
   const { toast } = useToast();
 
+  // Proveravamo da li je korisnik prijavljen
+  if (!user) return null;
+
   const userVotingHistory = getUserVotingHistory(proposals, user);
   const userProposals = proposals.filter(
     (proposal) => proposal.author === user
   );
   const activeProposals = proposals.filter((p) => p.status === "open");
-  const completedProposals = proposals.filter((p) => p.status === "closed");
+  const completedProposals = proposals.filter((p) => p.status === "closed" || p.status === "cancelled");
+  const cancelledProposals = proposals.filter((p) => p.status === "cancelled");
+
+  // Definišemo tipove podataka za aktivnosti
+  type ProposalActivity = {
+    type: "proposal_created" | "proposal_cancelled";
+    date: Date;
+    data: Proposal;
+  };
+
+  type VoteActivity = {
+    type: "vote_cast";
+    date: Date;
+    data: { event: VoteEvent; item: VotableItem };
+  };
+
+  type Activity = ProposalActivity | VoteActivity;
 
   // Handler za otkazivanje predloga
   const handleCancelProposal = async (proposal: Proposal) => {
@@ -106,6 +126,26 @@ export function UserActivity() {
     }
     return "bg-gray-50 text-gray-700 border-gray-200";
   };
+
+  // U delu za "Sve aktivnosti"
+  const activities: Activity[] = [
+    ...userProposals.map((p) => ({
+      type: "proposal_created" as const,
+      date: p.dateAdded,
+      data: p,
+    })),
+    ...userVotingHistory.map((v) => ({
+      type: "vote_cast" as const,
+      date: v.event.date,
+      data: v,
+    })),
+    // Dodajemo praćenje otkazanih predloga
+    ...cancelledProposals.filter(p => p.author === user).map((p) => ({
+      type: "proposal_cancelled" as const,
+      date: new Date(), // Ovde nemamo tačan datum, pa koristimo trenutni
+      data: p,
+    })),
+  ];
 
   return (
     <Tabs defaultValue="glasanje">
@@ -239,6 +279,16 @@ export function UserActivity() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                                asChild
+                              >
+                                <Link href={`/votes/${proposal.id.toString()}`}>
+                                  Pregled
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
                                 onClick={() => handleCancelProposal(proposal)}
                               >
@@ -271,8 +321,12 @@ export function UserActivity() {
                             <h4 className="font-medium text-base">
                               {proposal.title}
                             </h4>
-                            <div className="bg-gray-100 text-gray-700 text-xs font-medium rounded-full px-2.5 py-1">
-                              Završeno
+                            <div className={`text-xs font-medium rounded-full px-2.5 py-1 ${
+                              proposal.status === "cancelled" 
+                                ? "bg-red-50 text-red-700" 
+                                : "bg-gray-100 text-gray-700"
+                            }`}>
+                              {proposal.status === "cancelled" ? "Otkazano" : "Završeno"}
                             </div>
                           </div>
                           <p className="text-sm text-gray-600 mb-4 line-clamp-2">
@@ -280,7 +334,21 @@ export function UserActivity() {
                           </p>
 
                           <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-                            <div>Završeno: {formatDate(proposal.closesAt)}</div>
+                            <div>
+                              {proposal.status === "cancelled" 
+                                ? "Otkazano: " 
+                                : "Završeno: "}{formatDate(proposal.closesAt)}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                              asChild
+                            >
+                              <Link href={`/votes/${proposal.id.toString()}`}>
+                                Pregled
+                              </Link>
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -301,82 +369,7 @@ export function UserActivity() {
           <div className="relative">
             <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200"></div>
             <div className="space-y-4 pl-10 relative">
-              {/* Kombinovanje podataka iz user proposals i voting history */}
-              {[
-                ...userProposals.map((p) => ({
-                  type: "proposal_created",
-                  date: p.dateAdded,
-                  data: p,
-                })),
-                ...userVotingHistory.map((v) => ({
-                  type: "vote_cast",
-                  date: v.event.date,
-                  data: v,
-                })),
-              ]
-                .sort((a, b) => {
-                  return b.date.getTime() - a.date.getTime(); // Od najnovijeg do najstarijeg
-                })
-                .map((activity, index) => (
-                  <div key={index} className="relative">
-                    <div className="absolute -left-10 mt-1">
-                      <div
-                        className={`h-6 w-6 rounded-full flex items-center justify-center
-                      ${
-                        activity.type === "proposal_created"
-                          ? "bg-blue-50 border border-blue-200"
-                          : activity.data.event.vote === "for"
-                            ? "bg-emerald-50 border border-emerald-200"
-                            : activity.data.event.vote === "against"
-                              ? "bg-rose-50 border border-rose-200"
-                              : "bg-gray-50 border border-gray-200"
-                      }`}
-                      >
-                        {activity.type === "proposal_created" ? (
-                          <Timer
-                            className={`h-3 w-3 ${(activity.data as Proposal).status === "open" ? "text-blue-600" : "text-gray-600"}`}
-                          />
-                        ) : activity.data.event.vote === "for" ? (
-                          <Check className="h-3 w-3 text-emerald-600" />
-                        ) : activity.data.event.vote === "against" ? (
-                          <X className="h-3 w-3 text-rose-600" />
-                        ) : (
-                          <AlertCircle className="h-3 w-3 text-gray-600" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium">
-                            {activity.type === "proposal_created"
-                              ? `Kreiran predlog: ${(activity.data as Proposal).title}`
-                              : `Glasali ste ${activity.data.event.vote === "for" ? "za" : activity.data.event.vote === "against" ? "protiv" : "uzdržano"}: ${activity.data.item.title || "Predlog"}`}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {formatDate(activity.date)}
-                          </div>
-                        </div>
-                        {activity.type === "proposal_created" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                            onClick={() =>
-                              handleCancelProposal(activity.data as Proposal)
-                            }
-                          >
-                            <X className="h-3.5 w-3.5 mr-1" />
-                            Otkaži
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-              {userProposals.length === 0 && userVotingHistory.length === 0 && (
+              {activities.length === 0 ? (
                 <div className="rounded-xl bg-gray-50 p-8 text-center">
                   <Activity className="mx-auto h-10 w-10 text-gray-400" />
                   <h3 className="mt-4 text-lg font-medium">Nema aktivnosti</h3>
@@ -384,6 +377,86 @@ export function UserActivity() {
                     Vaše aktivnosti na blokchainu će se pojaviti ovde.
                   </p>
                 </div>
+              ) : (
+                activities
+                  .sort((a, b) => {
+                    return b.date.getTime() - a.date.getTime(); // Od najnovijeg do najstarijeg
+                  })
+                  .map((activity, index) => (
+                    <div key={index} className="relative">
+                      <div className="absolute -left-10 mt-1">
+                        <div
+                          className={`h-6 w-6 rounded-full flex items-center justify-center
+                          ${
+                            activity.type === "proposal_created"
+                              ? "bg-blue-50 border border-blue-200"
+                              : activity.type === "proposal_cancelled"
+                                ? "bg-red-50 border border-red-200"
+                                : activity.type === "vote_cast" && activity.data.event.vote === "for"
+                                  ? "bg-emerald-50 border border-emerald-200"
+                                  : activity.type === "vote_cast" && activity.data.event.vote === "against"
+                                    ? "bg-rose-50 border border-rose-200"
+                                    : "bg-gray-50 border border-gray-200"
+                          }`}
+                        >
+                          {activity.type === "proposal_created" ? (
+                            <Timer
+                              className={`h-3 w-3 ${activity.data.status === "open" ? "text-blue-600" : "text-gray-600"}`}
+                            />
+                          ) : activity.type === "proposal_cancelled" ? (
+                            <X className="h-3 w-3 text-red-600" />
+                          ) : activity.type === "vote_cast" && activity.data.event.vote === "for" ? (
+                            <Check className="h-3 w-3 text-emerald-600" />
+                          ) : activity.type === "vote_cast" && activity.data.event.vote === "against" ? (
+                            <X className="h-3 w-3 text-rose-600" />
+                          ) : (
+                            <AlertCircle className="h-3 w-3 text-gray-600" />
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-medium">
+                              {activity.type === "proposal_created"
+                                ? `Kreiran predlog: ${activity.data.title}`
+                                : activity.type === "proposal_cancelled"
+                                  ? `Otkazan predlog: ${activity.data.title}`
+                                  : activity.type === "vote_cast" && `Glasali ste ${
+                                      activity.data.event.vote === "for" 
+                                        ? "za" 
+                                        : activity.data.event.vote === "against" 
+                                          ? "protiv" 
+                                          : "uzdržano"
+                                    }: ${activity.data.item.title || "Predlog"}`}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {formatDate(activity.date)}
+                            </div>
+                          </div>
+                          {(activity.type === "proposal_created" || 
+                            activity.type === "proposal_cancelled" || 
+                            activity.type === "vote_cast") && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+                              asChild
+                            >
+                              <Link 
+                                href={activity.type === "vote_cast" 
+                                  ? `/votes/${activity.data.item.id.toString()}` 
+                                  : `/votes/${activity.data.id.toString()}`}
+                              >
+                                Pregled
+                              </Link>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
               )}
             </div>
           </div>

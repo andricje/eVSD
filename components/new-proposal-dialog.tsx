@@ -44,6 +44,7 @@ export function NewProposalDialog({
   customText,
 }: NewProposalDialogProps) {
   const { proposalService } = useProposals();
+  const [open, setOpen] = useState(false);
   const [newProposal, setNewProposal] = useState<UIProposal>({
     title: "",
     description: "",
@@ -56,9 +57,33 @@ export function NewProposalDialog({
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [infoDots, setInfoDots] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   useEffect(() => {
-    // Dodajemo podrazumevani predlog ako nema nijednog
+    if (open) {
+      setError(null);
+      setInfoMessage(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (proposalSubmitted) {
+      const timer = setTimeout(() => {
+        setNewProposal({
+          title: "",
+          description: "",
+          file: undefined,
+          voteItems: [],
+        });
+        setDocumentName("");
+        setProposalSubmitted(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [proposalSubmitted]);
+
+  useEffect(() => {
     if (newProposal.voteItems.length === 0) {
       const defaultVoteItem: UIVotableItem = {
         title: "",
@@ -123,13 +148,11 @@ export function NewProposalDialog({
     const newSubItems = [...newProposal.voteItems];
 
     if (direction === "up" && currentIndex > 0) {
-      // Zamena sa prethodnim elementom
       [newSubItems[currentIndex], newSubItems[currentIndex - 1]] = [
         newSubItems[currentIndex - 1],
         newSubItems[currentIndex],
       ];
     } else if (direction === "down" && currentIndex < newSubItems.length - 1) {
-      // Zamena sa sledećim elementom
       [newSubItems[currentIndex], newSubItems[currentIndex + 1]] = [
         newSubItems[currentIndex + 1],
         newSubItems[currentIndex],
@@ -173,7 +196,6 @@ export function NewProposalDialog({
       return;
     }
 
-    // Проверавамо да ли су сви подпредлози попуњени
     if (newProposal.voteItems.length === 0) {
       setError("За вишеслојни предлог морате додати најмање једну подтачку.");
       return;
@@ -187,39 +209,21 @@ export function NewProposalDialog({
     }
 
     setError(null);
-    setInfoMessage(null);
     setLoading(true);
 
     try {
-      // Прво приказујемо информацију да проверавамо стање
-      setInfoMessage("Провера стања токена и делегација гласова...");
-
-      // Креирамо предлог
-      setInfoMessage(
-        "Креирање предлога... (потврдите трансакцију у новчанику)"
-      );
-
       const result = await proposalService?.uploadProposal(newProposal);
 
       console.log("Предлог послат:", newProposal, "Hash:", result);
       setError(null);
-      setInfoMessage(null);
-      setProposalSubmitted(true);
+      setShowSuccessMessage(true);
 
-      // Reset форме након 3 секунде
       setTimeout(() => {
-        setNewProposal({
-          title: "",
-          description: "",
-          voteItems: [],
-        });
-        setDocumentName("");
-      }, 3000);
+        setOpen(false);
+      }, 2000);
     } catch (error) {
       console.error("Грешка при креирању предлога:", error);
-      setInfoMessage(null);
 
-      // Детаљније руковање грешкама за јаснију поруку кориснику
       let errorMessage = "Дошло је до грешке при креирању предлога.";
 
       if (error instanceof Error) {
@@ -246,7 +250,7 @@ export function NewProposalDialog({
             "Проблем са прослеђеним подацима. Проверите да ли је адреса токена исправна и параметри одговарајући.";
         } else if (errorWithCode.code === "CALL_EXCEPTION") {
           errorMessage =
-            "Трансакција је одбијена. Могућ проблем са адресом паметног уговора.";
+            "Трансакција је одбијена. Могућ проблем са адресом споразумеог уговора.";
         } else if (errorWithCode.code === "UNPREDICTABLE_GAS_LIMIT") {
           errorMessage =
             "Неуспешна процена трошкова гаса. Проверите да ли испуњавате услове за предлог.";
@@ -254,7 +258,6 @@ export function NewProposalDialog({
           errorMessage =
             "Недовољно средстава за плаћање трошкова трансакције (ETH).";
         } else {
-          // Приказујемо стварну поруку грешке у развојном окружењу
           errorMessage = `Грешка: ${errorString}`;
         }
       }
@@ -265,7 +268,6 @@ export function NewProposalDialog({
     }
   };
 
-  // "Анимација" обраде кроз тачкице
   useEffect(() => {
     if (!infoMessage) {
       return;
@@ -279,7 +281,7 @@ export function NewProposalDialog({
   }, [infoMessage]);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className={customClassName || ""}>
           {customText || (
@@ -297,13 +299,11 @@ export function NewProposalDialog({
             Попуните формулар да бисте додали нови предлог за гласање.
           </DialogDescription>
         </DialogHeader>
-        {proposalSubmitted ? (
+        
+        {showSuccessMessage ? (
           <div className="py-6 text-center">
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium">Предлог успешно послат!</h3>
-            <p className="text-sm text-muted-foreground mt-2">
-              Ваш предлог је додат и доступан је за гласање.
-            </p>
           </div>
         ) : (
           <>
@@ -346,6 +346,7 @@ export function NewProposalDialog({
                     })
                   }
                   placeholder="Унесите наслов предлога"
+                  disabled={loading || proposalSubmitted}
                 />
               </div>
               <div className="grid gap-2">
@@ -361,6 +362,7 @@ export function NewProposalDialog({
                   }
                   placeholder="Детаљно опишите ваш предлог"
                   rows={6}
+                  disabled={loading || proposalSubmitted}
                 />
               </div>
 
@@ -389,6 +391,7 @@ export function NewProposalDialog({
                     size="sm"
                     onClick={addSubItem}
                     className="flex items-center gap-1"
+                    disabled={loading || proposalSubmitted}
                   >
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span>Додај подтачку</span>
@@ -501,6 +504,7 @@ export function NewProposalDialog({
                                   onChange={(e) =>
                                     updateSubItem(item, "title", e.target.value)
                                   }
+                                  disabled={loading || proposalSubmitted}
                                 />
                               </div>
 
@@ -523,6 +527,7 @@ export function NewProposalDialog({
                                     )
                                   }
                                   rows={3}
+                                  disabled={loading || proposalSubmitted}
                                 />
                               </div>
                             </div>
@@ -534,21 +539,6 @@ export function NewProposalDialog({
                 </ScrollArea>
               </div>
 
-              {/* <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="urgent"
-                  checked={newProposal.urgent}
-                  onChange={(e) =>
-                    setNewProposal({
-                      ...newProposal,
-                      urgent: e.target.checked,
-                    })
-                  }
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <Label htmlFor="urgent">Означите као хитно</Label>
-              </div> */}
               <div className="grid gap-2">
                 <Label htmlFor="document">Приложите документ (опционо)</Label>
                 <div className="flex items-center gap-2">
@@ -565,6 +555,7 @@ export function NewProposalDialog({
                     onChange={handleFileChange}
                     className="hidden"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    disabled={loading || proposalSubmitted}
                   />
                   {documentName && (
                     <span className="text-sm text-muted-foreground">
@@ -578,7 +569,7 @@ export function NewProposalDialog({
               <Button
                 type="submit"
                 onClick={handleProposalSubmit}
-                disabled={loading}
+                disabled={loading || proposalSubmitted}
               >
                 {loading ? "Слање..." : "Додај предлог"}
               </Button>
