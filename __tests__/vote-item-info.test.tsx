@@ -1,35 +1,13 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { Proposal, User, VotableItem, VoteEvent, VoteOption } from '@/types/proposal';
+import { User, VotableItem, VoteEvent, VoteOption } from '@/types/proposal';
 import { STRINGS } from '@/constants/strings';
-import { ProposalCard } from '@/components/ProposalCard/proposal-card';
 import { VoteItemInfo } from '@/components/VoteItemInfo/vote-item-info';
 import {v4 as uuidv4} from 'uuid';
-import { getTranslatedVoteOption, getTranslatedVoteOptionWithCount } from '@/lib/utils';
+import { getTranslatedVoteOptionWithCount, QUORUM } from '@/lib/utils';
 
 global.ResizeObserver = require('resize-observer-polyfill')
-
-function getTestProposal(status: 'open' | 'closed' | 'cancelled')
-{
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const proposal : Proposal = {
-        id: 0n,
-        title: 'Test proposal',
-        description: 'Test proposal description',
-        author: {
-            address: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-            name: 'Fakultet 1'
-        },
-        dateAdded: today,
-        status,
-        closesAt: tomorrow,
-        voteItems: []
-    };   
-    return proposal;
-}
 
 function generateUserVote(voteOption: VoteOption)
 {
@@ -76,8 +54,14 @@ describe('NewProposalDialog', () => {
   it("Shows the correct number of votes", async () => {
     const voteItem = getVoteItem(10,3,5);
     render(<VoteItemInfo voteItem={voteItem} />);
-    expect(await screen.queryByText(getTranslatedVoteOptionWithCount("for",10))).toBeInTheDocument();
-    expect(await screen.queryByText(getTranslatedVoteOptionWithCount("against",3))).toBeInTheDocument();
-    expect(await screen.queryByText(getTranslatedVoteOptionWithCount("abstain",5))).toBeInTheDocument();
+    expect(screen.getByText(getTranslatedVoteOptionWithCount("for",10))).toBeInTheDocument();
+    expect(screen.getByText(getTranslatedVoteOptionWithCount("against",3))).toBeInTheDocument();
+    expect(screen.getByText(getTranslatedVoteOptionWithCount("abstain",5))).toBeInTheDocument();
+  });
+  it("Shows quorum reached when there are enough votes", async () => {
+    const quorumhalf = Math.floor(QUORUM/2);
+    const voteItem = getVoteItem(quorumhalf,quorumhalf,5);
+    render(<VoteItemInfo voteItem={voteItem} />);
+    expect(screen.getByText(STRINGS.voting.quorumReached)).toBeInTheDocument();
   });
 });

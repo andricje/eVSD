@@ -35,8 +35,8 @@ export function countVoteForOption(
   votableItem: VotableItem,
   option: VoteOption
 ) {
-  return votableItem.userVotes
-    .values()
+  return [...votableItem.userVotes
+    .values()]
     .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
 }
 
