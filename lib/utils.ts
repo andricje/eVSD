@@ -13,6 +13,7 @@ import {
   VoteResult,
 } from "../types/proposal";
 import { addressNameMap } from "../constants/address-name-map";
+import { STRINGS } from "@/constants/strings";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -196,6 +197,18 @@ export function getNewVoterProposalDescription(newVoterAddress: string) {
     title: `Додавање ${convertAddressToName(newVoterAddress)} као новог члана Е-ВСД`,
     description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress} (${convertAddressToName(newVoterAddress)})`,
   };
+}
+
+export function getTranslatedVoteOption(voteOption: VoteOption)
+{
+  switch (voteOption) {
+      case "for":
+          return STRINGS.voting.voteOptions.for;
+      case "against":
+          return STRINGS.voting.voteOptions.against;
+      case "abstain":
+          return STRINGS.voting.voteOptions.abstain;
+  }
 }
 
 async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {

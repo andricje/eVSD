@@ -3,6 +3,7 @@ import {
   QUORUM,
   isQuorumReached,
   convertAddressToName,
+  getTranslatedVoteOption,
 } from "@/lib/utils";
 import { VotableItem } from "@/types/proposal";
 import { Badge } from "../ui/badge";
@@ -16,15 +17,15 @@ export function VoteItemInfo({ voteItem }: VoteItemInfoProps) {
     <>
       <div className="flex items-center gap-4">
         <div className="flex items-center">
-          <Badge className="bg-green-500">За</Badge>
+          <Badge className="bg-green-500">{getTranslatedVoteOption("for")}</Badge>
           <span className="ml-1">{voteItem.votesFor}</span>
         </div>
         <div className="flex items-center">
-          <Badge className="bg-red-500">Против</Badge>
+          <Badge className="bg-red-500">{getTranslatedVoteOption("against")}</Badge>
           <span className="ml-1">{voteItem.votesAgainst}</span>
         </div>
         <div className="flex items-center">
-          <Badge variant="outline">Уздржан</Badge>
+          <Badge variant="outline">{getTranslatedVoteOption("abstain")}</Badge>
           <span className="ml-1">{voteItem.votesAbstain}</span>
         </div>
       </div>

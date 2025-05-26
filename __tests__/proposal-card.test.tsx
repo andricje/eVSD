@@ -1,9 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { Proposal } from '@/types/proposal';
-import { NewProposalDialog } from '@/components/new-proposal-dialog';
-import userEvent from '@testing-library/user-event';
 import { STRINGS } from '@/constants/strings';
 import { ProposalCard } from '@/components/ProposalCard/proposal-card';
 
