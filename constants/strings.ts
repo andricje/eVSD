@@ -74,6 +74,24 @@ export const STRINGS = {
     },
     proposalCard: {
       voteButton: 'Гласај'
+    },
+    userActivity: {
+      timeLine: {
+        title: 'Aktivnosti na blokchainu',
+        created: 'Kreiran predlog',
+        deleted: 'Povučen predlog',
+        youVoted: 'Glasali ste',
+        noActivity: 'Nema aktivnosti',
+        description: 'Vaše aktivnosti na blokchainu će se pojaviti ovde.'
+      }
+    },
+    voteOptions: {
+      for: 'za',
+      against: 'protiv',
+      abstain: 'uzdržano'
+    },
+    buttons: {
+      cancelProposal: 'Otkaži'
     }
   };
   

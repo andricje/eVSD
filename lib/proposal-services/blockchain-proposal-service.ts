@@ -24,6 +24,7 @@ import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
 import { ProposalService } from "./proposal-service";
 import { DuplicateProposalError, ExecuteFailedError, IneligibleProposerError, IneligibleVoterError } from "../../types/proposal-service-errors";
+import { UserActivityEventProposal, UserActivityEventVote } from "@/components/user-activity";
 
 export type onProposalsChangedUnsubscribe = () => void;
 
@@ -180,6 +181,56 @@ export class BlockchainProposalService implements ProposalService {
     }
     return proposals;
   }
+  async getAllUserActivity() : Promise<(UserActivityEventVote | UserActivityEventProposal)[]>
+  {
+    const proposals = await this.getProposals();
+    const createEvents = proposals.map((proposal) => {
+      const proposalCreateEvt : UserActivityEventProposal = {
+        type: "Create",
+        proposal,
+        date: proposal.dateAdded
+      }
+      return proposalCreateEvt;
+    });
+
+    const voteEventsWithId = await this.getAllVoteEvents();
+    const voteEvents : UserActivityEventVote[] = [];
+    for(const x of voteEventsWithId)
+    {
+      for(const proposal of proposals)
+      {
+        const voteItem = proposal.voteItems.find((voteItem) => voteItem.id === BigInt(x.proposalId));
+        if(voteItem)
+          {
+            const evt : UserActivityEventVote = {
+              voteEvent: x.voteEvent,
+              proposal,
+              voteItem,
+              date: x.voteEvent.date
+            };
+            voteEvents.push(evt);
+          }
+      }
+    }
+
+    const cancelEventsWithId = await this.getAllCancelEvents();
+    const cancelEvents : UserActivityEventProposal[] = []
+    for(const x of cancelEventsWithId)
+    {
+      const proposal = proposals.find((proposal) => proposal.id === BigInt(x.proposalId));
+      if(proposal)
+      {
+        const evt : UserActivityEventProposal = {
+          proposal,
+          type: "Delete",
+          date: x.date
+        };
+        cancelEvents.push(evt);
+      }
+    }
+
+    return [...createEvents, ...voteEvents, ...cancelEvents];    
+  }
   private async getAllVoteEvents() {
     // Filteriramo događaje za glasanje korisnika
     const filter = this.governor.filters.VoteCast();
@@ -199,8 +250,30 @@ export class BlockchainProposalService implements ProposalService {
         voter: { address: args.voter, name: convertAddressToName(args.voter) },
       } as VoteEvent;
       return {
-        proposalId: args.proposalId.toString(),
+        proposalId: args.proposalId,
         voteEvent,
+      };
+    });
+    return (await Promise.all(votingHistory)).filter(
+      (item) => item !== undefined
+    );
+  }
+  private async getAllCancelEvents()
+  {
+    const filter = this.governor.filters.ProposalCanceled();
+    const events = await this.governor.queryFilter(filter, 0, "latest");
+
+    const votingHistory = events.map(async (event) => {
+      const args = (event as EventLog).args;
+      if (!args) {
+        return undefined;
+      }
+      
+      const block = await this.provider.getBlock(event.blockNumber);
+      const date = new Date(block ? block.timestamp * 1000 : 0);
+      return {
+        proposalId: args.proposalId.toString(),
+        date,
       };
     });
     return (await Promise.all(votingHistory)).filter(
@@ -223,32 +296,27 @@ export class BlockchainProposalService implements ProposalService {
     const tokenAddress = evsdTokenArtifacts.address;
     const newVoterAddress = item.newVoterAddress;
     const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
-    const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);    
-
-    try{
-      const tx = await this.governor.propose(
-        [tokenAddress],
-        [0],
-        [transferCalldata],
-        descriptionSerialized
-      );
-      const receipt = await tx.wait();
-      for (const log of receipt.logs) {
-        try {
-          const parsed = this.governor.interface.parseLog(log);
-          if (parsed?.name === "ProposalCreated") {
-            return parsed.args.proposalId;
-          }
-        } catch (err) {
-          // This log might not match the contract interface, ignore it
-          console.log(err);
+    const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);
+    
+    const tx = await this.governor.propose(
+      [tokenAddress],
+      [0],
+      [transferCalldata],
+      descriptionSerialized
+    );
+    const receipt = await tx.wait();
+    for (const log of receipt.logs) {
+      try {
+        const parsed = this.governor.interface.parseLog(log);
+        if (parsed?.name === "ProposalCreated") {
+          return parsed.args.proposalId;
         }
+      } catch (err) {
+        // This log might not match the contract interface, ignore it
+        console.log(err);
       }
     }
-    catch(err)
-    {
-      const x = 5;
-    }
+    
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
   // Creates a proposal on-chain that invokes the do nothing method of the contract. Returns the proposal id

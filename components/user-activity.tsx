@@ -3,7 +3,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { formatDate, getUserVotingHistory } from "@/lib/utils";
-import { Proposal } from "@/types/proposal";
+import { Proposal, User, VotableItem, VoteEvent } from "@/types/proposal";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays,
@@ -15,13 +15,49 @@ import {
 } from "lucide-react";
 import { useProposals } from "@/hooks/use-proposals";
 import { useWallet } from "@/context/wallet-context";
+import { Timeline } from "./user-activity/timeline";
+import { useEffect, useState } from "react";
+import { VotingHistory } from "./user-activity/voting-history";
+
+export interface UserActivityEventVote {
+   voteEvent: VoteEvent;
+   proposal: Proposal;
+   voteItem: VotableItem;
+   date: Date;
+}
+
+export interface UserActivityEventProposal {
+  type: "Create" | "Delete";
+  proposal: Proposal;
+  date: Date;
+}
+
+export function IsUserActivityVote(
+  userActivityEvent: UserActivityEvent
+): userActivityEvent is UserActivityEventVote {
+  return (userActivityEvent as UserActivityEventVote).voteEvent !== undefined;
+}
+
+export type UserActivityEvent = UserActivityEventVote | UserActivityEventProposal;
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();
   const { user } = useWallet();
   const { toast } = useToast();
 
-  const userVotingHistory = user ? getUserVotingHistory(proposals, user) : [];
+  const [activity, setActivity] = useState<(UserActivityEvent)[]>([]);
+  useEffect(()=>{
+    async function getUserActivity()
+    {
+      if(proposalService)
+      {
+        setActivity(await proposalService.getAllUserActivity());
+      }
+    }
+    getUserActivity();
+  },[proposalService])
+  
+  
   const userProposals = proposals.filter(
     (proposal) => proposal.author.address === user?.address
   );
@@ -87,16 +123,6 @@ export function UserActivity() {
     return "text-gray-600";
   };
 
-  const getVoteIconClass = (vote: string) => {
-    if (vote === "for") {
-      return <Check className="h-4 w-4 text-emerald-600" />;
-    }
-    if (vote === "against") {
-      return <X className="h-4 w-4 text-rose-600" />;
-    }
-    return <AlertCircle className="h-4 w-4 text-gray-600" />;
-  };
-
   const getVoteBadgeStyle = (vote: string) => {
     if (vote === "for") {
       return "bg-emerald-50 text-emerald-700 border-emerald-200";
@@ -135,7 +161,7 @@ export function UserActivity() {
         <div className="space-y-6">
           <h2 className="text-xl font-semibold">Istorija glasanja</h2>
 
-          {userVotingHistory.length === 0 ? (
+          {activity.length === 0 ? (
             <div className="rounded-xl bg-gray-50 p-8 text-center">
               <Check className="mx-auto h-10 w-10 text-gray-400" />
               <h3 className="mt-4 text-lg font-medium">Još niste glasali</h3>
@@ -144,54 +170,7 @@ export function UserActivity() {
                 glasanja.
               </p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {userVotingHistory.map(({ event, item }, index) => (
-                <div
-                  key={index}
-                  className="bg-white border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5">
-                          {getVoteIconClass(event.vote)}
-                        </div>
-                        <div>
-                          <h3 className="font-medium">
-                            {item.title ||
-                              `Predlog #${item.id.toString().substring(0, 8)}...`}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-1 text-sm text-gray-500">
-                            <CalendarDays className="h-3 w-3" />
-                            <span>{formatDate(event.date)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <div
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium
-                        ${
-                          event.vote === "for"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : event.vote === "against"
-                              ? "bg-rose-50 text-rose-700"
-                              : "bg-gray-100 text-gray-700"
-                        }`}
-                      >
-                        {event.vote === "for"
-                          ? "Za"
-                          : event.vote === "against"
-                            ? "Protiv"
-                            : "Uzdržan"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          ) : (<VotingHistory activity={activity} />)}
         </div>
       </TabsContent>
 
@@ -295,99 +274,7 @@ export function UserActivity() {
 
       {/* Sve aktivnosti */}
       <TabsContent value="aktivnosti">
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Aktivnosti na blokchainu</h2>
-
-          <div className="relative">
-            <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-            <div className="space-y-4 pl-10 relative">
-              {/* Kombinovanje podataka iz user proposals i voting history */}
-              {[
-                ...userProposals.map((p) => ({
-                  type: "proposal_created",
-                  date: p.dateAdded,
-                  data: p,
-                })),
-                ...userVotingHistory.map((v) => ({
-                  type: "vote_cast",
-                  date: v.event.date,
-                  data: v,
-                })),
-              ]
-                .sort((a, b) => {
-                  return b.date.getTime() - a.date.getTime(); // Od najnovijeg do najstarijeg
-                })
-                .map((activity, index) => (
-                  <div key={index} className="relative">
-                    <div className="absolute -left-10 mt-1">
-                      <div
-                        className={`h-6 w-6 rounded-full flex items-center justify-center
-                      ${
-                        activity.type === "proposal_created"
-                          ? "bg-blue-50 border border-blue-200"
-                          : activity.data.event.vote === "for"
-                            ? "bg-emerald-50 border border-emerald-200"
-                            : activity.data.event.vote === "against"
-                              ? "bg-rose-50 border border-rose-200"
-                              : "bg-gray-50 border border-gray-200"
-                      }`}
-                      >
-                        {activity.type === "proposal_created" ? (
-                          <Timer
-                            className={`h-3 w-3 ${(activity.data as Proposal).status === "open" ? "text-blue-600" : "text-gray-600"}`}
-                          />
-                        ) : activity.data.event.vote === "for" ? (
-                          <Check className="h-3 w-3 text-emerald-600" />
-                        ) : activity.data.event.vote === "against" ? (
-                          <X className="h-3 w-3 text-rose-600" />
-                        ) : (
-                          <AlertCircle className="h-3 w-3 text-gray-600" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium">
-                            {activity.type === "proposal_created"
-                              ? `Kreiran predlog: ${(activity.data as Proposal).title}`
-                              : `Glasali ste ${activity.data.event.vote === "for" ? "za" : activity.data.event.vote === "against" ? "protiv" : "uzdržano"}: ${activity.data.item.title || "Predlog"}`}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {formatDate(activity.date)}
-                          </div>
-                        </div>
-                        {activity.type === "proposal_created" && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-rose-200 text-rose-700 hover:bg-rose-50 hover:text-rose-800"
-                            onClick={() =>
-                              handleCancelProposal(activity.data as Proposal)
-                            }
-                          >
-                            <X className="h-3.5 w-3.5 mr-1" />
-                            Otkaži
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-              {userProposals.length === 0 && userVotingHistory.length === 0 && (
-                <div className="rounded-xl bg-gray-50 p-8 text-center">
-                  <Activity className="mx-auto h-10 w-10 text-gray-400" />
-                  <h3 className="mt-4 text-lg font-medium">Nema aktivnosti</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Vaše aktivnosti na blokchainu će se pojaviti ovde.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <Timeline userActivity={activity} />
       </TabsContent>
     </Tabs>
   );
