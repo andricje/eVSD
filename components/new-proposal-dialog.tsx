@@ -57,6 +57,21 @@ export function NewProposalDialog({
   const [infoDots, setInfoDots] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    // Dodajemo podrazumevani predlog ako nema nijednog
+    if (newProposal.voteItems.length === 0) {
+      const defaultVoteItem: UIVotableItem = {
+        title: "",
+        description: "",
+        UIOnlyId: crypto.randomUUID(),
+      };
+      setNewProposal((prev) => ({
+        ...prev,
+        voteItems: [defaultVoteItem],
+      }));
+    }
+  }, [newProposal.voteItems.length]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setNewProposal({ ...newProposal, file: e.target.files[0] });

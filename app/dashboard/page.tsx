@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,10 +17,13 @@ import {
   History,
   Megaphone,
   User as UserIcon,
+  Bell,
+  CheckCircle2,
+  AlertCircle,
+  Info,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
-import { NewAnnouncementDialog } from "@/components/new-announcement-dialog";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
 import { UserActivity } from "@/components/user-activity";
 import { useWallet } from "@/context/wallet-context";
@@ -36,164 +39,248 @@ import {
 } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
-
-// Compact WalletInfo Component
-const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
-  const { disconnect } = useWallet();
-  // Simulacija podataka o fakultetu - ovo bi trebalo dobiti iz konteksta korisnika
-  const userFaculty = "Електротехнички факултет";
-  const userRole = "Студент";
-
-  return (
-    <Card className="p-5 bg-background border border-border/40 rounded-xl shadow-md">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-primary/10 rounded-full">
-            <Wallet className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <p className="text-base font-semibold text-foreground">
-                {address.substring(0, 6)}...
-                {address.substring(address.length - 4)}
-              </p>
-              <Badge
-                variant="outline"
-                className="text-sm bg-blue-500/10 text-blue-700 border-blue-200"
-              >
-                {userRole}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground">Повезан новчаник</p>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge variant="secondary" className="px-2 py-0.5">
-                <UserIcon className="h-3.5 w-3.5 mr-1" />
-                {userFaculty}
-              </Badge>
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <div className="text-right flex flex-col items-end">
-            <Button variant="ghost" size="sm" className="h-9 px-3 text-sm">
-              Детаљи <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 px-3 text-sm border-border/40 hover:bg-destructive/5 hover:text-destructive"
-              onClick={() => disconnect()}
-            >
-              <X className="h-4 w-4 mr-1.5" /> Одјави се
-            </Button>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-};
+import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
+  const { disconnect } = useWallet();
+
   return (
     <div className="flex gap-3 w-full">
       <NewProposalDialog
         customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
         customText={
           <>
-            <FileText className="h-2 w-4.5 mr-2" />
+            <FileText className="h-4 w-4 mr-2" />
             Нови предлог
           </>
         }
       />
-      {/* {isAdmin && (
-        <NewAnnouncementDialog
-          customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
-          customText={
-            <>
-              <Megaphone className="h-4.5 w-4.5 mr-2" />
-              Обраћање
-            </>
-          }
-        />
-      )} */}
-      <NewVoterDialog />
       <Button
         variant="outline"
         className="flex-1 border border-primary/20 hover:bg-primary/5 text-primary font-medium py-3 text-sm h-full"
         asChild
       >
         <Link href="/rezultati">
-          <PieChart className="h-4.5 w-4.5 mr-2" />
+          <PieChart className="h-4 w-4 mr-2" />
           Резултати
         </Link>
+      </Button>
+      <div className="border-l border-border h-8 mx-2" />
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex-1 border border-border/40 hover:bg-destructive/5 hover:text-destructive py-3 text-sm h-full"
+        onClick={() => disconnect()}
+      >
+        <X className="h-4 w-4 mr-1.5" /> Одјави се
       </Button>
     </div>
   );
 };
 
-// FacultyAnnouncements Component
-const FacultyAnnouncements: React.FC = () => {
+// Compact WalletInfo Component
+const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
+  // Simulacija podataka o fakultetu - ovo bi trebalo dobiti iz konteksta korisnika
+  const userFaculty = "Електротехнички факултет";
+
+  return (
+    <div className="flex items-center justify-between bg-background py-4 px-2 rounded-lg">
+      <div className="flex items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <UserIcon className="h-5 w-5 text-primary" />
+            <p className="text-base font-semibold text-foreground uppercase">
+              {userFaculty}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="secondary" className="px-2 py-0.5 text-sm">
+              <span className="text-muted-foreground">
+                {address.substring(0, 6)}...
+                {address.substring(address.length - 4)}
+              </span>
+            </Badge>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// SystemAnnouncements Component
+const SystemAnnouncements: React.FC = () => {
   const announcements = [
     {
       id: 1,
-      title: "Важно обавештење декана",
+      title: "Ажурирање система",
       date: new Date(),
       content:
-        "Поштовани студенти, обавештавамо вас да су измењени услови за пријаву испита у јануарском року.",
-      faculty: "Факултет организационих наука",
+        "Обавештавамо вас да ће систем бити недоступан због планираног одржавања у суботу од 22:00 до 23:00 часова.",
+      type: "info",
+      icon: Info,
     },
     {
       id: 2,
-      title: "Промене у распореду наставе",
+      title: "Успешно завршено гласање",
       date: new Date(Date.now() - 24 * 60 * 60 * 1000),
       content:
-        "Због техничких проблема у учионици 201, предавања из предмета Софтверско инжењерство се пребацују у салу 301.",
-      faculty: "Електротехнички факултет",
+        "Гласање за предлог 'Измене правилника о студирању' је успешно завршено са постигнутим кворумом.",
+      type: "success",
+      icon: CheckCircle2,
     },
     {
       id: 3,
-      title: "Позив на ванредну седницу",
+      title: "Важно обавештење",
       date: new Date(Date.now() - 48 * 60 * 60 * 1000),
       content:
-        "Обавештавају се чланови Студентског парламента да ће ванредна седница бити одржана у среду, 15.12. у 18ч.",
-      faculty: "Правни факултет",
+        "Потребно је да сви корисници ажурирају своје профиле најкасније до 15.12. ради усклађивања са новим прописима.",
+      type: "warning",
+      icon: AlertCircle,
     },
   ];
 
+  const getIconBgColor = (type: string) => {
+    switch (type) {
+      case "info":
+        return "bg-blue-100";
+      case "success":
+        return "bg-green-100";
+      case "warning":
+        return "bg-amber-100";
+      default:
+        return "bg-gray-100";
+    }
+  };
+
+  const getIconColor = (type: string) => {
+    switch (type) {
+      case "info":
+        return "text-blue-600";
+      case "success":
+        return "text-green-600";
+      case "warning":
+        return "text-amber-600";
+      default:
+        return "text-gray-600";
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-base font-semibold text-foreground mb-2">
-        Обавештења факултета
+      <h2 className="text-base font-semibold text-foreground mb-2 flex items-center">
+        <Bell className="h-4 w-4 mr-2" />
+        Обавештења система
       </h2>
       {announcements.map((announcement) => (
         <Card
           key={announcement.id}
           className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow"
         >
-          <div className="flex justify-between items-start mb-2">
-            <h4 className="text-base font-medium text-foreground">
-              {announcement.title}
-            </h4>
-            <Badge variant="outline" className="text-xs px-2">
-              {announcement.faculty}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mb-3">
-            {announcement.content}
-          </p>
-          <div className="flex justify-between items-center">
-            <span className="text-xs text-muted-foreground">
-              {formatDate(announcement.date)}
-            </span>
-            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-              Детаљније <ChevronRight className="h-3 w-3 ml-1" />
-            </Button>
+          <div className="flex items-start gap-3">
+            <div className={`p-2 ${getIconBgColor(announcement.type)} rounded-full mt-1`}>
+              <announcement.icon className={`h-4 w-4 ${getIconColor(announcement.type)}`} />
+            </div>
+            <div className="flex-1">
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="text-base font-medium text-foreground">
+                  {announcement.title}
+                </h4>
+                <span className="text-xs text-muted-foreground">
+                  {formatDate(announcement.date)}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                {announcement.content}
+              </p>
+              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                Детаљније <ChevronRight className="h-3 w-3 ml-1" />
+              </Button>
+            </div>
           </div>
         </Card>
       ))}
+    </div>
+  );
+};
+
+// ActiveMembers Component
+const ActiveMembers: React.FC = () => {
+  const members = [
+    {
+      address: "0x8F42...e4c1",
+      faculty: "ЕТФ",
+      role: "Администратор",
+      isOnline: true,
+    },
+    {
+      address: "0x3A91...b2d5",
+      faculty: "ФОН",
+      role: "Члан",
+      isOnline: true,
+    },
+    {
+      address: "0x6D22...a7f3",
+      faculty: "Правни",
+      role: "Члан",
+      isOnline: false,
+    },
+    {
+      address: "0x1F5B...c8e9",
+      faculty: "ФТН",
+      role: "Члан",
+      isOnline: true,
+    },
+    {
+      address: "0x9C3D...f2a1",
+      faculty: "ПМФ",
+      role: "Члан",
+      isOnline: false,
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-base font-semibold text-foreground flex items-center">
+          <Users className="h-4 w-4 mr-2" />
+          Активни чланови еВСД
+        </h2>
+        <NewVoterDialog />
+      </div>
+      <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
+        <div className="space-y-3">
+          {members.map((member, index) => (
+            <div 
+              key={index} 
+              className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
+            >
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <UserIcon className="h-4 w-4 text-primary" />
+                  </div>
+                  {member.isOnline && (
+                    <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background"></div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{member.address}</p>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs px-1.5 py-0">
+                      {member.faculty}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">{member.role}</span>
+                  </div>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 };
@@ -209,56 +296,67 @@ function getProposalsToVote(proposals: Proposal[], user: User) {
 // Dashboard component
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
-  const { user } = useWallet();
+  const { user, acceptMembership, declineMembership } = useWallet();
   const { proposals } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
+  
+  // Stanje za prikazivanje popup-a za prihvatanje članstva
+  const [showMembershipDialog, setShowMembershipDialog] = useState(false);
+  
+  // Funkcija za testiranje (samo za razvoj)
+  const simulateNewMember = () => {
+    if (user) {
+      // Postavljamo u localStorage da je korisnik novi član
+      localStorage.setItem(`isNewMember_${user.address}`, "true");
+      // Brišemo informaciju o prihvatanju članstva ako postoji
+      localStorage.removeItem(`membershipAccepted_${user.address}`);
+      // Osvežavamo stranicu da bi se primenilje promene
+      window.location.reload();
+    }
+  };
+  
+  useEffect(() => {
+    // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
+    if (user && user.isNewMember) {
+      setShowMembershipDialog(true);
+    } else {
+      setShowMembershipDialog(false);
+    }
+  }, [user]);
+  
+  // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
+  const handleAcceptMembership = () => {
+    acceptMembership();
+    setShowMembershipDialog(false);
+  };
+  
+  const handleDeclineMembership = () => {
+    declineMembership();
+    setShowMembershipDialog(false);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
+      {/* Dodajemo komponentu za prihvatanje članstva */}
+      <MembershipAcceptanceDialog 
+        isOpen={showMembershipDialog}
+        onAccept={handleAcceptMembership}
+        onDecline={handleDeclineMembership}
+      />
+      
       <main className="flex-1 w-full px-5 py-8">
         <div className="flex flex-col gap-7 max-w-full">
-          {/* Platform stats */}
-          {/* <div className="grid grid-cols-3 gap-4">
-            <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
-              <div className="p-2.5 bg-blue-100 rounded-full">
-                <FileText className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Активни предлози
-                </p>
-                <p className="text-lg font-bold">{totalActiveProposals}</p>
-              </div>
-            </Card>
-            <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
-              <div className="p-2.5 bg-green-100 rounded-full">
-                <Vote className="h-5 w-5 text-green-600" />
-              </div>
-            </Card>
-            <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md flex items-center gap-3">
-              <div className="p-2.5 bg-amber-100 rounded-full">
-                <Users className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  Минимални кворум
-                </p>
-                <p className="text-lg font-bold">{QUORUM} гласова</p>
-              </div>
-            </Card>
-          </div> */}
-
-          {/* Wallet info */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="md:col-span-2">
+          {/* Wallet info and actions */}
+          <div className="bg-background rounded-xl shadow-sm border border-border/40 p-4">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               {user ? (
                 <CompactWalletInfo address={user.address} />
               ) : (
                 <OriginalWalletInfo />
               )}
-            </div>
-            <div className="flex items-center">
-              <ActionButtons isAdmin={false} />
+              <div className="flex w-full md:w-auto gap-3">
+                <ActionButtons isAdmin={false} />
+              </div>
             </div>
           </div>
 
@@ -325,7 +423,8 @@ export default function Dashboard() {
               )}
 
               <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FacultyAnnouncements />
+                <SystemAnnouncements />
+                <ActiveMembers />
               </div>
             </TabsContent>
 
