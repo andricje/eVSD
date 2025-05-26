@@ -25,4 +25,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: npm ui-test
+      - run: npm run ui-test
