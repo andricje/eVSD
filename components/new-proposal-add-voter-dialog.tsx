@@ -27,6 +27,7 @@ export function NewVoterDialog({
 }: NewVoterDialogProps) {
   const { proposalService } = useProposals();
   const [newVoterAddress, setNewVoterAddress] = useState<string>("");
+  const [facultyName, setFacultyName] = useState<string>("");
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
@@ -34,9 +35,13 @@ export function NewVoterDialog({
   const [loading, setLoading] = useState(false);
 
   const handleProposalSubmit = async () => {
-    // TODO: Check if this is a valid address
-    if (newVoterAddress.trim() == "") {
+    if (newVoterAddress.trim() === "") {
       setError("Адреса је обавезна.");
+      return;
+    }
+
+    if (facultyName.trim() === "") {
+      setError("Име факултета је обавезно.");
       return;
     }
 
@@ -45,38 +50,28 @@ export function NewVoterDialog({
     setLoading(true);
 
     try {
-      // Креирамо предлог
-      setInfoMessage(
-        "Креирање предлога... (потврдите трансакцију у новчанику)"
-      );
-
       const voteItem: UIAddVoterVotableItem = { newVoterAddress };
       const proposal: UIProposal = {
-        ...getNewVoterProposalDescription(newVoterAddress),
+        title: `Додавање новог члана: ${facultyName}`,
+        description: `Предлог за додавање новог члана из факултета: ${facultyName}`,
         voteItems: [voteItem],
       };
 
       const result = await proposalService?.uploadProposal(proposal);
 
-      console.log(
-        "Предлог послат додавање адресе:",
-        newVoterAddress,
-        "Hash:",
-        result
-      );
+      console.log("Предлог послат додавање адресе:", newVoterAddress, "Hash:", result);
       setError(null);
       setInfoMessage(null);
       setProposalSubmitted(true);
 
-      // Reset форме након 3 секунде
       setTimeout(() => {
         setNewVoterAddress("");
+        setFacultyName("");
       }, 3000);
     } catch (error) {
       console.error("Грешка при креирању предлога:", error);
       setInfoMessage(null);
 
-      // Детаљније руковање грешкама за јаснију поруку кориснику
       let errorMessage = "Дошло је до грешке при креирању предлога.";
 
       if (error instanceof Error) {
@@ -111,7 +106,6 @@ export function NewVoterDialog({
           errorMessage =
             "Недовољно средстава за плаћање трошкова трансакције (ETH).";
         } else {
-          // Приказујемо стварну поруку грешке у развојном окружењу
           errorMessage = `Грешка: ${errorString}`;
         }
       }
@@ -122,7 +116,6 @@ export function NewVoterDialog({
     }
   };
 
-  // "Анимација" обраде кроз тачкице
   useEffect(() => {
     if (!infoMessage) {
       return;
@@ -192,14 +185,21 @@ export function NewVoterDialog({
 
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">
-                  Адреса новог члана ког желите да додате у Е-ВСД
-                </Label>
+                <Label htmlFor="voterAddress">Адреса новог члана</Label>
                 <Input
-                  id="title"
+                  id="voterAddress"
                   value={newVoterAddress}
                   onChange={(e) => setNewVoterAddress(e.target.value)}
                   placeholder="Унесите адресу"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="facultyName">Име факултета</Label>
+                <Input
+                  id="facultyName"
+                  value={facultyName}
+                  onChange={(e) => setFacultyName(e.target.value)}
+                  placeholder="Унесите име факултета"
                 />
               </div>
             </div>
