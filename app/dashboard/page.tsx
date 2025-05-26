@@ -21,7 +21,7 @@ import {
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
-import { UserActivity } from "@/components/user-activity";
+import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";

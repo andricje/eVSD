@@ -5,7 +5,7 @@ import {
   VoteOption,
 } from "@/types/proposal";
 import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import { UserActivityEventVote, UserActivityEventProposal } from "@/components/user-activity";
+import { UserActivityEventVote, UserActivityEventProposal } from "@/components/user-activity/user-activity";
 
 export interface ProposalService {
   getProposals: () => Promise<Proposal[]>;
@@ -15,5 +15,5 @@ export interface ProposalService {
   onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
   ): onProposalsChangedUnsubscribe;
-  getAllUserActivity() : Promise<(UserActivityEventVote | UserActivityEventProposal)[]>;
+  getAllUserActivity(): Promise<(UserActivityEventVote | UserActivityEventProposal)[]>;
 }
