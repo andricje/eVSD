@@ -33,6 +33,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useProposals } from "@/hooks/use-proposals";
+import { STRINGS } from "@/constants/strings";
+import { v4 as uuidv4 } from 'uuid';
+
 
 interface NewProposalDialogProps {
   customClassName?: string;
@@ -108,7 +111,7 @@ export function NewProposalDialog({
     const newVoteItem: UIVotableItem = {
       title: "",
       description: "",
-      UIOnlyId: crypto.randomUUID(),
+      UIOnlyId: uuidv4(),
     };
 
     setNewProposal({
@@ -187,81 +190,79 @@ export function NewProposalDialog({
 
   const handleProposalSubmit = async () => {
     if (!newProposal.description.trim()) {
-      setError("Опис предлога је обавезан.");
+      setError(STRINGS.newProposal.error.descriptionRequired);
       return;
     }
-
+  
     if (!newProposal.title.trim()) {
-      setError("Наслов предлога је обавезан.");
+      setError(STRINGS.newProposal.error.titleRequired);
       return;
     }
 
+    // Проверавамо да ли су сви подпредлози попуњени
     if (newProposal.voteItems.length === 0) {
-      setError("За вишеслојни предлог морате додати најмање једну подтачку.");
+      setError(STRINGS.newProposal.error.noVoteItems);
       return;
     }
-
+  
     for (const item of newProposal.voteItems) {
       if (!item.title.trim() || !item.description.trim()) {
-        setError("Сви наслови и описи подтачака су обавезни.");
+        setError(STRINGS.newProposal.error.subitemsIncomplete);
         return;
       }
     }
-
+  
     setError(null);
     setLoading(true);
-
+  
     try {
+      setInfoMessage(STRINGS.newProposal.status.creating);
+  
       const result = await proposalService?.uploadProposal(newProposal);
-
-      console.log("Предлог послат:", newProposal, "Hash:", result);
+  
       setError(null);
+      setInfoMessage(null);
+      setProposalSubmitted(true);
+  
       setShowSuccessMessage(true);
 
       setTimeout(() => {
         setOpen(false);
       }, 2000);
     } catch (error) {
-      console.error("Грешка при креирању предлога:", error);
-
-      let errorMessage = "Дошло је до грешке при креирању предлога.";
-
+      setInfoMessage(null);
+  
+      let errorMessage = STRINGS.newProposal.error.generic();
+  
       if (error instanceof Error) {
         const errorString = error.toString();
         const errorWithCode = error as any;
-
+  
         if (errorString.includes("GovernorInsufficientProposerVotes")) {
-          errorMessage =
-            "Немате довољно токена за креирање предлога. За креирање предлога потребно је имати најмање 1 EVSD токен и делегирати их себи.";
+          errorMessage = STRINGS.newProposal.error.insufficientEVSDTokens;
         } else if (
           errorString.includes("user rejected") ||
           errorString.includes("user denied") ||
           errorString.includes("action rejected")
         ) {
-          errorMessage =
-            "Трансакција је одбијена од стране корисника. Потребно је одобрити трансакцију у новчанику.";
+          errorMessage = STRINGS.newProposal.error.txRejectedByUser;
         } else if (errorString.includes("insufficient funds")) {
-          errorMessage =
-            "Недовољно средстава за плаћање трошкова трансакције (ETH).";
+          errorMessage = STRINGS.newProposal.error.insufficientETH;
         } else if (errorString.includes("ERC20InsufficientBalance")) {
-          errorMessage = "Недовољно EVSD токена за креирање предлога.";
+          errorMessage = STRINGS.newProposal.error.insufficientEVSDTokens;
         } else if (errorWithCode.code === "BAD_DATA") {
-          errorMessage =
-            "Проблем са прослеђеним подацима. Проверите да ли је адреса токена исправна и параметри одговарајући.";
+          errorMessage = STRINGS.newProposal.error.badData;
         } else if (errorWithCode.code === "CALL_EXCEPTION") {
-          errorMessage =
-            "Трансакција је одбијена. Могућ проблем са адресом споразумеог уговора.";
+          errorMessage = STRINGS.newProposal.error.callException;
         } else if (errorWithCode.code === "UNPREDICTABLE_GAS_LIMIT") {
-          errorMessage =
-            "Неуспешна процена трошкова гаса. Проверите да ли испуњавате услове за предлог.";
+          errorMessage = STRINGS.newProposal.error.generic(errorString);
         } else if (errorWithCode.code === "INSUFFICIENT_FUNDS") {
-          errorMessage =
-            "Недовољно средстава за плаћање трошкова трансакције (ETH).";
+          errorMessage = STRINGS.newProposal.error.insufficientETH;
         } else {
-          errorMessage = `Грешка: ${errorString}`;
+          errorMessage = STRINGS.newProposal.error.generic(errorString);
         }
       }
-
+  
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -287,23 +288,26 @@ export function NewProposalDialog({
           {customText || (
             <>
               <PlusCircle className="h-4 w-4 mr-2" />
-              Додај нови предлог
+              {STRINGS.newProposal.dialog.addNew}
             </>
           )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Нови предлог за гласање</DialogTitle>
+          <DialogTitle>{STRINGS.newProposal.dialog.title}</DialogTitle>
           <DialogDescription>
-            Попуните формулар да бисте додали нови предлог за гласање.
+            {STRINGS.newProposal.dialog.description}
           </DialogDescription>
         </DialogHeader>
         
         {showSuccessMessage ? (
           <div className="py-6 text-center">
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium">Предлог успешно послат!</h3>
+            <h3 className="text-lg font-medium">{STRINGS.newProposal.success.title}</h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              {STRINGS.newProposal.success.description}
+            </p>
           </div>
         ) : (
           <>
@@ -311,7 +315,7 @@ export function NewProposalDialog({
               <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-red-600 flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 mt-0.5" />
                 <div>
-                  <h3 className="font-medium">Грешка</h3>
+                  <h3 className="font-medium">{STRINGS.newProposal.error.title}</h3>
                   <p className="text-sm break-words whitespace-pre-wrap">
                     {error}
                   </p>
@@ -324,7 +328,7 @@ export function NewProposalDialog({
                 <Info className="h-5 w-5 mt-0.5" />
                 <div>
                   <h3 className="font-medium">
-                    Обрада<span>{infoDots}</span>
+                    {STRINGS.newProposal.info.processing}<span>{infoDots}</span>
                   </h3>
                   <p className="text-sm break-words whitespace-pre-wrap">
                     {infoMessage}
@@ -335,7 +339,7 @@ export function NewProposalDialog({
 
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">Наслов предлога</Label>
+                <Label htmlFor="title">{STRINGS.newProposal.form.title.label}</Label>
                 <Input
                   id="title"
                   value={newProposal.title}
@@ -345,12 +349,13 @@ export function NewProposalDialog({
                       title: e.target.value,
                     })
                   }
-                  placeholder="Унесите наслов предлога"
+                  placeholder={STRINGS.newProposal.form.title.placeholder}
                   disabled={loading || proposalSubmitted}
                 />
               </div>
+
               <div className="grid gap-2">
-                <Label htmlFor="description">Опис предлога</Label>
+                <Label htmlFor="description">{STRINGS.newProposal.form.description.label}</Label>
                 <Textarea
                   id="description"
                   value={newProposal.description}
@@ -360,7 +365,7 @@ export function NewProposalDialog({
                       description: e.target.value,
                     })
                   }
-                  placeholder="Детаљно опишите ваш предлог"
+                  placeholder={STRINGS.newProposal.form.description.placeholder}
                   rows={6}
                   disabled={loading || proposalSubmitted}
                 />
@@ -369,10 +374,10 @@ export function NewProposalDialog({
               <div className="flex items-center justify-between">
                 <div className="flex flex-col">
                   <Label htmlFor="multilayered-proposal" className="mb-1">
-                    Тачке за гласање
+                    {STRINGS.newProposal.form.voteItems.label}
                   </Label>
                   <span className="text-xs text-muted-foreground">
-                    Додајте све тачке за које желите да се гласа
+                    {STRINGS.newProposal.form.voteItems.hint}
                   </span>
                 </div>
               </div>
@@ -382,7 +387,7 @@ export function NewProposalDialog({
                   <Label className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     <span>
-                      Тачке за гласање ({newProposal.voteItems.length})
+                      {STRINGS.newProposal.form.voteItems.label} ({newProposal.voteItems.length})
                     </span>
                   </Label>
                   <Button
@@ -393,8 +398,8 @@ export function NewProposalDialog({
                     className="flex items-center gap-1"
                     disabled={loading || proposalSubmitted}
                   >
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    <span>Додај подтачку</span>
+                    {/* <PlusCircle className="h-3.5 w-3.5" /> */}
+                    {STRINGS.newProposal.form.subItem.add}
                   </Button>
                 </div>
 
@@ -402,17 +407,12 @@ export function NewProposalDialog({
                   <div className="bg-muted p-4 text-center rounded-md">
                     <Layers className="h-10 w-10 text-muted-foreground mx-auto mb-2 opacity-50" />
                     <p className="text-sm text-muted-foreground">
-                      Додајте подтачке предлога за које ће се гласати
-                      појединачно
+                      {STRINGS.newProposal.form.voteItems.none}
                     </p>
                   </div>
                 )}
 
-                <ScrollArea
-                  className={
-                    newProposal.voteItems.length > 2 ? "h-[300px] pr-4" : ""
-                  }
-                >
+                <ScrollArea className={newProposal.voteItems.length > 2 ? "h-[300px] pr-4" : ""}>
                   {newProposal.voteItems.map((item, index) => (
                     <div
                       key={item.UIOnlyId}
@@ -423,16 +423,11 @@ export function NewProposalDialog({
                         collapsible
                         defaultValue={
                           newProposal.voteItems.length > 0
-                            ? newProposal.voteItems[
-                                newProposal.voteItems.length - 1
-                              ].UIOnlyId
+                            ? newProposal.voteItems[newProposal.voteItems.length - 1].UIOnlyId
                             : ""
                         }
                       >
-                        <AccordionItem
-                          value={item.UIOnlyId}
-                          className="border-b-0"
-                        >
+                        <AccordionItem value={item.UIOnlyId} className="border-b-0">
                           <div className="flex items-center justify-between p-3 bg-slate-100 border-b">
                             <AccordionTrigger>
                               <div className="flex items-center gap-2">
@@ -440,7 +435,7 @@ export function NewProposalDialog({
                                   {index + 1}
                                 </span>
                                 <h4 className="font-medium truncate">
-                                  {item.title || `Подтачка ${index + 1}`}
+                                  {item.title || `${STRINGS.newProposal.form.subItem.default} ${index + 1}`}
                                 </h4>
                               </div>
                             </AccordionTrigger>
@@ -460,9 +455,7 @@ export function NewProposalDialog({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => moveSubItem(item, "down")}
-                                disabled={
-                                  index === newProposal.voteItems.length - 1
-                                }
+                                disabled={index === newProposal.voteItems.length - 1}
                                 className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
                               >
                                 <ChevronDown className="h-4 w-4" />
@@ -495,11 +488,11 @@ export function NewProposalDialog({
                                   htmlFor={`title-${item.UIOnlyId}`}
                                   className="text-xs font-medium mb-1 block"
                                 >
-                                  Наслов подтачке
+                                  {STRINGS.newProposal.form.subItem.title.label}
                                 </Label>
                                 <Input
                                   id={`title-${item.UIOnlyId}`}
-                                  placeholder="Унесите наслов подtaчке"
+                                  placeholder={STRINGS.newProposal.form.subItem.title.placeholder}
                                   value={item.title}
                                   onChange={(e) =>
                                     updateSubItem(item, "title", e.target.value)
@@ -513,18 +506,14 @@ export function NewProposalDialog({
                                   htmlFor={`description-${item.UIOnlyId}`}
                                   className="text-xs font-medium mb-1 block"
                                 >
-                                  Опис подtaчке предлога
+                                  {STRINGS.newProposal.form.subItem.description.label}
                                 </Label>
                                 <Textarea
                                   id={`description-${item.UIOnlyId}`}
-                                  placeholder="Опис подtaчке предлога"
+                                  placeholder={STRINGS.newProposal.form.subItem.description.placeholder}
                                   value={item.description}
                                   onChange={(e) =>
-                                    updateSubItem(
-                                      item,
-                                      "description",
-                                      e.target.value
-                                    )
+                                    updateSubItem(item, "description", e.target.value)
                                   }
                                   rows={3}
                                   disabled={loading || proposalSubmitted}
@@ -540,14 +529,16 @@ export function NewProposalDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="document">Приложите документ (опционо)</Label>
+                <Label htmlFor="document">
+                  {STRINGS.newProposal.form.attachment.label}
+                </Label>
                 <div className="flex items-center gap-2">
                   <Label
                     htmlFor="document"
                     className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer hover:bg-muted"
                   >
                     <FileUp className="h-4 w-4" />
-                    <span>Изаберите фајл</span>
+                    <span>{STRINGS.newProposal.form.attachment.button}</span>
                   </Label>
                   <Input
                     id="document"
@@ -558,20 +549,19 @@ export function NewProposalDialog({
                     disabled={loading || proposalSubmitted}
                   />
                   {documentName && (
-                    <span className="text-sm text-muted-foreground">
-                      {documentName}
-                    </span>
+                    <span className="text-sm text-muted-foreground">{documentName}</span>
                   )}
                 </div>
               </div>
             </div>
+
             <DialogFooter>
               <Button
                 type="submit"
                 onClick={handleProposalSubmit}
                 disabled={loading || proposalSubmitted}
               >
-                {loading ? "Слање..." : "Додај предлог"}
+                {loading ? STRINGS.newProposal.form.submit.loading : STRINGS.newProposal.form.submit.default}
               </Button>
             </DialogFooter>
           </>

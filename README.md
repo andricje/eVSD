@@ -1,4 +1,5 @@
-[![Blockchain integration tests](https://github.com/eVSD-PUB/front/actions/workflows/node.js.yml/badge.svg?branch=main)](https://github.com/eVSD-PUB/front/actions/workflows/node.js.yml)
+[![Blockchain integration tests](https://github.com/eVSD-PUB/front/actions/workflows/blockchain-tests.yml/badge.svg)](https://github.com/eVSD-PUB/front/actions/workflows/blockchain-tests.yml)
+[![UI tests](https://github.com/eVSD-PUB/front/actions/workflows/ui-tests.yml/badge.svg)](https://github.com/eVSD-PUB/front/actions/workflows/ui-tests.yml)
 # EVSD
 A decentralized voting platform developed by several students intended to be used for various faculty related voting purposes, especially the events related to the current student movement in Serbia.
 This is a frontend that interacts with an OpenZeppelin "Governor" smart contract.

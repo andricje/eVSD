@@ -71,9 +71,7 @@ export interface VoteEvent {
 export type VoteOption =
   | "for"
   | "against"
-  | "abstain"
-  | "didntVote"
-  | "notEligible";
+  | "abstain";
 
 export type VoteResult = "passed" | "failed" | "returned";
 export type ProposalState = "open" | "closed" | "cancelled";
