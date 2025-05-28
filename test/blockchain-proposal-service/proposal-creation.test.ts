@@ -6,10 +6,29 @@ import { BlockchainProposalService } from "../../lib/proposal-services/blockchai
 import {
   DuplicateProposalError,
   IneligibleProposerError,
-} from "../../lib/proposal-services/proposal-service-errors";
-import { UIAddVoterVotableItem, UIProposal } from "../../types/proposal";
+} from "../../types/proposal-service-errors";
+import { UIAddVoterVotableItem, UIProposal, UIVotableItem } from "../../types/proposal";
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
+import { v4 as uuidv4 } from 'uuid';
+function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal
+{
+  const items: UIVotableItem[] = [];
+  for(let i = 0; i < numVoteItems; i++)
+  {
+    items.push({
+      title: `Vote item ${i}`,
+      description: `Test description ${uuidv4()}`,
+      UIOnlyId: `${i}`
+    });
+  }
+
+  return {
+    title: `Test proposal ${uuidv4()}`,
+    description: "Test proposal description",
+    voteItems: items,
+  };
+}
 
 describe("BlockchainProposalService integration", function () {
   let registeredVoterProposalServices: BlockchainProposalService[];
@@ -61,6 +80,21 @@ describe("BlockchainProposalService integration", function () {
         generatedProposal
       );
     await assertProposalSameForEveryone(generatedProposal, proposalId);
+    ;
+  });
+  it("should preserve the order of vote items of a proposal", async () => {
+    const generatedProposal1 = getProposalLargeNumberOfVoteItems(20);
+    const generatedProposal2 = getProposalLargeNumberOfVoteItems(10);
+
+    const proposalId1 =
+      await registeredVoterProposalServices[0].uploadProposal(
+        generatedProposal1
+      );
+    const proposalId2 = await registeredVoterProposalServices[0].uploadProposal(
+      generatedProposal2
+    );
+    await assertProposalSameForEveryone(generatedProposal1, proposalId1);
+    await assertProposalSameForEveryone(generatedProposal2, proposalId2);
   });
   it("should create a proposal on-chain with correct title and description when there is a vote item to add a voter and fetch it", async () => {
     const generatedProposal: UIProposal = {
@@ -99,7 +133,7 @@ describe("BlockchainProposalService integration", function () {
       registeredVoterProposalServices[0].uploadProposal(generatedProposal)
     ).to.be.rejectedWith(DuplicateProposalError);
   });
-  it("should not throw an error when a proposal with same title and description but different vote items is submitted", async () => {
+  it("should throw an appropriate error when a proposal with same title and description but different vote items is submitted", async () => {
     const proposal1: UIProposal = {
       title: "Test proposal",
       description: "Test proposal description",
@@ -113,6 +147,8 @@ describe("BlockchainProposalService integration", function () {
     };
 
     await registeredVoterProposalServices[0].uploadProposal(proposal1);
-    await registeredVoterProposalServices[0].uploadProposal(proposal2);
+    await expect(
+      registeredVoterProposalServices[1].uploadProposal(proposal2)
+    ).to.be.rejectedWith(DuplicateProposalError);
   });
 });

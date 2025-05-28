@@ -1,6 +1,7 @@
 export interface User {
   address: string;
   name: string;
+  isNewMember?: boolean;
 }
 
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
@@ -36,11 +37,16 @@ export function countVoteForOption(
   option: VoteOption
 ) {
   return Array.from(votableItem.userVotes.values())
-  .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
+              .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
 }
 
 export interface AddVoterVotableItem extends VotableItem {
   newVoterAddress: string;
+}
+export function IsAddVoterVotableItem(
+  votableItem: AddVoterVotableItem | VotableItem
+): votableItem is AddVoterVotableItem {
+  return (votableItem as AddVoterVotableItem).newVoterAddress !== undefined;
 }
 
 export interface Proposal {
@@ -52,7 +58,7 @@ export interface Proposal {
   dateAdded: Date;
   status: ProposalState;
   closesAt: Date;
-  voteItems: VotableItem[];
+  voteItems: (VotableItem | AddVoterVotableItem)[];
 }
 
 export interface VoteEvent {
@@ -64,9 +70,7 @@ export interface VoteEvent {
 export type VoteOption =
   | "for"
   | "against"
-  | "abstain"
-  | "didntVote"
-  | "notEligible";
+  | "abstain";
 
 export type VoteResult = "passed" | "failed" | "returned";
 export type ProposalState = "open" | "closed" | "cancelled";

@@ -10,7 +10,7 @@ import {
   User,
   VoteOption,
 } from "../../types/proposal";
-import { IneligibleVoterError } from "../../lib/proposal-services/proposal-service-errors";
+import { IneligibleVoterError } from "../../types/proposal-service-errors";
 import { getVoteResultForItem } from "../../lib/utils";
 import {
   assertVoterVoteRecordedCorrectly,
@@ -21,7 +21,8 @@ import {
   getRandomVotes,
   rng,
 } from "../utils";
-import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { EvsdToken } from "@/typechain-types";
+import { ethers } from "ethers";
 
 export const voteItems: UIVotableItem[] = [
   {
@@ -67,6 +68,7 @@ describe("BlockchainProposalService integration", function () {
   let addVoterVoteItem: UIAddVoterVotableItem;
   let votingPeriod: number;
   let unregisteredVoterAddress: string;
+  let token : EvsdToken;
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
     registeredVoterProposalServices = initData.registeredVoterProposalServices;
@@ -75,6 +77,7 @@ describe("BlockchainProposalService integration", function () {
     addVoterVoteItem = initData.addVoterVoteItem;
     votingPeriod = initData.votingPeriod;
     unregisteredVoterAddress = initData.unregisteredVoterAddress;
+    token = initData.evsdToken;
   });
 
   async function deployAndGetProposalOneVoteItem(
@@ -121,12 +124,12 @@ describe("BlockchainProposalService integration", function () {
     const proposal =
       await unregisteredVoterProposalServices[0].getProposal(proposalId);
 
-    await expect(function () {
+    await expect(
       unregisteredVoterProposalServices[0].voteForItem(
         proposal.voteItems[0],
         "for"
-      );
-    }).to.be.rejectedWith(IneligibleVoterError);
+      )
+    ).to.be.rejectedWith(IneligibleVoterError);
   });
   it("should correctly record the votes for all addresses when everyone has voted", async () => {
     const proposal = await deployAndGetProposalOneVoteItem();
@@ -229,10 +232,19 @@ describe("BlockchainProposalService integration", function () {
       getVotes(numVoters, 0, 0)
     );
     await fastForwardTime(0, 0, votingPeriod + 10);
-
-    const newProposal = await deployAndGetProposalOneVoteItem();
+    // Voting has ended now someone must call executeItem in order to actually execute the proposal
     const newVoterProposalService = unregisteredVoterProposalServices[0];
-    newVoterProposalService.voteForItem(newProposal.voteItems[0], "for");
+    await newVoterProposalService.executeItem(proposal, 0);
+
+    // Voter should now have token balance of one token
+    const tokenBalance = await token.balanceOf(unregisteredVoterAddress);
+    const decimals = await token.decimals();
+    const oneToken = ethers.parseUnits("1", decimals);
+    expect(tokenBalance).to.equal(oneToken);
+
+    // Create a new proposal and try voting
+    const newProposal = await deployAndGetProposalOneVoteItem();
+    await newVoterProposalService.voteForItem(newProposal.voteItems[0], "for");
     const newProposalUpdated = await newVoterProposalService.getProposal(
       newProposal.id
     );

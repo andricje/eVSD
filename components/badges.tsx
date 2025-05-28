@@ -1,15 +1,20 @@
 import { Badge } from "@/components/ui/badge";
-import { getRemainingTime } from "@/lib/utils";
-import { VoteOption } from "@/types/proposal";
+import { STRINGS } from "@/constants/strings";
+import { getRemainingTime, getTranslatedVoteOption } from "@/lib/utils";
+import { ProposalState, VoteOption } from "@/types/proposal";
 import { CheckCircle2, MinusCircle, Timer, XCircle } from "lucide-react";
 
 export const VoteBadge = ({ vote }: { vote: VoteOption }) => {
-  if (vote === "for") {
-    return <Badge className="bg-green-500">Za</Badge>;
-  } else if (vote === "against") {
-    return <Badge className="bg-red-500">Protiv</Badge>;
-  } else {
-    return <Badge variant="outline">Uzdržan</Badge>;
+  const translatedVote = getTranslatedVoteOption(vote);
+  switch(vote)
+  {
+    case "for":
+      return <Badge className="bg-green-500">{translatedVote}</Badge>;
+    case "against":
+      return <Badge className="bg-red-500">{translatedVote}</Badge>;
+    case "abstain":
+      return <Badge variant="outline">{translatedVote}</Badge>;
+
   }
 };
 
@@ -27,21 +32,22 @@ export const StatusBadge = ({
   status,
   expiresAt,
 }: {
-  status: string;
+  status: ProposalState;
   expiresAt?: Date;
 }) => {
-  if (status === "closed") {
-    return <Badge className="bg-green-500">Zatvoreno</Badge>;
-  } else if (status === "expired") {
-    return <Badge className="bg-gray-500">Isteklo</Badge>;
-  } else if (status === "expiring" && expiresAt) {
-    return (
-      <Badge className="bg-amber-500">
-        <Timer className="h-3 w-3 mr-1" />
-        Ističe za {getRemainingTime(expiresAt)}
-      </Badge>
-    );
-  } else {
-    return <Badge className="bg-blue-500">Aktivno</Badge>;
+  switch (status) {
+    case "open":
+      return <>
+        <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
+        {expiresAt ?
+          <Badge className="bg-amber-500">
+            <Timer className="h-3 w-3 mr-1" />
+            {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+          </Badge> : <></>}
+      </>
+    case "closed":
+      return <Badge className="bg-red-500">{STRINGS.proposal.statusClosed}</Badge>;
+    case "cancelled":
+      return <Badge className="bg-red-500">{STRINGS.proposal.statusCancelled}</Badge>;
   }
 };
