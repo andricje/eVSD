@@ -58,7 +58,7 @@ describe('NewProposalDialog', () => {
     expect(screen.getByText('Грешка')).toBeInTheDocument();
     expect(uploadProposalSpy).not.toHaveBeenCalled();
   });
-  it('Shows an error if there are no voting points is not filled', async () => {
+  it('Shows an error if there are no voting points', async () => {
     render(<NewProposalDialog />);
     fireEvent.click(screen.getByText(STRINGS.newProposal.dialog.addNew));
 
@@ -74,7 +74,7 @@ describe('NewProposalDialog', () => {
     expect(screen.getByText('Грешка')).toBeInTheDocument();
     expect(uploadProposalSpy).not.toHaveBeenCalled();
   });
-  it('Shows an error if there are no voting points is not filled', async () => {
+  it('Calls the correct method from the proposal service if title, description and one voting point are filled', async () => {
     render(<NewProposalDialog />);
     fireEvent.click(screen.getByText(STRINGS.newProposal.dialog.addNew));
     
@@ -84,10 +84,6 @@ describe('NewProposalDialog', () => {
 
     const descriptionInput = screen.getByPlaceholderText(STRINGS.newProposal.form.description.placeholder)
     await userEvent.type(descriptionInput, 'Test opis');
-
-    // Click the button to add a voting point
-    const addVotingPointButton = screen.getByText(STRINGS.newProposal.form.subItem.add);
-    fireEvent.click(addVotingPointButton);
 
     // Fill in the title and description for the new voting point
     await addVotingPoint("Test voting point title", "Voting point description");

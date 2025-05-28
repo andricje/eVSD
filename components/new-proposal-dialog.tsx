@@ -47,6 +47,7 @@ export function NewProposalDialog({
   customText,
 }: NewProposalDialogProps) {
   const { proposalService } = useProposals();
+  const [open, setOpen] = useState(false);
   const [newProposal, setNewProposal] = useState<UIProposal>({
     title: "",
     description: "",
@@ -59,6 +60,45 @@ export function NewProposalDialog({
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [infoDots, setInfoDots] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setError(null);
+      setInfoMessage(null);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (proposalSubmitted) {
+      const timer = setTimeout(() => {
+        setNewProposal({
+          title: "",
+          description: "",
+          file: undefined,
+          voteItems: [],
+        });
+        setDocumentName("");
+        setProposalSubmitted(false);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [proposalSubmitted]);
+
+  useEffect(() => {
+    if (newProposal.voteItems.length === 0) {
+      const defaultVoteItem: UIVotableItem = {
+        title: "",
+        description: "",
+        UIOnlyId: uuidv4(),
+      };
+      setNewProposal((prev) => ({
+        ...prev,
+        voteItems: [defaultVoteItem],
+      }));
+    }
+  }, [newProposal.voteItems.length]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -111,13 +151,11 @@ export function NewProposalDialog({
     const newSubItems = [...newProposal.voteItems];
 
     if (direction === "up" && currentIndex > 0) {
-      // Zamena sa prethodnim elementom
       [newSubItems[currentIndex], newSubItems[currentIndex - 1]] = [
         newSubItems[currentIndex - 1],
         newSubItems[currentIndex],
       ];
     } else if (direction === "down" && currentIndex < newSubItems.length - 1) {
-      // Zamena sa sledećim elementom
       [newSubItems[currentIndex], newSubItems[currentIndex + 1]] = [
         newSubItems[currentIndex + 1],
         newSubItems[currentIndex],
@@ -141,7 +179,7 @@ export function NewProposalDialog({
     const newVoteItem: UIVotableItem = {
       ...originalItem,
       title: `${originalItem.title} (kopija)`,
-      UIOnlyId: crypto.randomUUID(),
+      UIOnlyId: uuidv4(),
     };
 
     setNewProposal({
@@ -160,7 +198,8 @@ export function NewProposalDialog({
       setError(STRINGS.newProposal.error.titleRequired);
       return;
     }
-  
+
+    // Проверавамо да ли су сви подпредлози попуњени
     if (newProposal.voteItems.length === 0) {
       setError(STRINGS.newProposal.error.noVoteItems);
       return;
@@ -174,7 +213,6 @@ export function NewProposalDialog({
     }
   
     setError(null);
-    setInfoMessage(null);
     setLoading(true);
   
     try {
@@ -186,14 +224,11 @@ export function NewProposalDialog({
       setInfoMessage(null);
       setProposalSubmitted(true);
   
-      // setTimeout(() => {
-      //   setNewProposal({
-      //     title: "",
-      //     description: "",
-      //     voteItems: [],
-      //   });
-      //   setDocumentName("");
-      // }, 3000);
+      setShowSuccessMessage(true);
+
+      setTimeout(() => {
+        setOpen(false);
+      }, 2000);
     } catch (error) {
       setInfoMessage(null);
   
@@ -234,7 +269,6 @@ export function NewProposalDialog({
     }
   };
 
-  // "Анимација" обраде кроз тачкице
   useEffect(() => {
     if (!infoMessage) {
       return;
@@ -248,7 +282,7 @@ export function NewProposalDialog({
   }, [infoMessage]);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className={customClassName || ""}>
           {customText || (
@@ -266,7 +300,8 @@ export function NewProposalDialog({
             {STRINGS.newProposal.dialog.description}
           </DialogDescription>
         </DialogHeader>
-        {proposalSubmitted ? (
+        
+        {showSuccessMessage ? (
           <div className="py-6 text-center">
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-medium">{STRINGS.newProposal.success.title}</h3>
@@ -315,6 +350,7 @@ export function NewProposalDialog({
                     })
                   }
                   placeholder={STRINGS.newProposal.form.title.placeholder}
+                  disabled={loading || proposalSubmitted}
                 />
               </div>
 
@@ -331,6 +367,7 @@ export function NewProposalDialog({
                   }
                   placeholder={STRINGS.newProposal.form.description.placeholder}
                   rows={6}
+                  disabled={loading || proposalSubmitted}
                 />
               </div>
 
@@ -359,6 +396,7 @@ export function NewProposalDialog({
                     size="sm"
                     onClick={addSubItem}
                     className="flex items-center gap-1"
+                    disabled={loading || proposalSubmitted}
                   >
                     {/* <PlusCircle className="h-3.5 w-3.5" /> */}
                     {STRINGS.newProposal.form.subItem.add}
@@ -459,6 +497,7 @@ export function NewProposalDialog({
                                   onChange={(e) =>
                                     updateSubItem(item, "title", e.target.value)
                                   }
+                                  disabled={loading || proposalSubmitted}
                                 />
                               </div>
 
@@ -477,6 +516,7 @@ export function NewProposalDialog({
                                     updateSubItem(item, "description", e.target.value)
                                   }
                                   rows={3}
+                                  disabled={loading || proposalSubmitted}
                                 />
                               </div>
                             </div>
@@ -506,6 +546,7 @@ export function NewProposalDialog({
                     onChange={handleFileChange}
                     className="hidden"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                    disabled={loading || proposalSubmitted}
                   />
                   {documentName && (
                     <span className="text-sm text-muted-foreground">{documentName}</span>
@@ -518,7 +559,7 @@ export function NewProposalDialog({
               <Button
                 type="submit"
                 onClick={handleProposalSubmit}
-                disabled={loading}
+                disabled={loading || proposalSubmitted}
               >
                 {loading ? STRINGS.newProposal.form.submit.loading : STRINGS.newProposal.form.submit.default}
               </Button>
