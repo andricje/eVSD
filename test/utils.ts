@@ -19,7 +19,7 @@ import {
 } from "../types/proposal";
 import seedrandom from "seedrandom";
 import { BlockchainProposalService } from "../lib/proposal-services/blockchain-proposal-service";
-import { InMemoryProposalFileService } from "../lib/file-upload";
+import { InMemoryProposalFileService } from "../lib/file-services/in-memory-proposal-file-service";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 export const rng = seedrandom("42");
 export interface TestInitData {

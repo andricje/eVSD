@@ -23,6 +23,7 @@ import {
   Timer,
   Calendar,
   Clock,
+  FileText,
 } from "lucide-react";
 
 import { useProposals } from "@/hooks/use-proposals";
@@ -40,6 +41,7 @@ import {
 } from "@/lib/utils";
 import { addressNameMap } from "@/constants/address-name-map";
 import { useWallet } from "@/context/wallet-context";
+import { PinataProposalFileService } from "@/lib/proposal-services/pinata-proposal-file-service";
 
 // VoteConfirm komponenta
 const VoteConfirm: React.FC<{
@@ -303,6 +305,19 @@ export default function ProposalDetails() {
   const proposal = proposals.find((p) => p.id.toString() === params.id);
   const isAuthor = proposal && proposal.author === user;
 
+  const downloadFileByHash = async (hash: string) => {
+    const fileService = new PinataProposalFileService();
+    const file = await fileService.download(hash);
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = hash;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   const handleSubItemVoteSelect = (
     voteItemId: string,
     vote: VoteOption,
@@ -418,6 +433,18 @@ export default function ProposalDetails() {
                 {proposal.description}
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              {proposal.fileHash && (
+                <Button
+                  onClick={async () =>
+                    await downloadFileByHash(proposal.fileHash!)
+                  }
+                >
+                  <FileText className="h-4.5 w-4.5 mr-2.5" />
+                  Preuzmi predlog
+                </Button>
+              )}
+            </CardContent>
           </Card>
           {/* Sekcija za podtačke višeslojnog predloga */}
           <div className="mb-8">

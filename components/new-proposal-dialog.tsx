@@ -34,8 +34,11 @@ import {
 } from "@/components/ui/accordion";
 import { useProposals } from "@/hooks/use-proposals";
 import { STRINGS } from "@/constants/strings";
-import { v4 as uuidv4 } from 'uuid';
-
+import { v4 as uuidv4 } from "uuid";
+import {
+  ALLOWED_CONTENT_TYPES,
+  MAX_FILE_SIZE,
+} from "@/lib/file-services/proposal-file-service";
 
 interface NewProposalDialogProps {
   customClassName?: string;
@@ -62,6 +65,17 @@ export function NewProposalDialog({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (!ALLOWED_CONTENT_TYPES.includes(file.type)) {
+        setError("Неподржани тип фајла. Подржани типови су: PDF");
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setError(
+          `Фајл је превелики. Максимална величина је ${MAX_FILE_SIZE / 1024 / 1024} MB.`
+        );
+        return;
+      }
       setNewProposal({ ...newProposal, file: e.target.files[0] });
       setDocumentName(e.target.files[0].name);
     }
@@ -155,37 +169,37 @@ export function NewProposalDialog({
       setError(STRINGS.newProposal.error.descriptionRequired);
       return;
     }
-  
+
     if (!newProposal.title.trim()) {
       setError(STRINGS.newProposal.error.titleRequired);
       return;
     }
-  
+
     if (newProposal.voteItems.length === 0) {
       setError(STRINGS.newProposal.error.noVoteItems);
       return;
     }
-  
+
     for (const item of newProposal.voteItems) {
       if (!item.title.trim() || !item.description.trim()) {
         setError(STRINGS.newProposal.error.subitemsIncomplete);
         return;
       }
     }
-  
+
     setError(null);
     setInfoMessage(null);
     setLoading(true);
-  
+
     try {
       setInfoMessage(STRINGS.newProposal.status.creating);
-  
+
       const result = await proposalService?.uploadProposal(newProposal);
-  
+
       setError(null);
       setInfoMessage(null);
       setProposalSubmitted(true);
-  
+
       setTimeout(() => {
         setNewProposal({
           title: "",
@@ -196,13 +210,13 @@ export function NewProposalDialog({
       }, 3000);
     } catch (error) {
       setInfoMessage(null);
-  
+
       let errorMessage = STRINGS.newProposal.error.generic();
-  
+
       if (error instanceof Error) {
         const errorString = error.toString();
         const errorWithCode = error as any;
-  
+
         if (errorString.includes("GovernorInsufficientProposerVotes")) {
           errorMessage = STRINGS.newProposal.error.insufficientEVSDTokens;
         } else if (
@@ -227,7 +241,7 @@ export function NewProposalDialog({
           errorMessage = STRINGS.newProposal.error.generic(errorString);
         }
       }
-  
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -269,7 +283,9 @@ export function NewProposalDialog({
         {proposalSubmitted ? (
           <div className="py-6 text-center">
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium">{STRINGS.newProposal.success.title}</h3>
+            <h3 className="text-lg font-medium">
+              {STRINGS.newProposal.success.title}
+            </h3>
             <p className="text-sm text-muted-foreground mt-2">
               {STRINGS.newProposal.success.description}
             </p>
@@ -280,7 +296,9 @@ export function NewProposalDialog({
               <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-red-600 flex items-start gap-2">
                 <AlertCircle className="h-5 w-5 mt-0.5" />
                 <div>
-                  <h3 className="font-medium">{STRINGS.newProposal.error.title}</h3>
+                  <h3 className="font-medium">
+                    {STRINGS.newProposal.error.title}
+                  </h3>
                   <p className="text-sm break-words whitespace-pre-wrap">
                     {error}
                   </p>
@@ -293,7 +311,8 @@ export function NewProposalDialog({
                 <Info className="h-5 w-5 mt-0.5" />
                 <div>
                   <h3 className="font-medium">
-                    {STRINGS.newProposal.info.processing}<span>{infoDots}</span>
+                    {STRINGS.newProposal.info.processing}
+                    <span>{infoDots}</span>
                   </h3>
                   <p className="text-sm break-words whitespace-pre-wrap">
                     {infoMessage}
@@ -304,7 +323,9 @@ export function NewProposalDialog({
 
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="title">{STRINGS.newProposal.form.title.label}</Label>
+                <Label htmlFor="title">
+                  {STRINGS.newProposal.form.title.label}
+                </Label>
                 <Input
                   id="title"
                   value={newProposal.title}
@@ -319,7 +340,9 @@ export function NewProposalDialog({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="description">{STRINGS.newProposal.form.description.label}</Label>
+                <Label htmlFor="description">
+                  {STRINGS.newProposal.form.description.label}
+                </Label>
                 <Textarea
                   id="description"
                   value={newProposal.description}
@@ -350,7 +373,8 @@ export function NewProposalDialog({
                   <Label className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     <span>
-                      {STRINGS.newProposal.form.voteItems.label} ({newProposal.voteItems.length})
+                      {STRINGS.newProposal.form.voteItems.label} (
+                      {newProposal.voteItems.length})
                     </span>
                   </Label>
                   <Button
@@ -374,7 +398,11 @@ export function NewProposalDialog({
                   </div>
                 )}
 
-                <ScrollArea className={newProposal.voteItems.length > 2 ? "h-[300px] pr-4" : ""}>
+                <ScrollArea
+                  className={
+                    newProposal.voteItems.length > 2 ? "h-[300px] pr-4" : ""
+                  }
+                >
                   {newProposal.voteItems.map((item, index) => (
                     <div
                       key={item.UIOnlyId}
@@ -385,11 +413,16 @@ export function NewProposalDialog({
                         collapsible
                         defaultValue={
                           newProposal.voteItems.length > 0
-                            ? newProposal.voteItems[newProposal.voteItems.length - 1].UIOnlyId
+                            ? newProposal.voteItems[
+                                newProposal.voteItems.length - 1
+                              ].UIOnlyId
                             : ""
                         }
                       >
-                        <AccordionItem value={item.UIOnlyId} className="border-b-0">
+                        <AccordionItem
+                          value={item.UIOnlyId}
+                          className="border-b-0"
+                        >
                           <div className="flex items-center justify-between p-3 bg-slate-100 border-b">
                             <AccordionTrigger>
                               <div className="flex items-center gap-2">
@@ -397,7 +430,8 @@ export function NewProposalDialog({
                                   {index + 1}
                                 </span>
                                 <h4 className="font-medium truncate">
-                                  {item.title || `${STRINGS.newProposal.form.subItem.default} ${index + 1}`}
+                                  {item.title ||
+                                    `${STRINGS.newProposal.form.subItem.default} ${index + 1}`}
                                 </h4>
                               </div>
                             </AccordionTrigger>
@@ -417,7 +451,9 @@ export function NewProposalDialog({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => moveSubItem(item, "down")}
-                                disabled={index === newProposal.voteItems.length - 1}
+                                disabled={
+                                  index === newProposal.voteItems.length - 1
+                                }
                                 className="h-7 w-7 p-0 text-slate-500 hover:text-slate-700"
                               >
                                 <ChevronDown className="h-4 w-4" />
@@ -454,7 +490,10 @@ export function NewProposalDialog({
                                 </Label>
                                 <Input
                                   id={`title-${item.UIOnlyId}`}
-                                  placeholder={STRINGS.newProposal.form.subItem.title.placeholder}
+                                  placeholder={
+                                    STRINGS.newProposal.form.subItem.title
+                                      .placeholder
+                                  }
                                   value={item.title}
                                   onChange={(e) =>
                                     updateSubItem(item, "title", e.target.value)
@@ -467,14 +506,24 @@ export function NewProposalDialog({
                                   htmlFor={`description-${item.UIOnlyId}`}
                                   className="text-xs font-medium mb-1 block"
                                 >
-                                  {STRINGS.newProposal.form.subItem.description.label}
+                                  {
+                                    STRINGS.newProposal.form.subItem.description
+                                      .label
+                                  }
                                 </Label>
                                 <Textarea
                                   id={`description-${item.UIOnlyId}`}
-                                  placeholder={STRINGS.newProposal.form.subItem.description.placeholder}
+                                  placeholder={
+                                    STRINGS.newProposal.form.subItem.description
+                                      .placeholder
+                                  }
                                   value={item.description}
                                   onChange={(e) =>
-                                    updateSubItem(item, "description", e.target.value)
+                                    updateSubItem(
+                                      item,
+                                      "description",
+                                      e.target.value
+                                    )
                                   }
                                   rows={3}
                                 />
@@ -508,7 +557,9 @@ export function NewProposalDialog({
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                   />
                   {documentName && (
-                    <span className="text-sm text-muted-foreground">{documentName}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {documentName}
+                    </span>
                   )}
                 </div>
               </div>
@@ -520,7 +571,9 @@ export function NewProposalDialog({
                 onClick={handleProposalSubmit}
                 disabled={loading}
               >
-                {loading ? STRINGS.newProposal.form.submit.loading : STRINGS.newProposal.form.submit.default}
+                {loading
+                  ? STRINGS.newProposal.form.submit.loading
+                  : STRINGS.newProposal.form.submit.default}
               </Button>
             </DialogFooter>
           </>

@@ -54,7 +54,7 @@ export interface Proposal {
   title: string;
   description: string;
   author: User;
-  file?: File;
+  fileHash?: string;
   dateAdded: Date;
   status: ProposalState;
   closesAt: Date;
@@ -67,10 +67,7 @@ export interface VoteEvent {
   voter: User;
 }
 
-export type VoteOption =
-  | "for"
-  | "against"
-  | "abstain";
+export type VoteOption = "for" | "against" | "abstain";
 
 export type VoteResult = "passed" | "failed" | "returned";
 export type ProposalState = "open" | "closed" | "cancelled";
