@@ -52,7 +52,7 @@ export function PerFacultyVotes({ voteItem }: { voteItem: VotableItem }) {
         {STRINGS.results.proposalInfo.perFacultyVotesTitle}
       </h3>
       <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
-        {Object.entries(voteItem.userVotes).map(([address, voteEvent]) => (
+        {[...voteItem.userVotes.entries()].map(([address, voteEvent]) => (
           <div
             key={address}
             className="flex justify-between py-1 border-b text-sm"
