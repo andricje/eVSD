@@ -91,7 +91,7 @@ export function NewProposalDialog({
       const defaultVoteItem: UIVotableItem = {
         title: "",
         description: "",
-        UIOnlyId: crypto.randomUUID(),
+        UIOnlyId: uuidv4(),
       };
       setNewProposal((prev) => ({
         ...prev,
@@ -179,7 +179,7 @@ export function NewProposalDialog({
     const newVoteItem: UIVotableItem = {
       ...originalItem,
       title: `${originalItem.title} (kopija)`,
-      UIOnlyId: crypto.randomUUID(),
+      UIOnlyId: uuidv4(),
     };
 
     setNewProposal({
