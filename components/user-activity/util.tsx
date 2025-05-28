@@ -1,20 +1,10 @@
 import { STRINGS } from "@/constants/strings";
 import { IsUserActivityVote, UserActivityEvent } from "./user-activity";
+import { getTranslatedVoteOption } from "@/lib/utils";
 
 export function getTextForActivityEvent(activityEvt: UserActivityEvent) {
     if (IsUserActivityVote(activityEvt)) {
-        let voteOptionTranslated;
-        switch (activityEvt.voteEvent.vote) {
-            case "for":
-                voteOptionTranslated = STRINGS.voting.voteOptions.for;
-                break;
-            case "against":
-                voteOptionTranslated = STRINGS.voting.voteOptions.against;
-                break;
-            case "abstain":
-                voteOptionTranslated = STRINGS.voting.voteOptions.abstain;
-                break;
-        }
+        const voteOptionTranslated = getTranslatedVoteOption(activityEvt.voteEvent.vote);
         return `${STRINGS.userActivity.timeLine.youVoted} ${voteOptionTranslated} (${STRINGS.voting.proposal}: ${activityEvt.proposal.title}, ${STRINGS.voting.voteItem}: ${activityEvt.voteItem.title})`;
     }
     else {

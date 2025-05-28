@@ -1,16 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { STRINGS } from "@/constants/strings";
-import { getRemainingTime } from "@/lib/utils";
+import { getRemainingTime, getTranslatedVoteOption } from "@/lib/utils";
 import { ProposalState, VoteOption } from "@/types/proposal";
 import { CheckCircle2, MinusCircle, Timer, XCircle } from "lucide-react";
 
 export const VoteBadge = ({ vote }: { vote: VoteOption }) => {
-  if (vote === "for") {
-    return <Badge className="bg-green-500">Za</Badge>;
-  } else if (vote === "against") {
-    return <Badge className="bg-red-500">Protiv</Badge>;
-  } else {
-    return <Badge variant="outline">Uzdržan</Badge>;
+  const translatedVote = getTranslatedVoteOption(vote);
+  switch(vote)
+  {
+    case "for":
+      return <Badge className="bg-green-500">{translatedVote}</Badge>;
+    case "against":
+      return <Badge className="bg-red-500">{translatedVote}</Badge>;
+    case "abstain":
+      return <Badge variant="outline">{translatedVote}</Badge>;
+
   }
 };
 
