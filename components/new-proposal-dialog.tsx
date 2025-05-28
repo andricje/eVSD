@@ -186,14 +186,14 @@ export function NewProposalDialog({
       setInfoMessage(null);
       setProposalSubmitted(true);
   
-      setTimeout(() => {
-        setNewProposal({
-          title: "",
-          description: "",
-          voteItems: [],
-        });
-        setDocumentName("");
-      }, 3000);
+      // setTimeout(() => {
+      //   setNewProposal({
+      //     title: "",
+      //     description: "",
+      //     voteItems: [],
+      //   });
+      //   setDocumentName("");
+      // }, 3000);
     } catch (error) {
       setInfoMessage(null);
   

@@ -32,7 +32,12 @@ describe('NewProposalDialog', () => {
         name: 'Test Fakultet'
     }
     const proposalService = new InMemoryProposalService(mockUser);
+    
+    const originalUploadProposal = proposalService.uploadProposal.bind(proposalService);
+
     uploadProposalSpy = jest.spyOn(proposalService, 'uploadProposal');
+    uploadProposalSpy.mockImplementation(originalUploadProposal);
+
     const mockProposalsReturn: ProposalsContextValue = {
         proposals: await proposalService.getProposals(),
         proposalService
@@ -50,7 +55,6 @@ describe('NewProposalDialog', () => {
 
     const submitButton = screen.getByText(STRINGS.newProposal.form.submit.default);
     fireEvent.click(submitButton);
-
     expect(screen.getByText('Грешка')).toBeInTheDocument();
     expect(uploadProposalSpy).not.toHaveBeenCalled();
   });
@@ -89,7 +93,9 @@ describe('NewProposalDialog', () => {
     await addVotingPoint("Test voting point title", "Voting point description");
 
     const submitButton = screen.getByText(STRINGS.newProposal.form.submit.default);
-    fireEvent.click(submitButton);
+    await act(async () => {
+      fireEvent.click(submitButton);
+    })
     
     expect(uploadProposalSpy).toHaveBeenCalled();
   });
