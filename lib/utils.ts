@@ -13,7 +13,7 @@ import {
   VoteResult,
 } from "../types/proposal";
 import { addressNameMap } from "../constants/address-name-map";
-import { STRINGS } from "@/constants/strings";
+import { STRINGS } from "../constants/strings";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

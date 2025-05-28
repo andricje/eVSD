@@ -1,5 +1,5 @@
-import { addressNameMap } from "@/constants/address-name-map";
-import { User, VoteEvent, VotableItem, Proposal, VoteOption } from "@/types/proposal";
+import { addressNameMap } from "../constants/address-name-map";
+import { User, VoteEvent, VotableItem, Proposal, VoteOption } from "../types/proposal";
 
 export function getVoteItem(votes: VoteOption[])
 {
