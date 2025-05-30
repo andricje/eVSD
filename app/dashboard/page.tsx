@@ -41,6 +41,7 @@ import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
+import { addressNameMap } from "@/constants/address-name-map";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
@@ -212,39 +213,6 @@ const SystemAnnouncements: React.FC = () => {
 
 // ActiveMembers Component
 const ActiveMembers: React.FC = () => {
-  const members = [
-    {
-      address: "0x8F42...e4c1",
-      faculty: "ЕТФ",
-      role: "Администратор",
-      isOnline: true,
-    },
-    {
-      address: "0x3A91...b2d5",
-      faculty: "ФОН",
-      role: "Члан",
-      isOnline: true,
-    },
-    {
-      address: "0x6D22...a7f3",
-      faculty: "Правни",
-      role: "Члан",
-      isOnline: false,
-    },
-    {
-      address: "0x1F5B...c8e9",
-      faculty: "ФТН",
-      role: "Члан",
-      isOnline: true,
-    },
-    {
-      address: "0x9C3D...f2a1",
-      faculty: "ПМФ",
-      role: "Члан",
-      isOnline: false,
-    },
-  ];
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
@@ -256,9 +224,9 @@ const ActiveMembers: React.FC = () => {
       </div>
       <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
         <div className="space-y-3">
-          {members.map((member, index) => (
-            <div 
-              key={index} 
+          {Object.entries(addressNameMap).map(([address, name]) => (
+            <div
+              key={address}
               className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
             >
               <div className="flex items-center gap-2">
@@ -266,23 +234,16 @@ const ActiveMembers: React.FC = () => {
                   <div className="p-2 bg-primary/10 rounded-full">
                     <UserIcon className="h-4 w-4 text-primary" />
                   </div>
-                  {member.isOnline && (
-                    <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-background"></div>
-                  )}
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{member.address}</p>
+                  <p className="text-sm font-medium">{address}</p>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs px-1.5 py-0">
-                      {member.faculty}
+                      {name}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">{member.role}</span>
                   </div>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           ))}
         </div>
@@ -305,10 +266,10 @@ export default function Dashboard() {
   const { user, acceptMembership, declineMembership } = useWallet();
   const { proposals } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
-  
+
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);
-  
+
   // Funkcija za testiranje (samo za razvoj)
   const simulateNewMember = () => {
     if (user) {
@@ -320,7 +281,7 @@ export default function Dashboard() {
       window.location.reload();
     }
   };
-  
+
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
     if (user && user.isNewMember) {
@@ -329,13 +290,13 @@ export default function Dashboard() {
       setShowMembershipDialog(false);
     }
   }, [user]);
-  
+
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = () => {
     acceptMembership();
     setShowMembershipDialog(false);
   };
-  
+
   const handleDeclineMembership = () => {
     declineMembership();
     setShowMembershipDialog(false);
@@ -344,12 +305,12 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
       {/* Dodajemo komponentu za prihvatanje članstva */}
-      <MembershipAcceptanceDialog 
+      <MembershipAcceptanceDialog
         isOpen={showMembershipDialog}
         onAccept={handleAcceptMembership}
         onDecline={handleDeclineMembership}
       />
-      
+
       <main className="flex-1 w-full px-5 py-8">
         <div className="flex flex-col gap-7 max-w-full">
           {/* Wallet info and actions */}
