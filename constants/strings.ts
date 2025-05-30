@@ -105,10 +105,16 @@ export const STRINGS = {
       against: 'protiv',
       abstain: 'uzdržano'
     },
+    results: {
+      passed: 'usvojeno',
+      failed: 'nije usvojeno',
+      noQuorum: 'nije dostignut kvorum'
+    },
     proposal: 'Predlog',
     voteItem: 'Tačka',
     quorum: 'Кворум',
-    quorumReached: 'Достигнут'
+    quorumReached: 'Достигнут',
+    result: 'Резултат'
   },
   proposal: {
     statusActive: 'Glasanje aktivno',
@@ -120,7 +126,7 @@ export const STRINGS = {
     cancelProposal: 'Otkaži'
   },
   results: {
-    proposalInfo:{
+    proposalInfo: {
       perFacultyVotesTitle: 'Детаљи гласања по факултетима'
     }
   }

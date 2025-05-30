@@ -37,7 +37,7 @@ export function countVoteForOption(
   option: VoteOption
 ) {
   return Array.from(votableItem.userVotes.values())
-              .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
+    .reduce((acc, item) => (item.vote === option ? acc + 1 : acc), 0);
 }
 
 export interface AddVoterVotableItem extends VotableItem {
@@ -72,7 +72,7 @@ export type VoteOption =
   | "against"
   | "abstain";
 
-export type VoteResult = "passed" | "failed" | "returned";
+export type VoteResult = "passed" | "failed" | "no-quorum";
 export type ProposalState = "open" | "closed" | "cancelled";
 export const ProposalStateMap: Map<number, string> = new Map([
   [0, "Pending"],

@@ -5,10 +5,11 @@ import {
   convertAddressToName,
   getTranslatedVoteOption,
   getTranslatedVoteOptionWithCount,
+  getVoteResult,
 } from "@/lib/utils";
 import { countVoteForOption, VotableItem } from "@/types/proposal";
 import { Badge } from "../ui/badge";
-import { VoteBadge } from "../badges";
+import { VoteBadge, VoteResultBadge } from "../badges";
 import { STRINGS } from "@/constants/strings";
 
 interface VoteItemInfoProps {
@@ -22,13 +23,13 @@ export function VoteItemInfo({ voteItem }: VoteItemInfoProps) {
     <>
       <div className="flex items-center gap-4">
         <div className="flex items-center">
-          <Badge className="bg-green-500">{getTranslatedVoteOptionWithCount("for",votesFor)}</Badge>
+          <Badge className="bg-green-500">{getTranslatedVoteOptionWithCount("for", votesFor)}</Badge>
         </div>
         <div className="flex items-center">
-          <Badge className="bg-red-500">{getTranslatedVoteOptionWithCount("against",votesAgainst)}</Badge>
+          <Badge className="bg-red-500">{getTranslatedVoteOptionWithCount("against", votesAgainst)}</Badge>
         </div>
         <div className="flex items-center">
-          <Badge variant="outline">{getTranslatedVoteOptionWithCount("abstain",votesAbstain)}</Badge>
+          <Badge variant="outline">{getTranslatedVoteOptionWithCount("abstain", votesAbstain)}</Badge>
         </div>
       </div>
       <div>
@@ -41,6 +42,10 @@ export function VoteItemInfo({ voteItem }: VoteItemInfoProps) {
             <Badge className="bg-green-500 ml-2">{STRINGS.voting.quorumReached}</Badge>
           )}
         </div>
+      </div>
+      <div>
+        <p className="text-sm font-medium mb-1">{STRINGS.voting.result}</p>
+        <VoteResultBadge status={getVoteResult(votesFor, votesAgainst, votesAbstain)} />
       </div>
     </>
   );

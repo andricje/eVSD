@@ -92,7 +92,7 @@ export function getVoteResult(
       return "failed";
     }
   } else {
-    return "returned";
+    return "no-quorum";
   }
 }
 
@@ -199,20 +199,18 @@ export function getNewVoterProposalDescription(newVoterAddress: string) {
   };
 }
 
-export function getTranslatedVoteOption(voteOption: VoteOption)
-{
+export function getTranslatedVoteOption(voteOption: VoteOption) {
   switch (voteOption) {
-      case "for":
-          return STRINGS.voting.voteOptions.for;
-      case "against":
-          return STRINGS.voting.voteOptions.against;
-      case "abstain":
-          return STRINGS.voting.voteOptions.abstain;
+    case "for":
+      return STRINGS.voting.voteOptions.for;
+    case "against":
+      return STRINGS.voting.voteOptions.against;
+    case "abstain":
+      return STRINGS.voting.voteOptions.abstain;
   }
 }
 
-export function getTranslatedVoteOptionWithCount(voteOption: VoteOption, count: number)
-{
+export function getTranslatedVoteOptionWithCount(voteOption: VoteOption, count: number) {
   return `${getTranslatedVoteOption(voteOption)}: ${count}`;
 }
 
