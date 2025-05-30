@@ -40,10 +40,12 @@ import {
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
+import { useRouter } from "next/navigation";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
   const { disconnect } = useWallet();
+  const router = useRouter();
 
   return (
     <div className="flex gap-3 w-full">
@@ -71,7 +73,11 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         variant="outline"
         size="sm"
         className="flex-1 border border-border/40 hover:bg-destructive/5 hover:text-destructive py-3 text-sm h-full"
-        onClick={() => disconnect()}
+        onClick={() => {
+          disconnect();
+          router.push('/');
+        }
+        }
       >
         <X className="h-4 w-4 mr-1.5" /> Одјави се
       </Button>

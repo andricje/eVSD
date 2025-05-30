@@ -1,3 +1,4 @@
+'use client';
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +11,10 @@ import {
 import { Shield, Wallet, FileCheck } from "lucide-react";
 import { Header } from "@/components/header";
 import { DonationsSection } from "@/components/donations/donations-section";
+import { useWallet } from "@/context/wallet-context";
 
 export default function Home() {
+  const { user } = useWallet();
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -29,12 +32,14 @@ export default function Home() {
                 </p>
               </div>
               <div className="space-x-4">
-                <Button asChild>
-                  <Link href="/login">Пријава са крипто новчаником</Link>
+                {user ? <><Button asChild>
+                  <Link href="/dashboard">Контролна табла</Link>
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/rezultati">Преглед јавних резултата</Link>
-                </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/rezultati">Преглед јавних резултата</Link>
+                  </Button></> : <Button asChild>
+                  <Link href="/login">Пријави се</Link>
+                </Button>}
               </div>
             </div>
           </div>
