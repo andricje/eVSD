@@ -1,4 +1,3 @@
-import { addressNameMap } from "../constants/address-name-map";
 import {
   User,
   VoteEvent,
@@ -6,14 +5,15 @@ import {
   Proposal,
   VoteOption,
 } from "../types/proposal";
+import { Wallet } from "ethers";
 
 export function getVoteItem(votes: VoteOption[]) {
   const addressVoteMap = new Map<string, VoteEvent>();
-  const addresses = Object.keys(addressNameMap);
   for (let i = 0; i < votes.length; i++) {
+    const wallet = Wallet.createRandom();
     const user: User = {
-      address: addresses[i],
-      name: addressNameMap[addresses[i]],
+      address: wallet.address,
+      name: `Test fakultet ${i}`,
     };
     addressVoteMap.set(user.address, {
       vote: "for",
