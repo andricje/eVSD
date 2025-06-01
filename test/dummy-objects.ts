@@ -5,16 +5,29 @@ import {
   Proposal,
   VoteOption,
 } from "../types/proposal";
-import { Wallet } from "ethers";
+import { createHash } from "crypto";
 
-export function getVoteItem(votes: VoteOption[]) {
-  const addressVoteMap = new Map<string, VoteEvent>();
-  for (let i = 0; i < votes.length; i++) {
-    const wallet = Wallet.createRandom();
+function generateEthAddress(seed: string) {
+  const hash = createHash("sha256").update(seed).digest("hex");
+  return "0x" + hash.slice(-40);
+}
+
+export function getDummyVoters(voterCount: number) {
+  const voters: User[] = [];
+  for (let i = 0; i < voterCount; i++) {
     const user: User = {
-      address: wallet.address,
+      address: generateEthAddress(`${i}`),
       name: `Test fakultet ${i}`,
     };
+    voters.push(user);
+  }
+  return voters;
+}
+
+export function getVoteItem(votes: VoteOption[], voters: User[]) {
+  const addressVoteMap = new Map<string, VoteEvent>();
+  for (let i = 0; i < votes.length; i++) {
+    const user = voters[i];
     addressVoteMap.set(user.address, {
       vote: "for",
       date: new Date(),
@@ -35,6 +48,7 @@ export function getTestProposal(status: "open" | "closed" | "cancelled") {
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
+  const voters = getDummyVoters(10);
   const proposal: Proposal = {
     id: 0n,
     title: "Test proposal",
@@ -47,8 +61,8 @@ export function getTestProposal(status: "open" | "closed" | "cancelled") {
     status,
     closesAt: tomorrow,
     voteItems: [
-      getVoteItem(["for", "against", "abstain"]),
-      getVoteItem(["for", "for", "against", "against"]),
+      getVoteItem(["for", "against", "abstain"], voters),
+      getVoteItem(["for", "for", "against", "against"], voters),
     ],
   };
   return proposal;

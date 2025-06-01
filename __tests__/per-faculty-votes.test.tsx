@@ -1,10 +1,19 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
+
+jest.mock("../lib/utils", () => {
+  const actualUtils = jest.requireActual("../lib/utils");
+  return {
+    ...actualUtils,
+    convertAddressToName: jest.fn(),
+  };
+});
+
 import { PerFacultyVotes } from "@/components/VoteItemInfo/vote-item-info";
-import { addressNameMap } from "@/constants/address-name-map";
-import { getVoteItem } from "../test/dummy-objects";
-import { getTranslatedVoteOption } from "@/lib/utils";
+import { getDummyVoters, getVoteItem } from "../test/dummy-objects";
+import { getTranslatedVoteOption, convertAddressToName } from "@/lib/utils";
+import { User } from "@/types/proposal";
 
 global.ResizeObserver = require("resize-observer-polyfill");
 
@@ -20,24 +29,42 @@ const getByTextContent = (text: string) => {
 };
 
 describe("NewProposalDialog", () => {
+  let dummyVoters: User[];
+  beforeAll(() => {
+    dummyVoters = getDummyVoters(10);
+    const mockAddrMap = dummyVoters.reduce(
+      (acc, item) => {
+        acc[item.address] = item.name;
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+
+    (convertAddressToName as jest.Mock).mockImplementation((addr: string) => {
+      return mockAddrMap[addr];
+    });
+  });
   it("Shows all faculties that did cast a vote", async () => {
-    const voteItem = getVoteItem(["for", "against", "abstain"]);
+    const voteItem = getVoteItem(["for", "against", "abstain"], dummyVoters);
     render(<PerFacultyVotes voteItem={voteItem} />);
-    const names = Object.values(addressNameMap);
+    const names = dummyVoters.map((voter) => voter.name);
     expect(screen.getByText(names[0])).toBeInTheDocument();
     expect(screen.getByText(names[1])).toBeInTheDocument();
     expect(screen.getByText(names[2])).toBeInTheDocument();
   });
   it("Doesn't show a faculty that didn't cast a vote", async () => {
-    const voteItem = getVoteItem(["for", "against", "abstain"]);
+    const voteItem = getVoteItem(["for", "against", "abstain"], dummyVoters);
     render(<PerFacultyVotes voteItem={voteItem} />);
-    const names = Object.values(addressNameMap);
+    const names = dummyVoters.map((voter) => voter.name);
     expect(screen.queryByText(names[3])).not.toBeInTheDocument();
   });
   it("Correctly shows what each faculty voted", async () => {
-    const voteItem = getVoteItem(["for", "against", "abstain", "for"]);
+    const voteItem = getVoteItem(
+      ["for", "against", "abstain", "for"],
+      dummyVoters
+    );
     render(<PerFacultyVotes voteItem={voteItem} />);
-    const names = Object.values(addressNameMap);
+    const names = dummyVoters.map((voter) => voter.name);
     expect(
       getByTextContent(`${names[0]}${getTranslatedVoteOption("for")}`)
     ).toBeInTheDocument();
