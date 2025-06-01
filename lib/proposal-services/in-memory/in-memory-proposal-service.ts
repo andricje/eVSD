@@ -7,10 +7,12 @@ import {
   User,
   VotableItem,
   VoteOption,
-} from "../../types/proposal";
-import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import { getNewVoterProposalDescription } from "../utils";
-import { ProposalService } from "./proposal-service";
+} from "../../../types/proposal";
+import {
+  onProposalsChangedUnsubscribe,
+  ProposalService,
+} from "../proposal-service";
+import { getNewVoterProposalDescription } from "../../utils";
 import {
   UserActivityEventVote,
   UserActivityEventProposal,

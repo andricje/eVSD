@@ -1,0 +1,70 @@
+import {
+  UserActivityEventProposal,
+  UserActivityEventVote,
+} from "@/components/user-activity/user-activity";
+import { BlockchainProposalReader } from "./blockchain-proposal-reader";
+import { BlockchainEventProvider } from "./blockchain-event-provider";
+import { UserActivityTracker } from "../proposal-service";
+
+export class BlockchainUserActivityTracker implements UserActivityTracker {
+  private readonly reader: BlockchainProposalReader;
+  private readonly eventProvider: BlockchainEventProvider;
+
+  constructor(
+    blockchainReader: BlockchainProposalReader,
+    blockchainEventProvider: BlockchainEventProvider
+  ) {
+    this.reader = blockchainReader;
+    this.eventProvider = blockchainEventProvider;
+  }
+  public async getAllUserActivity(): Promise<
+    (UserActivityEventVote | UserActivityEventProposal)[]
+  > {
+    const proposals = await this.reader.getProposals();
+    const createEvents = proposals.map((proposal) => {
+      const proposalCreateEvt: UserActivityEventProposal = {
+        type: "Create",
+        proposal,
+        date: proposal.dateAdded,
+      };
+      return proposalCreateEvt;
+    });
+
+    const voteEventsWithId = await this.eventProvider.getAllVoteEvents();
+    const voteEvents: UserActivityEventVote[] = [];
+    for (const x of voteEventsWithId) {
+      for (const proposal of proposals) {
+        const voteItem = proposal.voteItems.find(
+          (voteItem) => voteItem.id === BigInt(x.proposalId)
+        );
+        if (voteItem) {
+          const evt: UserActivityEventVote = {
+            voteEvent: x.voteEvent,
+            proposal,
+            voteItem,
+            date: x.voteEvent.date,
+          };
+          voteEvents.push(evt);
+        }
+      }
+    }
+
+    const cancelEventsWithId = await this.eventProvider.getAllCancelEvents();
+    const cancelEvents: UserActivityEventProposal[] = [];
+    for (const x of cancelEventsWithId) {
+      const proposal = proposals.find(
+        (proposal) => proposal.id === BigInt(x.proposalId)
+      );
+      if (proposal) {
+        const evt: UserActivityEventProposal = {
+          proposal,
+          type: "Delete",
+          date: x.date,
+        };
+        cancelEvents.push(evt);
+      }
+    }
+
+    return [...createEvents, ...voteEvents, ...cancelEvents];
+  }
+}

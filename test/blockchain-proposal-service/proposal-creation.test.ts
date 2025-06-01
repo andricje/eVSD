@@ -2,7 +2,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
+import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
 import {
   DuplicateProposalError,
   IneligibleProposerError,
