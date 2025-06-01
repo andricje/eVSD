@@ -44,8 +44,9 @@ export async function deployContracts(deployer: ethers.Signer) {
     "EvsdGovernor",
     deployer
   );
+  const tokenAddress = await evsdToken.getAddress();
   const evsdGovernor = await EvsdGovernorFactory.deploy(
-    evsdTokenArtifacts.address
+    tokenAddress
   );
   await evsdGovernor.waitForDeployment();
   return {
@@ -106,6 +107,8 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
 
   await delegateVotesToAllSigners(token);
 
+  const governorAddress = await governor.getAddress();
+  const tokenAddress = await token.getAddress();
   // Create mock services
   const fileService = new InMemoryProposalFileService();
   const registeredVoterProposalServices = voters.map(
@@ -113,7 +116,9 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
       new BlockchainProposalService(
         voter as unknown as ethers.Signer,
         fileService,
-        hardhat.ethers.provider
+        hardhat.ethers.provider,
+        governorAddress,
+        tokenAddress
       )
   );
   const unregisteredVoter = await getUnregisteredVoter();
@@ -121,7 +126,9 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     new BlockchainProposalService(
       unregisteredVoter as unknown as ethers.Signer,
       fileService,
-      hardhat.ethers.provider
+      hardhat.ethers.provider,
+      governorAddress,
+      tokenAddress
     ),
   ];
   const addVoterVoteItem = { newVoterAddress: unregisteredVoter.address };

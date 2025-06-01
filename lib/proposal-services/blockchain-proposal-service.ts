@@ -34,19 +34,25 @@ export class BlockchainProposalService implements ProposalService {
   private readonly fileService: ProposalFileService;
   private readonly signer: ethers.Signer;
   private readonly provider: ethers.Provider;
+  private readonly tokenAddress : string;
+  private readonly governorAddress : string;
 
   constructor(
     signer: ethers.Signer,
     fileService: ProposalFileService,
-    provider: ethers.Provider
+    provider: ethers.Provider,
+    governorAddress?: string,
+    tokenAddress?: string
   ) {
+    this.governorAddress = governorAddress ? governorAddress : evsdGovernorArtifacts.address;
+    this.tokenAddress = tokenAddress ? tokenAddress : evsdTokenArtifacts.address;
     this.governor = new ethers.Contract(
-      evsdGovernorArtifacts.address,
+      this.governorAddress,
       evsdGovernorArtifacts.abi,
       signer
     );
     this.token = new ethers.Contract(
-      evsdTokenArtifacts.address,
+      this.tokenAddress,
       evsdTokenArtifacts.abi,
       signer
     );
@@ -54,6 +60,7 @@ export class BlockchainProposalService implements ProposalService {
     this.signer = signer;
     this.provider = provider;
   }
+
   onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
   ): onProposalsChangedUnsubscribe {
@@ -281,13 +288,12 @@ export class BlockchainProposalService implements ProposalService {
     item: UIAddVoterVotableItem,
     parentProposalId: bigint
   ): Promise<bigint> {
-    const tokenAddress = evsdTokenArtifacts.address;
     const newVoterAddress = item.newVoterAddress;
     const transferCalldata = this.getTransferTokenCalldata(newVoterAddress);
     const descriptionSerialized = this.serializeVotableItem(item, parentProposalId, 0);
 
     const tx = await this.governor.propose(
-      [tokenAddress],
+      [this.tokenAddress],
       [0],
       [transferCalldata],
       descriptionSerialized
@@ -533,7 +539,7 @@ export class BlockchainProposalService implements ProposalService {
 
     // The only address should be the token address
     const targetsCorrect =
-      targets.length === 1 && targets[0] === evsdTokenArtifacts.address;
+      targets.length === 1 && targets[0] === this.tokenAddress;
     if (!targetsCorrect) {
       return false;
     }
