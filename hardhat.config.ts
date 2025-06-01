@@ -3,11 +3,11 @@ import "@nomicfoundation/hardhat-toolbox";
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.28",  
+    version: "0.8.28",
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200  
+        runs: 200
       }
     }
   },
@@ -18,6 +18,10 @@ const config: HardhatUserConfig = {
       },
 
     },
+    sepolia: {
+      url: "https://ethereum-sepolia-rpc.publicnode.com",
+      accounts: []
+    }
   },
 };
 

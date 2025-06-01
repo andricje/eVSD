@@ -1,5 +1,5 @@
 {
-  "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "address": "0x65E953e4D8B4c27BEe51E3fa2af8ff141C5611D2",
   "abi": [
     "constructor(address recipient)",
     "error CheckpointUnorderedInsertion()",

@@ -1,5 +1,5 @@
 {
-  "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "address": "0xbbd71385538f36b771885975A0EDB0F5530aC0Cc",
   "abi": [
     "constructor(address _token)",
     "error FailedCall()",

@@ -20,12 +20,12 @@ contract EvsdGovernor is
     IVotes _token
   )
     Governor("EvsdGovernor")
-    GovernorSettings(0 minutes, 1 days, 1e18)
+    GovernorSettings(0 minutes, 15 minutes, 1e18)
     GovernorVotes(_token)
   {}
 
   function quorum(uint256 blockNumber) public pure override returns (uint256) {
-    return 3e18;
+    return 2e18;
   }
 
   // The following functions are overrides required by Solidity.
@@ -60,13 +60,10 @@ contract EvsdGovernor is
   {
     return super.proposalThreshold();
   }
-  function _validateCancel(uint256 proposalId, address caller)
-    internal
-    view
-    override(Governor, GovernorProposalGuardian)
-    returns(bool)
-  {
+  function _validateCancel(
+    uint256 proposalId,
+    address caller
+  ) internal view override(Governor, GovernorProposalGuardian) returns (bool) {
     return super._validateCancel(proposalId, caller);
   }
-  
 }
