@@ -7,6 +7,7 @@ import { InMemoryProposalService } from "@/lib/proposal-services/in-memory/in-me
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { Proposal } from "@/types/proposal";
 import { getEvsdGovernor, getEvsdToken } from "@/lib/contract-provider";
+import { ProposalServiceType } from "@/types/evsd-config";
 
 export interface ProposalsContextValue {
   proposals: Proposal[];
@@ -100,16 +101,14 @@ export function ProposalsProvider({
   type,
 }: {
   children: React.ReactNode;
-  type: "mock" | "blockchain";
+  type: ProposalServiceType;
 }) {
   switch (type) {
     case "blockchain":
       return (
         <BlockchainProposalProvider>{children}</BlockchainProposalProvider>
       );
-    case "mock":
+    case "in-memory":
       return <MockProposalProvider>{children}</MockProposalProvider>;
-    default:
-      throw new Error("Invalid proposal service type");
   }
 }

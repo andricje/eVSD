@@ -14,7 +14,6 @@ import {
   convertVoteOptionToGovernor,
   getTransferTokenCalldata,
 } from "../../utils";
-import evsdTokenArtifacts from "../../../contracts/evsd-token.json";
 import { ProposalWriter } from "../proposal-service";
 import {
   DuplicateProposalError,
@@ -75,7 +74,7 @@ export class BlockchainProposalWriter implements ProposalWriter {
     item: UIAddVoterVotableItem,
     parentProposalId: bigint
   ): Promise<bigint> {
-    const tokenAddress = evsdTokenArtifacts.address;
+    const tokenAddress = await this.token.getAddress();
     const newVoterAddress = item.newVoterAddress;
     const transferCalldata = await getTransferTokenCalldata(
       this.token,

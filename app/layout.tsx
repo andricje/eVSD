@@ -5,6 +5,7 @@ import "./globals.css";
 import { WalletProvider } from "@/context/wallet-context";
 import { Toaster } from "@/components/ui/toaster";
 import { ProposalsProvider } from "@/context/proposals-context";
+import { config } from "@/evsd.config";
 // import { AnnouncementsProvider } from "@/context/announcements-context";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -16,9 +17,8 @@ export const metadata: Metadata = {
   generator: "Marko Andric",
 };
 
-// TODO: get this from some config
-function getProposalServiceType(): "mock" | "blockchain" {
-  return "blockchain";
+function getProposalServiceType() {
+  return config.proposalService.type;
 }
 
 export default function RootLayout({

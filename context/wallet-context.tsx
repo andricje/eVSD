@@ -1,6 +1,7 @@
 "use client";
 
 import { convertAddressToName } from "@/lib/utils";
+import { ProposalServiceType } from "@/types/evsd-config";
 import { User } from "@/types/proposal";
 import { ethers, Provider, Signer } from "ethers";
 import {
@@ -191,7 +192,7 @@ export function WalletProvider({
   type,
 }: {
   children: ReactNode;
-  type: "blockchain" | "mock";
+  type: ProposalServiceType;
 }) {
   const walletFactory =
     type === "blockchain" ? blockchainWalletFactory : mockWalletFactory;

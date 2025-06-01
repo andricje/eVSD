@@ -4,15 +4,23 @@ import {
   EvsdToken,
   EvsdToken__factory,
 } from "@/typechain-types";
-import governorArtifacts from "@/contracts/evsd-governor.json";
-import tokenArtifacts from "@/contracts/evsd-token.json";
+import { config } from "@/evsd.config";
+
+function getBlockchainConfig() {
+  if (config.proposalService.type !== "blockchain") {
+    throw new Error("Blockchain not configured in config file");
+  }
+  return config.proposalService.network;
+}
 
 export function getEvsdGovernor(): EvsdGovernor {
-  const governor = EvsdGovernor__factory.connect(governorArtifacts.address);
+  const { governorAddress } = getBlockchainConfig();
+  const governor = EvsdGovernor__factory.connect(governorAddress);
   return governor;
 }
 
 export function getEvsdToken(): EvsdToken {
-  const token = EvsdToken__factory.connect(tokenArtifacts.address);
+  const { tokenAddress } = getBlockchainConfig();
+  const token = EvsdToken__factory.connect(tokenAddress);
   return token;
 }

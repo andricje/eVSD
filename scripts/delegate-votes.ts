@@ -1,6 +1,5 @@
-import evsdTokenArtifacts from "../contracts/evsd-token.json";
-
-import { EvsdToken, EvsdToken__factory } from "../typechain-types";
+import { getEvsdToken } from "@/lib/contract-provider";
+import { EvsdToken } from "../typechain-types";
 import { ethers, Signer } from "ethers";
 import hardhat from "hardhat";
 
@@ -12,10 +11,7 @@ export async function delegateVotesToAllSigners() {
   const signers = await hardhat.ethers.getSigners();
 
   for (const signer of signers) {
-    const token = EvsdToken__factory.connect(
-      evsdTokenArtifacts.address,
-      signer
-    );
+    const token = getEvsdToken();
     token.delegate(await signer.getAddress());
     await delegateVoteToSelf(token, signer as unknown as ethers.Signer);
   }

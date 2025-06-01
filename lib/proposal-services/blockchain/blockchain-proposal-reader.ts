@@ -3,7 +3,6 @@ import {
   onProposalsChangedUnsubscribe,
   ProposalReader,
 } from "../proposal-service";
-import evsdTokenArtifacts from "../../../contracts/evsd-token.json";
 import {
   AddVoterVotableItem,
   Proposal,
@@ -191,8 +190,8 @@ export class BlockchainProposalReader implements ProposalReader {
     }
 
     // The only address should be the token address
-    const targetsCorrect =
-      targets.length === 1 && targets[0] === evsdTokenArtifacts.address;
+    const tokenAddress = await this.token.getAddress();
+    const targetsCorrect = targets.length === 1 && targets[0] === tokenAddress;
     if (!targetsCorrect) {
       return false;
     }
