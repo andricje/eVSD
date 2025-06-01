@@ -3,7 +3,13 @@
 import { convertAddressToName } from "@/lib/utils";
 import { User } from "@/types/proposal";
 import { ethers, Provider, Signer } from "ethers";
-import { createContext, useContext, useState, type ReactNode, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  type ReactNode,
+  useEffect,
+} from "react";
 
 interface WalletContextType {
   provider: Provider | null;
@@ -40,11 +46,13 @@ function AbstractWalletProvider({
     setConnectionStatus("connecting");
     try {
       const result = await walletFactory();
-      
+
       if (result.user) {
         // Proveravamo da li je korisnik prethodno prihvatio članstvo
-        const membershipAccepted = localStorage.getItem(`membershipAccepted_${result.user.address}`);
-        
+        const membershipAccepted = localStorage.getItem(
+          `membershipAccepted_${result.user.address}`
+        );
+
         // Ako korisnik ima isNewMember i nije prihvatio članstvo, postavljamo to polje
         if (result.user.isNewMember && !membershipAccepted) {
           result.user.isNewMember = true;
@@ -76,10 +84,10 @@ function AbstractWalletProvider({
     if (user) {
       // Čuvamo informaciju o prihvatanju članstva u localStorage
       localStorage.setItem(`membershipAccepted_${user.address}`, "true");
-      
+
       // Ažuriramo korisnika da više nije novi član
-      setUser(prev => prev ? { ...prev, isNewMember: false } : null);
-      
+      setUser((prev) => (prev ? { ...prev, isNewMember: false } : null));
+
       // Ovde bi trebalo dodati poziv API-ja za ažuriranje statusa korisnika na backend-u
       console.log("Članstvo prihvaćeno");
     }
@@ -90,10 +98,10 @@ function AbstractWalletProvider({
     if (user) {
       // Čuvamo informaciju o odbijanju članstva
       localStorage.setItem(`membershipDeclined_${user.address}`, "true");
-      
+
       // Ovde bi trebalo dodati poziv API-ja za ažuriranje statusa korisnika na backend-u
       console.log("Članstvo odbijeno");
-      
+
       // Odjavljujemo korisnika
       disconnect();
     }
@@ -122,9 +130,9 @@ async function getProviderAndSigner() {
   interface EthereumWindow extends Window {
     ethereum?: any;
   }
-  
+
   const win = window as EthereumWindow;
-  
+
   if (win.ethereum) {
     const provider = new ethers.BrowserProvider(win.ethereum);
     const signer = await provider.getSigner();
@@ -141,17 +149,17 @@ async function blockchainWalletFactory(): Promise<{
 }> {
   const { provider, signer } = await getProviderAndSigner();
   const address = await signer.getAddress();
-  
+
   // Simulacija dobijanja podataka o novom članu sa bekenda
   // U stvarnoj implementaciji, ovo bi trebalo da dođe sa API-ja
   const isNewMember = localStorage.getItem(`isNewMember_${address}`) === "true";
-  
+
   const user = {
     address,
     name: convertAddressToName(address),
     isNewMember,
   };
-  
+
   return { provider, signer, user };
 }
 
@@ -161,16 +169,16 @@ async function mockWalletFactory(): Promise<{
   user: User | null;
 }> {
   const address = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-  
+
   // Za testiranje, proveravamo da li je korisnik označen kao novi član u localStorage
   const isNewMember = localStorage.getItem(`isNewMember_${address}`) === "true";
-  
+
   const user = {
     address,
     name: convertAddressToName(address),
     isNewMember,
   };
-  
+
   return {
     provider: null,
     signer: null,

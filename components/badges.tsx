@@ -13,7 +13,6 @@ export const VoteBadge = ({ vote }: { vote: VoteOption }) => {
       return <Badge className="bg-red-500">{translatedVote}</Badge>;
     case "abstain":
       return <Badge variant="outline">{translatedVote}</Badge>;
-
   }
 };
 
@@ -36,32 +35,43 @@ export const StatusBadge = ({
 }) => {
   switch (status) {
     case "open":
-      return <>
-        <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
-        {expiresAt ?
-          <Badge className="bg-amber-500">
-            <Timer className="h-3 w-3 mr-1" />
-            {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
-          </Badge> : <></>}
-      </>
+      return (
+        <>
+          <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
+          {expiresAt ? (
+            <Badge className="bg-amber-500">
+              <Timer className="h-3 w-3 mr-1" />
+              {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+            </Badge>
+          ) : (
+            <></>
+          )}
+        </>
+      );
     case "closed":
-      return <Badge className="bg-red-500">{STRINGS.proposal.statusClosed}</Badge>;
+      return (
+        <Badge className="bg-red-500">{STRINGS.proposal.statusClosed}</Badge>
+      );
     case "cancelled":
-      return <Badge className="bg-red-500">{STRINGS.proposal.statusCancelled}</Badge>;
+      return (
+        <Badge className="bg-red-500">{STRINGS.proposal.statusCancelled}</Badge>
+      );
   }
 };
 
-export const VoteResultBadge = ({
-  status
-}: {
-  status: VoteResult;
-}) => {
+export const VoteResultBadge = ({ status }: { status: VoteResult }) => {
   switch (status) {
     case "passed":
-      return <Badge className="bg-green-500">{STRINGS.voting.results.passed}</Badge>;
+      return (
+        <Badge className="bg-green-500">{STRINGS.voting.results.passed}</Badge>
+      );
     case "failed":
-      return <Badge className="bg-red-500">{STRINGS.voting.results.failed}</Badge>;
+      return (
+        <Badge className="bg-red-500">{STRINGS.voting.results.failed}</Badge>
+      );
     case "no-quorum":
-      return <Badge className="bg-red-500">{STRINGS.voting.results.noQuorum}</Badge>;
+      return (
+        <Badge className="bg-red-500">{STRINGS.voting.results.noQuorum}</Badge>
+      );
   }
 };

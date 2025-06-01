@@ -84,16 +84,20 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
           </div>
           <Progress value={percentPointsWithQuorum} className="h-2" />
         </div>
-        {proposal.status === "open" ? <Button
-          size="sm"
-          className="text-sm px-4 py-2 h-auto font-medium"
-          asChild
-        >
-          <Link href={`/votes/${proposal.id}`}>
-            <Vote className="h-4 w-4 mr-2" />
-            {STRINGS.proposalCard.voteButton}
-          </Link>
-        </Button> : <></>}
+        {proposal.status === "open" ? (
+          <Button
+            size="sm"
+            className="text-sm px-4 py-2 h-auto font-medium"
+            asChild
+          >
+            <Link href={`/votes/${proposal.id}`}>
+              <Vote className="h-4 w-4 mr-2" />
+              {STRINGS.proposalCard.voteButton}
+            </Link>
+          </Button>
+        ) : (
+          <></>
+        )}
         <div className="pt-1.5 flex items-center justify-between"></div>
       </CardContent>
     </Card>

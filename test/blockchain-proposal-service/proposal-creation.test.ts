@@ -7,19 +7,21 @@ import {
   DuplicateProposalError,
   IneligibleProposerError,
 } from "../../types/proposal-service-errors";
-import { UIAddVoterVotableItem, UIProposal, UIVotableItem } from "../../types/proposal";
+import {
+  UIAddVoterVotableItem,
+  UIProposal,
+  UIVotableItem,
+} from "../../types/proposal";
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
-import { v4 as uuidv4 } from 'uuid';
-function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal
-{
+import { v4 as uuidv4 } from "uuid";
+function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal {
   const items: UIVotableItem[] = [];
-  for(let i = 0; i < numVoteItems; i++)
-  {
+  for (let i = 0; i < numVoteItems; i++) {
     items.push({
       title: `Vote item ${i}`,
       description: `Test description ${uuidv4()}`,
-      UIOnlyId: `${i}`
+      UIOnlyId: `${i}`,
     });
   }
 
@@ -80,7 +82,6 @@ describe("BlockchainProposalService integration", function () {
         generatedProposal
       );
     await assertProposalSameForEveryone(generatedProposal, proposalId);
-    ;
   });
   it("should preserve the order of vote items of a proposal", async () => {
     const generatedProposal1 = getProposalLargeNumberOfVoteItems(20);
@@ -90,9 +91,10 @@ describe("BlockchainProposalService integration", function () {
       await registeredVoterProposalServices[0].uploadProposal(
         generatedProposal1
       );
-    const proposalId2 = await registeredVoterProposalServices[0].uploadProposal(
-      generatedProposal2
-    );
+    const proposalId2 =
+      await registeredVoterProposalServices[0].uploadProposal(
+        generatedProposal2
+      );
     await assertProposalSameForEveryone(generatedProposal1, proposalId1);
     await assertProposalSameForEveryone(generatedProposal2, proposalId2);
   });

@@ -45,9 +45,7 @@ export async function deployContracts(deployer: ethers.Signer) {
     deployer
   );
   const tokenAddress = await evsdToken.getAddress();
-  const evsdGovernor = await EvsdGovernorFactory.deploy(
-    tokenAddress
-  );
+  const evsdGovernor = await EvsdGovernorFactory.deploy(tokenAddress);
   await evsdGovernor.waitForDeployment();
   return {
     token: evsdToken as EvsdToken,

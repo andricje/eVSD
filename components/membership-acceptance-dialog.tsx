@@ -1,5 +1,12 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "lucide-react";
 
@@ -9,11 +16,9 @@ interface MembershipAcceptanceProps {
   onDecline: () => void;
 }
 
-export const MembershipAcceptanceDialog: React.FC<MembershipAcceptanceProps> = ({
-  isOpen,
-  onAccept,
-  onDecline,
-}) => {
+export const MembershipAcceptanceDialog: React.FC<
+  MembershipAcceptanceProps
+> = ({ isOpen, onAccept, onDecline }) => {
   return (
     <Dialog open={isOpen}>
       <DialogContent className="sm:max-w-md">
@@ -27,9 +32,9 @@ export const MembershipAcceptanceDialog: React.FC<MembershipAcceptanceProps> = (
             </div>
           </div>
           <DialogDescription className="text-center text-base">
-            Честитамо! Ваша кандидатура за чланство у еВСД је успешно изгласана. 
-            Да бисте постали пуноправни члан, потребно је да прихватите чланство и 
-            правила организације.
+            Честитамо! Ваша кандидатура за чланство у еВСД је успешно изгласана.
+            Да бисте постали пуноправни члан, потребно је да прихватите чланство
+            и правила организације.
           </DialogDescription>
         </DialogHeader>
         <div className="p-4 bg-muted/30 rounded-lg border border-border/40 my-4">
@@ -54,11 +59,7 @@ export const MembershipAcceptanceDialog: React.FC<MembershipAcceptanceProps> = (
           </ul>
         </div>
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button
-            variant="outline"
-            onClick={onDecline}
-            className="sm:w-full"
-          >
+          <Button variant="outline" onClick={onDecline} className="sm:w-full">
             Одбиј чланство
           </Button>
           <Button
@@ -71,4 +72,4 @@ export const MembershipAcceptanceDialog: React.FC<MembershipAcceptanceProps> = (
       </DialogContent>
     </Dialog>
   );
-}; 
+};

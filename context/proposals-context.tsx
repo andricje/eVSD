@@ -47,17 +47,16 @@ const AbstractProposalsProvider = ({
     proposalService?.onProposalsChanged((proposals) => {
       setProposals(proposals);
     });
-    
+
     const fetchInitialProposals = async () => {
       if (proposalService) {
         const initialProposals = await proposalService.getProposals();
         setProposals(initialProposals);
       }
     };
-  
+
     fetchInitialProposals();
   }, [proposalService]);
-
 
   return (
     <ProposalsContext.Provider

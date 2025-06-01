@@ -25,55 +25,60 @@ import { useWallet } from "@/context/wallet-context";
 import { useRouter } from "next/navigation";
 import { Proposal } from "@/types/proposal";
 
-function FilterResults({ filteredProposals }: { filteredProposals: Proposal[] }) {
-  return (<>{filteredProposals.length > 0 ? (
-    filteredProposals.map((proposal) => (
-      <Card key={proposal.id}>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col">
-            <CardTitle className="w-full">
-              <div className="flex flex-row gap-4">
-                <p className="flex-grow text-xl">{proposal.title}</p>
-                <p className="text-sm font-medium mb-1">Статус</p>
-                <StatusBadge
-                  status={proposal.status}
-                  expiresAt={proposal.closesAt}
-                />
+function FilterResults({
+  filteredProposals,
+}: {
+  filteredProposals: Proposal[];
+}) {
+  return (
+    <>
+      {filteredProposals.length > 0 ? (
+        filteredProposals.map((proposal) => (
+          <Card key={proposal.id}>
+            <CardHeader className="pb-3">
+              <div className="flex flex-col">
+                <CardTitle className="w-full">
+                  <div className="flex flex-row gap-4">
+                    <p className="flex-grow text-xl">{proposal.title}</p>
+                    <p className="text-sm font-medium mb-1">Статус</p>
+                    <StatusBadge
+                      status={proposal.status}
+                      expiresAt={proposal.closesAt}
+                    />
+                  </div>
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Предложио: {proposal.author.name}
+                  {isVotingComplete(proposal) &&
+                    `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
+                </CardDescription>
               </div>
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Предложио: {proposal.author.name}
-              {isVotingComplete(proposal) &&
-                `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm mb-4">{proposal.description}</p>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm mb-4">{proposal.description}</p>
 
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-4">
-            <div>
-              <p className="text-sm font-medium mb-1">
-                Резултат гласања:
-              </p>
-            </div>
-          </div>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 mb-4">
+                <div>
+                  <p className="text-sm font-medium mb-1">Резултат гласања:</p>
+                </div>
+              </div>
 
-          <ProposalInfo proposal={proposal} />
-        </CardContent>
-      </Card>
-    ))
-  ) : (
-    <div className="text-center py-12">
-      <p className="text-lg text-muted-foreground">
-        Нема резултата за приказ
-      </p>
-      <p className="text-sm text-muted-foreground mt-2">
-        Покушајте да измените филтере или претрагу да бисте видели
-        резултате
-      </p>
-    </div>
-  )}</>);
+              <ProposalInfo proposal={proposal} />
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-lg text-muted-foreground">
+            Нема резултата за приказ
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Покушајте да измените филтере или претрагу да бисте видели резултате
+          </p>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function RezultatiPage() {
@@ -83,9 +88,9 @@ export default function RezultatiPage() {
 
   useEffect(() => {
     if (!user) {
-      router.push('/login');
+      router.push("/login");
     }
-  }, [user])
+  }, [user]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
 

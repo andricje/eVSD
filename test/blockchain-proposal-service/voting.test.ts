@@ -68,7 +68,7 @@ describe("BlockchainProposalService integration", function () {
   let addVoterVoteItem: UIAddVoterVotableItem;
   let votingPeriod: number;
   let unregisteredVoterAddress: string;
-  let token : EvsdToken;
+  let token: EvsdToken;
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
     registeredVoterProposalServices = initData.registeredVoterProposalServices;

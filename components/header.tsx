@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { LogIn, LogOut, Wallet } from "lucide-react";
 import Link from "next/link";
 import { WalletInfo } from "./wallet-info";
@@ -18,34 +18,43 @@ export function Header() {
           <WalletInfo />
         </div>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          {user ? <>
-            <div className="flex justify-center items-center space-x-6 w-full">
-              <Link href="/dashboard" className="text-sm font-medium text-center">
-                Контролна табла
+          {user ? (
+            <>
+              <div className="flex justify-center items-center space-x-6 w-full">
+                <Link
+                  href="/dashboard"
+                  className="text-sm font-medium text-center"
+                >
+                  Контролна табла
+                </Link>
+                <Link
+                  href="/rezultati"
+                  className="text-sm font-medium text-center"
+                >
+                  Јавни резултати
+                </Link>
+              </div>
+              <Button
+                variant="link"
+                size="sm"
+                className="text-sm font-medium text-blue-500"
+                onClick={() => {
+                  disconnect();
+                  router.push("/");
+                }}
+              >
+                <LogOut className="h-4 w-4 inline mr-1" />
+                Одјави се
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-sm font-medium text-blue-500">
+                <LogIn className="h-4 w-4 inline mr-1" />
+                Пријави се
               </Link>
-              <Link href="/rezultati" className="text-sm font-medium text-center">
-                Јавни резултати
-              </Link>
-            </div>
-            <Button
-              variant="link"
-              size="sm"
-              className="text-sm font-medium text-blue-500"
-              onClick={() => {
-                disconnect();
-                router.push('/');
-              }
-              }>
-              <LogOut className="h-4 w-4 inline mr-1" />
-              Одјави се
-            </Button>
-          </> : <>
-            <Link href="/login" className="text-sm font-medium text-blue-500">
-              <LogIn className="h-4 w-4 inline mr-1" />
-              Пријави се
-            </Link>
-          </>}
-
+            </>
+          )}
         </nav>
       </div>
     </header>

@@ -210,7 +210,10 @@ export function getTranslatedVoteOption(voteOption: VoteOption) {
   }
 }
 
-export function getTranslatedVoteOptionWithCount(voteOption: VoteOption, count: number) {
+export function getTranslatedVoteOptionWithCount(
+  voteOption: VoteOption,
+  count: number
+) {
   return `${getTranslatedVoteOption(voteOption)}: ${count}`;
 }
 
@@ -226,7 +229,7 @@ async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {
     // Read and compare buffers byte by byte
     const [buffer1, buffer2] = await Promise.all([
       file1.arrayBuffer(),
-      file2.arrayBuffer()
+      file2.arrayBuffer(),
     ]);
     const view1 = new Uint8Array(buffer1);
     const view2 = new Uint8Array(buffer2);
@@ -239,6 +242,13 @@ async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {
   return false;
 }
 
-export async function areProposalsEqual(uiProposal: UIProposal, proposal: Proposal) {
-  return proposal.title === uiProposal.title && proposal.description === uiProposal.description && await areFilesEqual(proposal.file, uiProposal.file);
+export async function areProposalsEqual(
+  uiProposal: UIProposal,
+  proposal: Proposal
+) {
+  return (
+    proposal.title === uiProposal.title &&
+    proposal.description === uiProposal.description &&
+    (await areFilesEqual(proposal.file, uiProposal.file))
+  );
 }

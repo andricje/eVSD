@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,14 +32,20 @@ export default function Home() {
                 </p>
               </div>
               <div className="space-x-4">
-                {user ? <><Button asChild>
-                  <Link href="/dashboard">Контролна табла</Link>
-                </Button>
-                  <Button variant="outline" asChild>
-                    <Link href="/rezultati">Преглед јавних резултата</Link>
-                  </Button></> : <Button asChild>
-                  <Link href="/login">Пријави се</Link>
-                </Button>}
+                {user ? (
+                  <>
+                    <Button asChild>
+                      <Link href="/dashboard">Контролна табла</Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href="/rezultati">Преглед јавних резултата</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <Button asChild>
+                    <Link href="/login">Пријави се</Link>
+                  </Button>
+                )}
               </div>
             </div>
           </div>

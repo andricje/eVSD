@@ -76,9 +76,8 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         className="flex-1 border border-border/40 hover:bg-destructive/5 hover:text-destructive py-3 text-sm h-full"
         onClick={() => {
           disconnect();
-          router.push('/');
-        }
-        }
+          router.push("/");
+        }}
       >
         <X className="h-4 w-4 mr-1.5" /> Одјави се
       </Button>
@@ -185,8 +184,12 @@ const SystemAnnouncements: React.FC = () => {
           className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow"
         >
           <div className="flex items-start gap-3">
-            <div className={`p-2 ${getIconBgColor(announcement.type)} rounded-full mt-1`}>
-              <announcement.icon className={`h-4 w-4 ${getIconColor(announcement.type)}`} />
+            <div
+              className={`p-2 ${getIconBgColor(announcement.type)} rounded-full mt-1`}
+            >
+              <announcement.icon
+                className={`h-4 w-4 ${getIconColor(announcement.type)}`}
+              />
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start mb-2">

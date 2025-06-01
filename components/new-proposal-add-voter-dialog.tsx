@@ -59,7 +59,12 @@ export function NewVoterDialog({
 
       const result = await proposalService?.uploadProposal(proposal);
 
-      console.log("Предлог послат додавање адресе:", newVoterAddress, "Hash:", result);
+      console.log(
+        "Предлог послат додавање адресе:",
+        newVoterAddress,
+        "Hash:",
+        result
+      );
       setError(null);
       setInfoMessage(null);
       setProposalSubmitted(true);

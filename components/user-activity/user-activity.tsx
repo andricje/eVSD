@@ -39,13 +39,15 @@ export function IsUserActivityVote(
   return (userActivityEvent as UserActivityEventVote).voteEvent !== undefined;
 }
 
-export type UserActivityEvent = UserActivityEventVote | UserActivityEventProposal;
+export type UserActivityEvent =
+  | UserActivityEventVote
+  | UserActivityEventProposal;
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();
   const { user } = useWallet();
 
-  const [activity, setActivity] = useState<(UserActivityEvent)[]>([]);
+  const [activity, setActivity] = useState<UserActivityEvent[]>([]);
   useEffect(() => {
     async function getUserActivity() {
       if (proposalService) {
@@ -53,7 +55,7 @@ export function UserActivity() {
       }
     }
     getUserActivity();
-  }, [proposalService])
+  }, [proposalService]);
 
   if (!proposalService) {
     return (

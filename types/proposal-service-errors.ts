@@ -10,7 +10,9 @@ export class BlockchainError extends Error {
 // Thrown if someone who is not eligible to create proposals tries to make one
 export class IneligibleProposerError extends BlockchainError {
   constructor(proposerAddress: string) {
-    super(`Address: ${proposerAddress} is not eligible to create proposals (insufficient token balance)`);
+    super(
+      `Address: ${proposerAddress} is not eligible to create proposals (insufficient token balance)`
+    );
     Object.setPrototypeOf(this, IneligibleProposerError.prototype);
   }
 }
