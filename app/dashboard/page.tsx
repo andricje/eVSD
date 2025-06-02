@@ -42,6 +42,7 @@ import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
+import { ProposalService } from "@/lib/proposal-services/proposal-service";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
@@ -266,8 +267,8 @@ function getProposalsToVote(proposals: Proposal[], user: User) {
 // Dashboard component
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
-  const { user, acceptMembership, declineMembership } = useWallet();
-  const { proposals } = useProposals();
+  const { user } = useWallet();
+  const { proposals, proposalService } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
 
   // Stanje za prikazivanje popup-a za prihvatanje članstva
@@ -287,21 +288,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
-    if (user && user.isNewMember) {
-      setShowMembershipDialog(true);
-    } else {
-      setShowMembershipDialog(false);
+    const checkUserVotingRights = async (proposalService: ProposalService) => {
+      const canAccept =
+        await proposalService.canCurrentUserAcceptVotingRights();
+      setShowMembershipDialog(canAccept);
+    };
+    if (user && proposalService) {
+      checkUserVotingRights(proposalService);
     }
-  }, [user]);
+  }, [user, proposalService]);
 
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
-  const handleAcceptMembership = () => {
-    acceptMembership();
-    setShowMembershipDialog(false);
-  };
-
-  const handleDeclineMembership = () => {
-    declineMembership();
+  const handleAcceptMembership = async () => {
+    await proposalService?.acceptVotingRights();
     setShowMembershipDialog(false);
   };
 
@@ -311,7 +310,7 @@ export default function Dashboard() {
       <MembershipAcceptanceDialog
         isOpen={showMembershipDialog}
         onAccept={handleAcceptMembership}
-        onDecline={handleDeclineMembership}
+        onDecline={() => {}}
       />
 
       <main className="flex-1 w-full px-5 py-8">

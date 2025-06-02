@@ -80,7 +80,7 @@ describe("NewProposalDialog", () => {
     expect(screen.getByText(STRINGS.voting.results.failed)).toBeInTheDocument();
   });
   it("Shows quorum not reached when QUORUM - 1 people vote", async () => {
-    const voteItem = getVoteItem(QUORUM - 5, 2, 2);
+    const voteItem = getVoteItem(QUORUM - 1, 0, 0);
     render(<VoteItemInfo voteItem={voteItem} />);
     expect(
       screen.getByText(STRINGS.voting.results.noQuorum)
