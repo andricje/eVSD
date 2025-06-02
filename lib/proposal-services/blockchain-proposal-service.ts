@@ -108,9 +108,20 @@ export class BlockchainProposalService implements ProposalService {
     );
   }
   async acceptVotingRights(): Promise<void> {
-    const proposalToExecute = await this.getProposalToAddCurrentUser();
-    if (proposalToExecute) {
-      await this.executeItem(proposalToExecute, 0);
+    const signerAddress = await this.signer.getAddress();
+    const balance = await this.token.balanceOf(signerAddress);
+    const currentVotingPower = await this.token.getVotes(signerAddress);
+
+    const needsToExecute = balance === 0n;
+    const needsToDelegate = currentVotingPower === 0n;
+    if (needsToExecute) {
+      const proposalToExecute = await this.getProposalToAddCurrentUser();
+      if (proposalToExecute) {
+        await this.executeItem(proposalToExecute, 0);
+      }
+    }
+
+    if (needsToDelegate) {
       await this.token.delegate(await this.signer.getAddress());
     }
   }
