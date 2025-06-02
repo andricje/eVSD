@@ -5,8 +5,8 @@ const hardhat = {
   governorAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
 };
 const sepolia = {
-  evsdTokenAddress: "0x65E953e4D8B4c27BEe51E3fa2af8ff141C5611D2",
-  evsdGovernorAddress: "0xbbd71385538f36b771885975A0EDB0F5530aC0Cc",
+  tokenAddress: "0x65E953e4D8B4c27BEe51E3fa2af8ff141C5611D2",
+  governorAddress: "0xbbd71385538f36b771885975A0EDB0F5530aC0Cc",
 };
 
 export const config: EvsdConfig = {
