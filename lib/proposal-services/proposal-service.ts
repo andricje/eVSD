@@ -21,4 +21,6 @@ export interface ProposalService {
   getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]
   >;
+  canCurrentUserAcceptVotingRights(): Promise<boolean>;
+  acceptVotingRights(): Promise<void>;
 }

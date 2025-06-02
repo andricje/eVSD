@@ -3,13 +3,7 @@
 import { convertAddressToName } from "@/lib/utils";
 import { User } from "@/types/proposal";
 import { ethers, Provider, Signer } from "ethers";
-import {
-  createContext,
-  useContext,
-  useState,
-  type ReactNode,
-  useEffect,
-} from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 
 interface WalletContextType {
   provider: Provider | null;
@@ -17,8 +11,6 @@ interface WalletContextType {
   user: User | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  acceptMembership: () => void;
-  declineMembership: () => void;
   connectionStatus: "connected" | "connecting" | "disconnected";
 }
 
@@ -47,20 +39,6 @@ function AbstractWalletProvider({
     try {
       const result = await walletFactory();
 
-      if (result.user) {
-        // Proveravamo da li je korisnik prethodno prihvatio članstvo
-        const membershipAccepted = localStorage.getItem(
-          `membershipAccepted_${result.user.address}`
-        );
-
-        // Ako korisnik ima isNewMember i nije prihvatio članstvo, postavljamo to polje
-        if (result.user.isNewMember && !membershipAccepted) {
-          result.user.isNewMember = true;
-        } else {
-          result.user.isNewMember = false;
-        }
-      }
-
       setProvider(result.provider);
       setSigner(result.signer);
       setUser(result.user);
@@ -79,34 +57,6 @@ function AbstractWalletProvider({
     setConnectionStatus("disconnected");
   };
 
-  // Funkcija za prihvatanje članstva
-  const acceptMembership = () => {
-    if (user) {
-      // Čuvamo informaciju o prihvatanju članstva u localStorage
-      localStorage.setItem(`membershipAccepted_${user.address}`, "true");
-
-      // Ažuriramo korisnika da više nije novi član
-      setUser((prev) => (prev ? { ...prev, isNewMember: false } : null));
-
-      // Ovde bi trebalo dodati poziv API-ja za ažuriranje statusa korisnika na backend-u
-      console.log("Članstvo prihvaćeno");
-    }
-  };
-
-  // Funkcija za odbijanje članstva
-  const declineMembership = () => {
-    if (user) {
-      // Čuvamo informaciju o odbijanju članstva
-      localStorage.setItem(`membershipDeclined_${user.address}`, "true");
-
-      // Ovde bi trebalo dodati poziv API-ja za ažuriranje statusa korisnika na backend-u
-      console.log("Članstvo odbijeno");
-
-      // Odjavljujemo korisnika
-      disconnect();
-    }
-  };
-
   return (
     <WalletContext.Provider
       value={{
@@ -115,8 +65,6 @@ function AbstractWalletProvider({
         user,
         connect,
         disconnect,
-        acceptMembership,
-        declineMembership,
         connectionStatus,
       }}
     >

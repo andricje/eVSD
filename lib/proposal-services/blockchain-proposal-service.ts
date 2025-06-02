@@ -19,6 +19,8 @@ import {
   convertVoteOptionToGovernor,
   convertGovernorState,
   areProposalsEqual,
+  getVoteResult,
+  getVoteResultForItem,
 } from "../utils";
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
 import evsdTokenArtifacts from "../../contracts/evsd-token.json";
@@ -35,7 +37,7 @@ import {
 } from "@/components/user-activity/user-activity";
 
 export type onProposalsChangedUnsubscribe = () => void;
-
+type UserVotingStatus = "NotEligible" | "CanAcceptVotingRights" | "Eligible";
 export class BlockchainProposalService implements ProposalService {
   private readonly governor: ethers.Contract;
   private readonly token: ethers.Contract;
@@ -44,7 +46,6 @@ export class BlockchainProposalService implements ProposalService {
   private readonly provider: ethers.Provider;
   private readonly tokenAddress: string;
   private readonly governorAddress: string;
-
   constructor(
     signer: ethers.Signer,
     fileService: ProposalFileService,
@@ -71,6 +72,47 @@ export class BlockchainProposalService implements ProposalService {
     this.fileService = fileService;
     this.signer = signer;
     this.provider = provider;
+  }
+  async getProposalToAddCurrentUser(): Promise<Proposal | null> {
+    const signerAddress = await this.signer.getAddress();
+    const allProposals = await this.getProposals();
+    // Find the proposal that adds the current signer that has vote result passed (if it exists)
+    for (const proposal of allProposals) {
+      const voteItem = proposal.voteItems[0];
+      const isAddVoter = IsAddVoterVotableItem(voteItem);
+      const voteResult = getVoteResultForItem(voteItem);
+      if (
+        isAddVoter &&
+        proposal.status === "closed" &&
+        voteResult === "passed" &&
+        voteItem.newVoterAddress === signerAddress
+      ) {
+        return proposal;
+      }
+    }
+    return null;
+  }
+  async getCurrentUserVotingStatus(): Promise<UserVotingStatus> {
+    const signerAddress = await this.signer.getAddress();
+    const currentVotingPower = await this.token.getVotes(signerAddress);
+    if (currentVotingPower > 0n) {
+      return "Eligible";
+    } else if (await this.getProposalToAddCurrentUser()) {
+      return "CanAcceptVotingRights";
+    }
+    return "NotEligible";
+  }
+  async canCurrentUserAcceptVotingRights(): Promise<boolean> {
+    return (
+      (await this.getCurrentUserVotingStatus()) === "CanAcceptVotingRights"
+    );
+  }
+  async acceptVotingRights(): Promise<void> {
+    const proposalToExecute = await this.getProposalToAddCurrentUser();
+    if (proposalToExecute) {
+      await this.executeItem(proposalToExecute, 0);
+      await this.token.delegate(await this.signer.getAddress());
+    }
   }
 
   onProposalsChanged(
