@@ -70,14 +70,8 @@ export function UserActivity() {
   }
 
   return (
-    <Tabs defaultValue="glasanje">
-      <TabsList className="w-full grid grid-cols-3 mb-6">
-        <TabsTrigger value="glasanje" className="rounded-l-lg">
-          <span className="flex items-center gap-2">
-            <Check className="w-4 h-4" />
-            {STRINGS.userActivity.votingHistory.title}
-          </span>
-        </TabsTrigger>
+    <Tabs defaultValue="predlozi">
+      <TabsList className="w-full grid grid-cols-2 mb-6">
         <TabsTrigger value="predlozi">
           <span className="flex items-center gap-2">
             <Timer className="w-4 h-4" />

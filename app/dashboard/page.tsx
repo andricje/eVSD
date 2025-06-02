@@ -392,8 +392,11 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <SystemAnnouncements />
+                <ActiveMembers />
+              </div> */}
+              <div className="mt-7">
                 <ActiveMembers />
               </div>
             </TabsContent>
