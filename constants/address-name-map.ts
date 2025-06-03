@@ -4,4 +4,7 @@ export const addressNameMap: Record<string, string> = {
   "0x401DdEd54d7df1e5b0ef8AA4C5fBDF1F9e83502d": "Filozofski test nalog",
   "0x4a4A2393809f21310183bCe4609D6B6abdEb8B02": "Višer test nalog",
   "0x696a45A7150c1d294Ce6E4168A7373b6c38aBC40": "FON test nalog",
+  "0x2fD780571e45434a21B71e7595BF497A699AA41F": "Nepoznato",
+  "0x7AD70d464A1623d640c2883C96526d3bc9CAc0C6": "Nepoznato",
+  "0x513eE018423E78C34616306B46Df40B4Ca13E626": "Nepoznato",
 };
