@@ -274,18 +274,6 @@ export default function Dashboard() {
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);
 
-  // Funkcija za testiranje (samo za razvoj)
-  const simulateNewMember = () => {
-    if (user) {
-      // Postavljamo u localStorage da je korisnik novi član
-      localStorage.setItem(`isNewMember_${user.address}`, "true");
-      // Brišemo informaciju o prihvatanju članstva ako postoji
-      localStorage.removeItem(`membershipAccepted_${user.address}`);
-      // Osvežavamo stranicu da bi se primenilje promene
-      window.location.reload();
-    }
-  };
-
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
     const checkUserVotingRights = async (proposalService: ProposalService) => {

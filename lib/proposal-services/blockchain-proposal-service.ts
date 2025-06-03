@@ -78,6 +78,10 @@ export class BlockchainProposalService implements ProposalService {
     const allProposals = await this.getProposals();
     // Find the proposal that adds the current signer that has vote result passed (if it exists)
     for (const proposal of allProposals) {
+      // Avoid malformed proposals
+      if (proposal.voteItems.length === 0) {
+        continue;
+      }
       const voteItem = proposal.voteItems[0];
       const isAddVoter = IsAddVoterVotableItem(voteItem);
       const voteResult = getVoteResultForItem(voteItem);
