@@ -290,6 +290,12 @@ export default function ProposalDetails() {
   const { user } = useWallet();
   const { proposals, proposalService } = useProposals();
 
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user]);
+
   const [error, setError] = useState("");
 
   // Stanja za glasanje
