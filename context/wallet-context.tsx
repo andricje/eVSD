@@ -2,8 +2,15 @@
 
 import { convertAddressToName } from "@/lib/utils";
 import { User } from "@/types/proposal";
+import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
+
+declare global {
+  interface Window {
+    ethereum?: MetaMaskInpageProvider;
+  }
+}
 
 interface WalletContextType {
   provider: Provider | null;
@@ -74,15 +81,9 @@ function AbstractWalletProvider({
 }
 
 async function getProviderAndSigner() {
-  // Deklaracija za window.ethereum
-  interface EthereumWindow extends Window {
-    ethereum?: any;
-  }
-
-  const win = window as EthereumWindow;
-
-  if (win.ethereum) {
-    const provider = new ethers.BrowserProvider(win.ethereum);
+  const { ethereum } = window;
+  if (ethereum) {
+    const provider = new ethers.BrowserProvider(ethereum);
     const signer = await provider.getSigner();
     return { provider, signer };
   } else {
@@ -98,14 +99,9 @@ async function blockchainWalletFactory(): Promise<{
   const { provider, signer } = await getProviderAndSigner();
   const address = await signer.getAddress();
 
-  // Simulacija dobijanja podataka o novom članu sa bekenda
-  // U stvarnoj implementaciji, ovo bi trebalo da dođe sa API-ja
-  const isNewMember = localStorage.getItem(`isNewMember_${address}`) === "true";
-
   const user = {
     address,
     name: convertAddressToName(address),
-    isNewMember,
   };
 
   return { provider, signer, user };
@@ -118,13 +114,9 @@ async function mockWalletFactory(): Promise<{
 }> {
   const address = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
 
-  // Za testiranje, proveravamo da li je korisnik označen kao novi član u localStorage
-  const isNewMember = localStorage.getItem(`isNewMember_${address}`) === "true";
-
   const user = {
     address,
     name: convertAddressToName(address),
-    isNewMember,
   };
 
   return {

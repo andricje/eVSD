@@ -1,7 +1,6 @@
 export interface User {
   address: string;
   name: string;
-  isNewMember?: boolean;
 }
 
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
