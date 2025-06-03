@@ -46,8 +46,14 @@ import { ProposalService } from "@/lib/proposal-services/proposal-service";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
-  const { disconnect } = useWallet();
+  const { disconnect, user } = useWallet();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user]);
 
   return (
     <div className="flex gap-3 w-full">
