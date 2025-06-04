@@ -226,10 +226,10 @@ const ActiveMembers: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base font-semibold text-foreground flex items-center">
-          <Users className="h-4 w-4 mr-2" />
+        <h2 className="text-lg font-semibold text-foreground">
           Активни чланови еВСД
         </h2>
+
         <NewVoterDialog />
       </div>
       <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
@@ -325,17 +325,21 @@ export default function Dashboard() {
 
           {/* Main tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-            <TabsList className="grid grid-cols-2 w-full bg-muted/50 p-1">
+            <TabsList className="grid grid-cols-3 w-full bg-muted/50 p-1">
               <TabsTrigger value="voting" className="text-sm py-2 font-medium">
-                <Vote className="h-4 w-4 mr-2" />
+                <Vote className="h-4 w-4 mr-2 hidden sm:block" />
                 Гласање
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
                 className="text-sm py-2 font-medium"
               >
-                <History className="h-4 w-4 mr-2" />
+                <History className="h-4 w-4 mr-2 hidden sm:block" />
                 Активност
+              </TabsTrigger>
+              <TabsTrigger value="members" className="text-sm py-2 font-medium">
+                <Users className="h-4 w-4 mr-2 hidden sm:block" />
+                Чланови
               </TabsTrigger>
             </TabsList>
 
@@ -389,9 +393,6 @@ export default function Dashboard() {
                 <SystemAnnouncements />
                 <ActiveMembers />
               </div> */}
-              <div className="mt-7">
-                <ActiveMembers />
-              </div>
             </TabsContent>
 
             {/* Activity tab */}
@@ -400,6 +401,12 @@ export default function Dashboard() {
                 Моје активности
               </h2>
               <UserActivity />
+            </TabsContent>
+
+            <TabsContent value="members" className="mt-5">
+              <div>
+                <ActiveMembers />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
