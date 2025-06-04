@@ -7,4 +7,5 @@ export const addressNameMap: Record<string, string> = {
   "0x2fD780571e45434a21B71e7595BF497A699AA41F": "Nepoznato",
   "0x7AD70d464A1623d640c2883C96526d3bc9CAc0C6": "Nepoznato",
   "0x513eE018423E78C34616306B46Df40B4Ca13E626": "Nepoznato",
+  "0x11bed83eB94129436bF4779DBc909c3274cB9ae7": "Nepoznato",
 };
