@@ -11,10 +11,8 @@ import {
 import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
 import { getNewVoterProposalDescription } from "../utils";
 import { ProposalService } from "./proposal-service";
-import {
-  UserActivityEventVote,
-  UserActivityEventProposal,
-} from "@/components/user-activity/user-activity";
+import { UserActivityEventProposal } from "@/types/activity";
+import { UserActivityEventVote } from "@/types/activity";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;

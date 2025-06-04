@@ -5,10 +5,8 @@ import {
   VoteOption,
 } from "@/types/proposal";
 import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import {
-  UserActivityEventVote,
-  UserActivityEventProposal,
-} from "@/components/user-activity/user-activity";
+import { UserActivityEventProposal } from "@/types/activity";
+import { UserActivityEventVote } from "@/types/activity";
 
 export interface ProposalService {
   getProposals: () => Promise<Proposal[]>;
