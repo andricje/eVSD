@@ -31,10 +31,8 @@ import {
   IneligibleProposerError,
   IneligibleVoterError,
 } from "../../types/proposal-service-errors";
-import {
-  UserActivityEventProposal,
-  UserActivityEventVote,
-} from "@/components/user-activity/user-activity";
+import { UserActivityEventProposal } from "@/types/activity";
+import { UserActivityEventVote } from "@/types/activity";
 
 export type onProposalsChangedUnsubscribe = () => void;
 type UserVotingStatus = "NotEligible" | "CanAcceptVotingRights" | "Eligible";

@@ -7,45 +7,35 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronRight,
   FileText,
   PieChart,
   Users,
   Vote,
-  Wallet,
   X,
-  History,
-  Megaphone,
   User as UserIcon,
-  Bell,
-  CheckCircle2,
-  AlertCircle,
-  Info,
+  Timer,
+  Activity,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
-import { UserActivity } from "@/components/user-activity/user-activity";
+import { UserActivityEvent } from "@/types/activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import {
-  hasVotingTimeExpired,
-  isVotingComplete,
-  formatDate,
-  QUORUM,
-  countUserRemainingItemsToVote,
-  isQuorumReachedForAllPoints,
-} from "@/lib/utils";
+import { isVotingComplete, QUORUM } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { STRINGS } from "@/constants/strings";
+import { UserProposals } from "@/components/user-activity/user-proposals";
+import { Timeline } from "@/components/user-activity/timeline";
 
 // Action Buttons
-const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
+const ActionButtons: React.FC = () => {
   const { disconnect, user } = useWallet();
   const router = useRouter();
 
@@ -53,7 +43,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
     if (!user) {
       router.push("/login");
     }
-  }, [user]);
+  }, [router, user]);
 
   return (
     <div className="flex gap-3 w-full">
@@ -117,106 +107,6 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-// SystemAnnouncements Component
-const SystemAnnouncements: React.FC = () => {
-  const announcements = [
-    {
-      id: 1,
-      title: "Ажурирање система",
-      date: new Date(),
-      content:
-        "Обавештавамо вас да ће систем бити недоступан због планираног одржавања у суботу од 22:00 до 23:00 часова.",
-      type: "info",
-      icon: Info,
-    },
-    {
-      id: 2,
-      title: "Успешно завршено гласање",
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      content:
-        "Гласање за предлог 'Измене правилника о студирању' је успешно завршено са постигнутим кворумом.",
-      type: "success",
-      icon: CheckCircle2,
-    },
-    {
-      id: 3,
-      title: "Важно обавештење",
-      date: new Date(Date.now() - 48 * 60 * 60 * 1000),
-      content:
-        "Потребно је да сви корисници ажурирају своје профиле најкасније до 15.12. ради усклађивања са новим прописима.",
-      type: "warning",
-      icon: AlertCircle,
-    },
-  ];
-
-  const getIconBgColor = (type: string) => {
-    switch (type) {
-      case "info":
-        return "bg-blue-100";
-      case "success":
-        return "bg-green-100";
-      case "warning":
-        return "bg-amber-100";
-      default:
-        return "bg-gray-100";
-    }
-  };
-
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case "info":
-        return "text-blue-600";
-      case "success":
-        return "text-green-600";
-      case "warning":
-        return "text-amber-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold text-foreground mb-2 flex items-center">
-        <Bell className="h-4 w-4 mr-2" />
-        Обавештења система
-      </h2>
-      {announcements.map((announcement) => (
-        <Card
-          key={announcement.id}
-          className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className={`p-2 ${getIconBgColor(announcement.type)} rounded-full mt-1`}
-            >
-              <announcement.icon
-                className={`h-4 w-4 ${getIconColor(announcement.type)}`}
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="text-base font-medium text-foreground">
-                  {announcement.title}
-                </h4>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(announcement.date)}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                {announcement.content}
-              </p>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-                Детаљније <ChevronRight className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ))}
     </div>
   );
 };
@@ -292,6 +182,16 @@ export default function Dashboard() {
     }
   }, [user, proposalService]);
 
+  const [activity, setActivity] = useState<UserActivityEvent[]>([]);
+  useEffect(() => {
+    async function getUserActivity() {
+      if (proposalService) {
+        setActivity(await proposalService.getAllUserActivity());
+      }
+    }
+    getUserActivity();
+  }, [proposalService]);
+
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = async () => {
     await proposalService?.acceptVotingRights();
@@ -318,24 +218,31 @@ export default function Dashboard() {
                 <OriginalWalletInfo />
               )}
               <div className="flex w-full md:w-auto gap-3">
-                <ActionButtons isAdmin={false} />
+                <ActionButtons />
               </div>
             </div>
           </div>
 
           {/* Main tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-            <TabsList className="grid grid-cols-2 w-full bg-muted/50 p-1">
+            <TabsList className="grid grid-cols-3 w-full bg-muted/50 p-1">
               <TabsTrigger value="voting" className="text-sm py-2 font-medium">
                 <Vote className="h-4 w-4 mr-2" />
                 Гласање
               </TabsTrigger>
               <TabsTrigger
+                value="user-proposals"
+                className="text-sm py-2 font-medium"
+              >
+                <Timer className="h-4 w-4 mr-2" />
+                {STRINGS.userActivity.userProposals.title}
+              </TabsTrigger>
+              <TabsTrigger
                 value="activity"
                 className="text-sm py-2 font-medium"
               >
-                <History className="h-4 w-4 mr-2" />
-                Активност
+                <Activity className="h-4 w-4 mr-2" />
+                {STRINGS.userActivity.timeLine.title}
               </TabsTrigger>
             </TabsList>
 
@@ -385,21 +292,19 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SystemAnnouncements />
-                <ActiveMembers />
-              </div> */}
               <div className="mt-7">
                 <ActiveMembers />
               </div>
             </TabsContent>
 
+            {/* User proposals tab */}
+            <TabsContent value="user-proposals" className="mt-5">
+              <UserProposals proposals={proposals} user={user} />
+            </TabsContent>
+
             {/* Activity tab */}
             <TabsContent value="activity" className="mt-5">
-              <h2 className="text-lg font-semibold text-foreground mb-5">
-                Моје активности
-              </h2>
-              <UserActivity />
+              <Timeline userActivity={activity} />
             </TabsContent>
           </Tabs>
         </div>
