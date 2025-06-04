@@ -22,6 +22,8 @@ export interface UserActivityTracker {
   getAllUserActivity: () => Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]
   >;
+  canCurrentUserAcceptVotingRights(): Promise<boolean>;
+  acceptVotingRights(): Promise<void>;
 }
 
 export interface ProposalWriter {

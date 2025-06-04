@@ -27,6 +27,12 @@ export class InMemoryProposalService implements ProposalService {
   constructor(user: User) {
     this.user = user;
   }
+  async canCurrentUserAcceptVotingRights(): Promise<boolean> {
+    return false;
+  }
+  async acceptVotingRights(): Promise<void> {
+    return;
+  }
   getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]
   > {

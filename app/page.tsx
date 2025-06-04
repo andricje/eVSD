@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Shield, Wallet, FileCheck } from "lucide-react";
 import { Header } from "@/components/header";
-import { DonationsSection } from "@/components/donations/donations-section";
+// import { DonationsSection } from "@/components/donations/donations-section";
 import { useWallet } from "@/context/wallet-context";
 
 export default function Home() {
@@ -50,7 +50,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <section className="w-full ">
+        <section className="w-full mb-6 lg:mb-12">
           <div className="w-full max-w-full px-4 md:px-6 lg:px-8">
             <h2 className="text-2xl font-bold text-center mb-12">
               Предности blockchain гласања
@@ -107,7 +107,7 @@ export default function Home() {
             </div>
           </div>
         </section>
-        <DonationsSection />
+        {/* <DonationsSection /> */}
       </main>
       <footer className="border-t py-6 bg-muted w-full">
         <div className="w-full max-w-full flex flex-col items-center justify-between gap-4 px-4 md:flex-row md:px-6 lg:px-8">

@@ -42,11 +42,18 @@ import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
+import { ProposalService } from "@/lib/proposal-services/proposal-service";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
-  const { disconnect } = useWallet();
+  const { disconnect, user } = useWallet();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [user]);
 
   return (
     <div className="flex gap-3 w-full">
@@ -266,42 +273,28 @@ function getProposalsToVote(proposals: Proposal[], user: User) {
 // Dashboard component
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
-  const { user, acceptMembership, declineMembership } = useWallet();
-  const { proposals } = useProposals();
+  const { user } = useWallet();
+  const { proposals, proposalService } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
 
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);
 
-  // Funkcija za testiranje (samo za razvoj)
-  const simulateNewMember = () => {
-    if (user) {
-      // Postavljamo u localStorage da je korisnik novi član
-      localStorage.setItem(`isNewMember_${user.address}`, "true");
-      // Brišemo informaciju o prihvatanju članstva ako postoji
-      localStorage.removeItem(`membershipAccepted_${user.address}`);
-      // Osvežavamo stranicu da bi se primenilje promene
-      window.location.reload();
-    }
-  };
-
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
-    if (user && user.isNewMember) {
-      setShowMembershipDialog(true);
-    } else {
-      setShowMembershipDialog(false);
+    const checkUserVotingRights = async (proposalService: ProposalService) => {
+      const canAccept =
+        await proposalService.canCurrentUserAcceptVotingRights();
+      setShowMembershipDialog(canAccept);
+    };
+    if (user && proposalService) {
+      checkUserVotingRights(proposalService);
     }
-  }, [user]);
+  }, [user, proposalService]);
 
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
-  const handleAcceptMembership = () => {
-    acceptMembership();
-    setShowMembershipDialog(false);
-  };
-
-  const handleDeclineMembership = () => {
-    declineMembership();
+  const handleAcceptMembership = async () => {
+    await proposalService?.acceptVotingRights();
     setShowMembershipDialog(false);
   };
 
@@ -311,7 +304,7 @@ export default function Dashboard() {
       <MembershipAcceptanceDialog
         isOpen={showMembershipDialog}
         onAccept={handleAcceptMembership}
-        onDecline={handleDeclineMembership}
+        onDecline={() => {}}
       />
 
       <main className="flex-1 w-full px-5 py-8">
@@ -392,8 +385,11 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <SystemAnnouncements />
+                <ActiveMembers />
+              </div> */}
+              <div className="mt-7">
                 <ActiveMembers />
               </div>
             </TabsContent>

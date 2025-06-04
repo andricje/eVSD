@@ -79,7 +79,7 @@ export function convertVoteOptionToString(vote: VoteOption): string {
   return voteOptionMap[vote];
 }
 
-export const QUORUM = 20;
+export const QUORUM = 2;
 
 export function getVoteResult(
   votesFor: number,
