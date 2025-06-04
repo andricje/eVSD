@@ -5,12 +5,18 @@ import {
 } from "../proposal-service";
 import {
   AddVoterVotableItem,
+  IsAddVoterVotableItem,
   Proposal,
   UIProposal,
+  UserVotingStatus,
   VotableItem,
   VoteEvent,
 } from "@/types/proposal";
-import { areProposalsEqual, getTransferTokenCalldata } from "../../utils";
+import {
+  areProposalsEqual,
+  getTransferTokenCalldata,
+  getVoteResultForItem,
+} from "../../utils";
 import {
   BlockchainProposalParser,
   isAddVoterVotableItemChainData,
@@ -39,6 +45,37 @@ export class BlockchainProposalReader implements ProposalReader {
       new InMemoryProposalFileService()
     );
     this.eventProvider = new BlockchainEventProvider(governor, provider);
+  }
+  async getUserVotingStatus(userAddress: string): Promise<UserVotingStatus> {
+    const currentVotingPower = await this.token.getVotes(userAddress);
+    if (currentVotingPower > 0n) {
+      return "Eligible";
+    } else if (await this.getProposalToAddUser(userAddress)) {
+      return "CanAcceptVotingRights";
+    }
+    return "NotEligible";
+  }
+  async getProposalToAddUser(userAddress: string): Promise<Proposal | null> {
+    const allProposals = await this.getProposals();
+    // Find the proposal that adds the current signer that has vote result passed (if it exists)
+    for (const proposal of allProposals) {
+      // Avoid malformed proposals
+      if (proposal.voteItems.length === 0) {
+        continue;
+      }
+      const voteItem = proposal.voteItems[0];
+      const isAddVoter = IsAddVoterVotableItem(voteItem);
+      const voteResult = getVoteResultForItem(voteItem);
+      if (
+        isAddVoter &&
+        proposal.status === "closed" &&
+        voteResult === "passed" &&
+        voteItem.newVoterAddress === userAddress
+      ) {
+        return proposal;
+      }
+    }
+    return null;
   }
 
   public async getProposals(): Promise<Proposal[]> {

@@ -5,6 +5,7 @@ import {
 import { BlockchainProposalReader } from "./blockchain-proposal-reader";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
 import { UserActivityTracker } from "../proposal-service";
+import { User } from "@/types/proposal";
 
 export class BlockchainUserActivityTracker implements UserActivityTracker {
   private readonly reader: BlockchainProposalReader;
@@ -16,6 +17,12 @@ export class BlockchainUserActivityTracker implements UserActivityTracker {
   ) {
     this.reader = blockchainReader;
     this.eventProvider = blockchainEventProvider;
+  }
+  async canUserAcceptVotingRights(user: User): Promise<boolean> {
+    return (
+      (await this.reader.getUserVotingStatus(user.address)) ===
+      "CanAcceptVotingRights"
+    );
   }
   public async getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]

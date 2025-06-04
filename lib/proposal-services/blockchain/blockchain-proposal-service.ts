@@ -13,6 +13,8 @@ import {
 import {
   Proposal,
   UIProposal,
+  User,
+  UserVotingStatus,
   VotableItem,
   VoteOption,
 } from "@/types/proposal";
@@ -46,6 +48,12 @@ export class BlockchainProposalService implements ProposalService {
       this.reader,
       new BlockchainEventProvider(governor, provider)
     );
+  }
+  canUserAcceptVotingRights(user: User): Promise<boolean> {
+    return this.activityTracker.canUserAcceptVotingRights(user);
+  }
+  acceptVotingRights(): Promise<void> {
+    return this.writer.acceptVotingRights();
   }
   public async getProposals(): Promise<Proposal[]> {
     return this.reader.getProposals();

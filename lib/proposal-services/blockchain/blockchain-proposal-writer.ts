@@ -45,6 +45,25 @@ export class BlockchainProposalWriter implements ProposalWriter {
     this.signer = signer;
     this.blockchainReader = blockchainReader;
   }
+  async acceptVotingRights(): Promise<void> {
+    const signerAddress = await this.signer.getAddress();
+    const balance = await this.token.balanceOf(signerAddress);
+    const currentVotingPower = await this.token.getVotes(signerAddress);
+
+    const needsToExecute = balance === 0n;
+    const needsToDelegate = currentVotingPower === 0n;
+    if (needsToExecute) {
+      const proposalToExecute =
+        await this.blockchainReader.getProposalToAddUser(signerAddress);
+      if (proposalToExecute) {
+        await this.executeItem(proposalToExecute, 0);
+      }
+    }
+
+    if (needsToDelegate) {
+      await this.token.delegate(await this.signer.getAddress());
+    }
+  }
 
   public async cancelProposal(proposal: Proposal): Promise<boolean> {
     try {

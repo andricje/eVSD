@@ -27,11 +27,11 @@ export class InMemoryProposalService implements ProposalService {
   constructor(user: User) {
     this.user = user;
   }
-  async canCurrentUserAcceptVotingRights(): Promise<boolean> {
-    return false;
+  canUserAcceptVotingRights(user: User): Promise<boolean> {
+    throw new Error("Method not implemented.");
   }
   async acceptVotingRights(): Promise<void> {
-    return;
+    throw new Error("Method not implemented.");
   }
   getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]

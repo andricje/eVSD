@@ -1,6 +1,8 @@
 import {
   Proposal,
   UIProposal,
+  User,
+  UserVotingStatus,
   VotableItem,
   VoteOption,
 } from "@/types/proposal";
@@ -22,14 +24,14 @@ export interface UserActivityTracker {
   getAllUserActivity: () => Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]
   >;
-  canCurrentUserAcceptVotingRights(): Promise<boolean>;
-  acceptVotingRights(): Promise<void>;
+  canUserAcceptVotingRights(user: User): Promise<boolean>;
 }
 
 export interface ProposalWriter {
   uploadProposal: (proposal: UIProposal) => Promise<bigint>;
   voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
   cancelProposal(proposal: Proposal): Promise<boolean>;
+  acceptVotingRights(): Promise<void>;
 }
 
 export interface ProposalService

@@ -36,7 +36,7 @@ export async function deployContracts(deployer: ethers.Signer) {
     "EvsdToken",
     deployer
   );
-  const evsdToken = await EvsdTokenFactory.deploy(deployer);
+  const evsdToken = await EvsdTokenFactory.deploy(deployer, deployer);
   await evsdToken.waitForDeployment();
 
   const EvsdGovernorFactory = await hardhat.ethers.getContractFactory(
