@@ -43,10 +43,10 @@ export function WalletConnectButton() {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Повежите крипто новчаник</DialogTitle>
+            <DialogTitle>Повежите дигитални новчаник</DialogTitle>
             <DialogDescription>
-              Повежите Ваш крипто новчаник да бисте се пријавили и учествовали у
-              гласању.
+              Повежите Ваш дигитални новчаник да бисте се пријавили и
+              учествовали у гласању.
             </DialogDescription>
           </DialogHeader>
 

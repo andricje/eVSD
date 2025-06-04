@@ -39,7 +39,7 @@ export default function LoginPage() {
             Пријава на еВСД
           </CardTitle>
           <CardDescription className="text-center">
-            Повежите Ваш крипто новчаник да бисте приступили систему
+            Повежите Ваш дигитални новчаник да бисте приступили систему
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

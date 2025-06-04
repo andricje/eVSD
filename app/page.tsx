@@ -59,15 +59,15 @@ export default function Home() {
               <Card>
                 <CardHeader>
                   <Wallet className="h-6 w-6 mb-2 text-blue-500" />
-                  <CardTitle>Крипто новчаник за приступ</CardTitle>
+                  <CardTitle>Дигитални новчаник за приступ</CardTitle>
                   <CardDescription>
                     Аутентификација корисника помоћу blockchain технологије
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Сваки факултет користи свој јединствени крипто новчаник за
-                    приступ систему и гласање, обезбеђујући највиши ниво
+                    Сваки факултет користи свој јединствени дигитални новчаник
+                    за приступ систему и гласање, обезбеђујући највиши ниво
                     сигурности и транспарентности.
                   </p>
                 </CardContent>
