@@ -13,6 +13,7 @@ import {
 import { Wallet } from "lucide-react";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { useWallet } from "@/context/wallet-context";
+import { WalletAddress } from "@/components/wallet-address";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,9 +42,11 @@ export default function LoginPage() {
                   <Wallet className="h-4 w-4 text-blue-500" />
                   <div>
                     {user.name}
-                    <div className="text-xs text-muted-foreground">
-                      {user.address}
-                    </div>
+                    <WalletAddress
+                      address={user.address}
+                      className="text-xs text-muted-foreground"
+                      iconSize={3}
+                    />
                   </div>
                 </div>
               </div>

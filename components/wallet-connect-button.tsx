@@ -34,7 +34,7 @@ export function WalletConnectButton() {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md w-[90%] sm:w-full rounded-lg pb-2">
           <DialogHeader>
             <DialogTitle>Повежите дигитални новчаник</DialogTitle>
             <DialogDescription>
