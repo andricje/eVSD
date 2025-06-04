@@ -11,7 +11,7 @@ import {
   UserVotingStatus,
   VotableItem,
   VoteEvent,
-} from "@/types/proposal";
+} from "../../../types/proposal";
 import {
   areProposalsEqual,
   getTransferTokenCalldata,
@@ -25,7 +25,7 @@ import {
 } from "./blockchain-proposal-parser";
 import { InMemoryProposalFileService } from "../../file-upload";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
-import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { EvsdGovernor, EvsdToken } from "../../../typechain-types";
 
 export class BlockchainProposalReader implements ProposalReader {
   private readonly governor: EvsdGovernor;
