@@ -3,8 +3,8 @@ import {
   EvsdGovernor__factory,
   EvsdToken,
   EvsdToken__factory,
-} from "@/typechain-types";
-import { config } from "@/evsd.config";
+} from "../typechain-types";
+import { config } from "../evsd.config";
 
 function getBlockchainConfig() {
   if (config.proposalService.type !== "blockchain") {

@@ -1,4 +1,4 @@
-import { getEvsdToken } from "@/lib/contract-provider";
+import { getEvsdToken } from "../lib/contract-provider";
 import { EvsdToken } from "../typechain-types";
 import { ethers, Signer } from "ethers";
 import hardhat from "hardhat";
@@ -12,7 +12,6 @@ export async function delegateVotesToAllSigners() {
 
   for (const signer of signers) {
     const token = getEvsdToken();
-    token.delegate(await signer.getAddress());
     await delegateVoteToSelf(token, signer as unknown as ethers.Signer);
   }
 }
