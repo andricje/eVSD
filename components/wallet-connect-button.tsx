@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import MetamaskLogo from "@/public/metamask.webp";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,8 +45,8 @@ export function WalletConnectButton() {
 
           <div className="w-full -mt-2">
             <div className="flex flex-col items-center justify-center p-4 space-y-4">
-              <img
-                src="/metamask.webp"
+              <Image
+                src={MetamaskLogo}
                 alt="MetaMask logo"
                 className="size-24"
               />
