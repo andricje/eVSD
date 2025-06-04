@@ -1,10 +1,12 @@
 import { ethers } from "hardhat";
 import { EvsdToken__factory } from "../typechain-types";
-import tokenArtifacts from "../contracts/evsd-token.json";
 
 async function main() {
   const signers = await ethers.getSigners();
-  const token = EvsdToken__factory.connect(tokenArtifacts.address, signers[0]);
+  const token = EvsdToken__factory.connect(
+    "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    signers[0]
+  );
 
   console.log("Провера стања токена свих налога:");
   console.log("===================================");

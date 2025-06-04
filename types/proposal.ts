@@ -3,6 +3,11 @@ export interface User {
   name: string;
 }
 
+export type UserVotingStatus =
+  | "NotEligible"
+  | "CanAcceptVotingRights"
+  | "Eligible";
+
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
   UIOnlyId: string;
 };

@@ -2,10 +2,12 @@
 import { createContext, useEffect, useMemo, useState } from "react";
 import { useWallet } from "@/context/wallet-context";
 import { InMemoryProposalFileService } from "@/lib/file-upload";
-import { BlockchainProposalService } from "@/lib/proposal-services/blockchain-proposal-service";
-import { InMemoryProposalService } from "@/lib/proposal-services/in-memory-proposal-service";
+import { BlockchainProposalService } from "@/lib/proposal-services/blockchain/blockchain-proposal-service";
+import { InMemoryProposalService } from "@/lib/proposal-services/in-memory/in-memory-proposal-service";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { Proposal } from "@/types/proposal";
+import { getEvsdGovernor, getEvsdToken } from "@/lib/contract-provider";
+import { ProposalServiceType } from "@/types/evsd-config";
 
 export interface ProposalsContextValue {
   proposals: Proposal[];
@@ -26,6 +28,8 @@ function useBlockchainProposalService(): ProposalService | null {
   return useMemo(() => {
     if (signer && provider) {
       return new BlockchainProposalService(
+        getEvsdGovernor(),
+        getEvsdToken(),
         signer,
         new InMemoryProposalFileService(),
         provider
@@ -97,16 +101,14 @@ export function ProposalsProvider({
   type,
 }: {
   children: React.ReactNode;
-  type: "mock" | "blockchain";
+  type: ProposalServiceType;
 }) {
   switch (type) {
     case "blockchain":
       return (
         <BlockchainProposalProvider>{children}</BlockchainProposalProvider>
       );
-    case "mock":
+    case "in-memory":
       return <MockProposalProvider>{children}</MockProposalProvider>;
-    default:
-      throw new Error("Invalid proposal service type");
   }
 }

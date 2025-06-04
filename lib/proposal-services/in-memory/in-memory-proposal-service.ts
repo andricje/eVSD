@@ -7,10 +7,12 @@ import {
   User,
   VotableItem,
   VoteOption,
-} from "../../types/proposal";
-import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import { getNewVoterProposalDescription } from "../utils";
-import { ProposalService } from "./proposal-service";
+} from "../../../types/proposal";
+import {
+  onProposalsChangedUnsubscribe,
+  ProposalService,
+} from "../proposal-service";
+import { getNewVoterProposalDescription } from "../../utils";
 import {
   UserActivityEventVote,
   UserActivityEventProposal,
@@ -25,11 +27,11 @@ export class InMemoryProposalService implements ProposalService {
   constructor(user: User) {
     this.user = user;
   }
-  async canCurrentUserAcceptVotingRights(): Promise<boolean> {
-    return false;
+  canUserAcceptVotingRights(user: User): Promise<boolean> {
+    throw new Error("Method not implemented.");
   }
   async acceptVotingRights(): Promise<void> {
-    return;
+    throw new Error("Method not implemented.");
   }
   getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]

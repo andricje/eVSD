@@ -12,10 +12,8 @@ import {
   PieChart,
   Users,
   Vote,
-  Wallet,
   X,
   History,
-  Megaphone,
   User as UserIcon,
   Bell,
   CheckCircle2,
@@ -29,14 +27,7 @@ import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import {
-  hasVotingTimeExpired,
-  isVotingComplete,
-  formatDate,
-  QUORUM,
-  countUserRemainingItemsToVote,
-  isQuorumReachedForAllPoints,
-} from "@/lib/utils";
+import { isVotingComplete, formatDate, QUORUM } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
@@ -282,13 +273,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
-    const checkUserVotingRights = async (proposalService: ProposalService) => {
-      const canAccept =
-        await proposalService.canCurrentUserAcceptVotingRights();
+    const checkUserVotingRights = async (
+      proposalService: ProposalService,
+      user: User
+    ) => {
+      const canAccept = await proposalService.canUserAcceptVotingRights(user);
       setShowMembershipDialog(canAccept);
     };
     if (user && proposalService) {
-      checkUserVotingRights(proposalService);
+      checkUserVotingRights(proposalService, user);
     }
   }, [user, proposalService]);
 
