@@ -35,18 +35,18 @@ export function WalletConnectButton() {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>
+      <Button onClick={() => setIsOpen(true)} className="w-full">
         <Wallet className="h-4 w-4 mr-2" />
-        Poveži novčanik
+        Повежите новчаник
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Poveži kripto novčanik</DialogTitle>
+            <DialogTitle>Повежите крипто новчаник</DialogTitle>
             <DialogDescription>
-              Povežite vaš kripto novčanik da biste se prijavili i učestvovali u
-              glasanju.
+              Повежите Ваш крипто новчаник да бисте се пријавили и учествовали у
+              гласању.
             </DialogDescription>
           </DialogHeader>
 
@@ -64,8 +64,8 @@ export function WalletConnectButton() {
                   className="h-20 w-20"
                 />
                 <p className="text-sm text-center text-muted-foreground">
-                  Povežite se sa MetaMask novčanikom. Potrebno je da imate
-                  instaliran MetaMask dodatak u vašem pretraživaču.
+                  Повежите се са MetaMask новчаником. Потребно је да имате
+                  инсталиран MetaMask додатак у вашем претраживачу.
                 </p>
                 <Button
                   className="w-full"
@@ -76,8 +76,8 @@ export function WalletConnectButton() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   {connectionStatus === "connecting"
-                    ? "Povezivanje..."
-                    : "Poveži MetaMask"}
+                    ? "Повезивање..."
+                    : "Повежи MetaMask"}
                 </Button>
               </div>
             </TabsContent>
@@ -91,11 +91,11 @@ export function WalletConnectButton() {
                     className="h-[150px] w-[150px] mx-auto mb-2"
                   />
                   <p className="text-xs text-muted-foreground">
-                    WalletConnect QR kod
+                    WalletConnect QR код
                   </p>
                 </div>
                 <p className="text-sm text-center text-muted-foreground">
-                  Skenirajte QR kod sa vašim mobilnim novčanikom koji podržava
+                  Скенирајте QR код са Вашим мобилним новчаником који подржава
                   WalletConnect.
                 </p>
                 <Button
@@ -107,8 +107,8 @@ export function WalletConnectButton() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   {connectionStatus === "connecting"
-                    ? "Povezivanje..."
-                    : "Poveži WalletConnect"}
+                    ? "Повезивање..."
+                    : "Повежи WalletConnect"}
                 </Button>
               </div>
             </TabsContent>

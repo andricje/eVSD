@@ -36,10 +36,10 @@ export default function LoginPage() {
             <Wallet className="h-12 w-12" />
           </div>
           <CardTitle className="text-2xl text-center">
-            Prijava na eVSD
+            Пријава на еВСД
           </CardTitle>
           <CardDescription className="text-center">
-            Povežite vaš kripto novčanik da biste pristupili sistemu
+            Повежите Ваш крипто новчаник да бисте приступили систему
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -53,22 +53,22 @@ export default function LoginPage() {
 
           {connectionStatus === "connected" && (
             <Alert className="bg-green-50 text-green-800 border-green-200">
-              <AlertTitle>Uspešna autentifikacija</AlertTitle>
+              <AlertTitle>Успешна аутентификација</AlertTitle>
               <AlertDescription>
-                Novčanik je verifikovan. Preusmeravamo vas...
+                Новчаник је верификован. Преусмеравамо Вас...
               </AlertDescription>
             </Alert>
           )}
 
           {user && (
             <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
-              <h3 className="font-medium mb-2">Povezani novčanik</h3>
+              <h3 className="font-medium mb-2">Повезани новчаник</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-blue-500" />
                   <div>
                     {/* <div className="font-medium">{authorizedWallet.faculty}</div> */}
-                    Test Fakultet
+                    Тест Факултет
                     <div className="text-xs text-muted-foreground">
                       {/* {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)} */}
                       {user.address}
@@ -77,7 +77,7 @@ export default function LoginPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Laptop className="h-4 w-4 text-blue-500" />
-                  <div className="text-sm">Uređaj: Windows PC (Chrome)</div>
+                  <div className="text-sm">Уређај: Windows PC (Chrome)</div>
                 </div>
               </div>
             </div>
@@ -85,13 +85,22 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter>
           {!user ? (
-            <WalletConnectButton />
+            <div className="w-full flex flex-row gap-2">
+              <Button
+                onClick={() => router.push("/")}
+                variant={"outline"}
+                className="w-full"
+              >
+                Назад
+              </Button>
+              <WalletConnectButton />
+            </div>
           ) : (
             <Button
               className="w-full"
               onClick={() => router.push("/dashboard")}
             >
-              Nastavi na dashboard
+              Настави на контролну таблу
             </Button>
           )}
         </CardFooter>
