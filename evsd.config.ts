@@ -12,6 +12,6 @@ const sepolia = {
 export const config: EvsdConfig = {
   proposalService: {
     type: "blockchain",
-    network: hardhat,
+    network: sepolia,
   },
 };
