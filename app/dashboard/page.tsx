@@ -12,10 +12,8 @@ import {
   PieChart,
   Users,
   Vote,
-  Wallet,
   X,
   History,
-  Megaphone,
   User as UserIcon,
   Bell,
   CheckCircle2,
@@ -29,20 +27,14 @@ import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import {
-  hasVotingTimeExpired,
-  isVotingComplete,
-  formatDate,
-  QUORUM,
-  countUserRemainingItemsToVote,
-  isQuorumReachedForAllPoints,
-} from "@/lib/utils";
+import { isVotingComplete, formatDate, QUORUM } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { WalletAddress } from "@/components/wallet-address";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
@@ -56,7 +48,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
   }, [user]);
 
   return (
-    <div className="flex gap-3 w-full">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
       <NewProposalDialog
         customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
         customText={
@@ -72,21 +64,20 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         asChild
       >
         <Link href="/rezultati">
-          <PieChart className="h-4 w-4 mr-2" />
+          <PieChart className="size-4 mr-2" />
           Резултати
         </Link>
       </Button>
-      <div className="border-l border-border h-8 mx-2" />
+      <div className="hidden sm:flex border-l border-border h-8 mx-2" />
       <Button
-        variant="outline"
         size="sm"
-        className="flex-1 border border-border/40 hover:bg-destructive/5 hover:text-destructive py-3 text-sm h-full"
+        className="flex-1 border border-border/40 py-3 text-sm h-full bg-destructive text-destructive-foreground hover:bg-destructive sm:bg-background sm:text-foreground sm:hover:bg-background sm:hover:text-destructive"
         onClick={() => {
           disconnect();
           router.push("/");
         }}
       >
-        <X className="h-4 w-4 mr-1.5" /> Одјави се
+        <X className="size-4 mr-1.5" /> Одјави се
       </Button>
     </div>
   );
@@ -110,8 +101,7 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="secondary" className="px-2 py-0.5 text-sm">
               <span className="text-muted-foreground">
-                {address.substring(0, 6)}...
-                {address.substring(address.length - 4)}
+                <WalletAddress address={address} />
               </span>
             </Badge>
           </div>
@@ -182,7 +172,7 @@ const SystemAnnouncements: React.FC = () => {
   return (
     <div className="space-y-4">
       <h2 className="text-base font-semibold text-foreground mb-2 flex items-center">
-        <Bell className="h-4 w-4 mr-2" />
+        <Bell className="size-4 mr-2" />
         Обавештења система
       </h2>
       {announcements.map((announcement) => (
@@ -225,7 +215,7 @@ const SystemAnnouncements: React.FC = () => {
 const ActiveMembers: React.FC = () => {
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
+      <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-2">
         <h2 className="text-lg font-semibold text-foreground">
           Активни чланови еВСД
         </h2>
@@ -246,7 +236,11 @@ const ActiveMembers: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{address}</p>
+                  <WalletAddress
+                    address={address}
+                    className="text-sm font-medium ml-1"
+                    iconSize={3}
+                  />
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs px-1.5 py-0">
                       {name}
@@ -345,7 +339,7 @@ export default function Dashboard() {
 
             {/* Voting tab */}
             <TabsContent value="voting" className="mt-5">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <h2 className="text-lg font-semibold text-foreground">
                   Предлози за гласање
                 </h2>

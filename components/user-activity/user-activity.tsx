@@ -1,22 +1,12 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { formatDate, getUserVotingHistory } from "@/lib/utils";
-import { Proposal, User, VotableItem, VoteEvent } from "@/types/proposal";
-import {
-  CalendarDays,
-  Check,
-  Timer,
-  X,
-  Activity,
-  AlertCircle,
-} from "lucide-react";
+import { Proposal, VotableItem, VoteEvent } from "@/types/proposal";
+import { Timer, Activity } from "lucide-react";
 import { useProposals } from "@/hooks/use-proposals";
 import { useWallet } from "@/context/wallet-context";
 import { Timeline } from "./timeline";
 import { useEffect, useState } from "react";
-import { VotingHistory } from "./voting-history";
 import { UserProposals } from "./user-proposals";
 import { STRINGS } from "@/constants/strings";
 
@@ -85,13 +75,6 @@ export function UserActivity() {
           </span>
         </TabsTrigger>
       </TabsList>
-
-      {/* Istorija glasanja */}
-      <TabsContent value="glasanje">
-        <div className="space-y-6">
-          <VotingHistory activity={activity} />
-        </div>
-      </TabsContent>
 
       {/* Moji predlozi */}
       <TabsContent value="predlozi">
