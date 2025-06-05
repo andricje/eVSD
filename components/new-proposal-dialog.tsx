@@ -292,7 +292,7 @@ export function NewProposalDialog({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] w-[90%] sm:w-full overflow-y-auto rounded-lg">
         <DialogHeader>
           <DialogTitle>{STRINGS.newProposal.dialog.title}</DialogTitle>
           <DialogDescription>
@@ -355,6 +355,7 @@ export function NewProposalDialog({
                       title: e.target.value,
                     })
                   }
+                  className="text-sm"
                   placeholder={STRINGS.newProposal.form.title.placeholder}
                   disabled={loading || proposalSubmitted}
                 />
@@ -373,6 +374,7 @@ export function NewProposalDialog({
                       description: e.target.value,
                     })
                   }
+                  className="text-sm"
                   placeholder={STRINGS.newProposal.form.description.placeholder}
                   rows={6}
                   disabled={loading || proposalSubmitted}
@@ -391,7 +393,7 @@ export function NewProposalDialog({
               </div>
 
               <div className="space-y-4 mt-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
                   <Label className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     <span>
@@ -517,6 +519,7 @@ export function NewProposalDialog({
                                     STRINGS.newProposal.form.subItem.title
                                       .placeholder
                                   }
+                                  className="text-xs"
                                   value={item.title}
                                   onChange={(e) =>
                                     updateSubItem(item, "title", e.target.value)
@@ -549,6 +552,7 @@ export function NewProposalDialog({
                                       e.target.value
                                     )
                                   }
+                                  className="text-xs"
                                   rows={3}
                                   disabled={loading || proposalSubmitted}
                                 />
