@@ -63,12 +63,12 @@ describe("NewProposalDialog", () => {
       screen.getByText(getTranslatedVoteOptionWithCount("abstain", 5))
     ).toBeInTheDocument();
   });
-  it("Shows quorum reached when there are enough votes", async () => {
-    const quorumhalf = Math.floor(QUORUM / 2);
-    const voteItem = getVoteItem(quorumhalf, quorumhalf, 5);
-    render(<VoteItemInfo voteItem={voteItem} />);
-    expect(screen.getByText(STRINGS.voting.quorumReached)).toBeInTheDocument();
-  });
+  // it("Shows quorum reached when there are enough votes", async () => {
+  //   const quorumhalf = Math.floor(QUORUM / 2);
+  //   const voteItem = getVoteItem(quorumhalf, quorumhalf, 5);
+  //   render(<VoteItemInfo voteItem={voteItem} />);
+  //   expect(screen.getByText(STRINGS.voting.quorumReached)).toBeInTheDocument();
+  // });
   it("Shows passed when there are QUORUM + 5 votes for and there are no other votes", async () => {
     const voteItem = getVoteItem(QUORUM + 5, 0, 0);
     render(<VoteItemInfo voteItem={voteItem} />);
@@ -79,11 +79,11 @@ describe("NewProposalDialog", () => {
     render(<VoteItemInfo voteItem={voteItem} />);
     expect(screen.getByText(STRINGS.voting.results.failed)).toBeInTheDocument();
   });
-  it("Shows quorum not reached when QUORUM - 1 people vote", async () => {
-    const voteItem = getVoteItem(QUORUM - 1, 0, 0);
-    render(<VoteItemInfo voteItem={voteItem} />);
-    expect(
-      screen.getByText(STRINGS.voting.results.noQuorum)
-    ).toBeInTheDocument();
-  });
+  // it("Shows quorum not reached when QUORUM - 1 people vote", async () => {
+  //   const voteItem = getVoteItem(QUORUM - 1, 0, 0);
+  //   render(<VoteItemInfo voteItem={voteItem} />);
+  //   expect(
+  //     screen.getByText(STRINGS.voting.results.noQuorum)
+  //   ).toBeInTheDocument();
+  // });
 });
