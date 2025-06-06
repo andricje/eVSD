@@ -1,9 +1,6 @@
 import {
   countTotalVotes,
-  QUORUM,
-  isQuorumReached,
   convertAddressToName,
-  getTranslatedVoteOption,
   getTranslatedVoteOptionWithCount,
   getVoteResult,
 } from "@/lib/utils";
@@ -54,7 +51,7 @@ export function VoteItemInfo({ voteItem }: VoteItemInfoProps) {
       </div> */}
         <div className="flex items-center sm:justify-end gap-2">
           <div className="flex sm:hidden">
-            <p className="text-sm">Резултат: </p>
+            <p className="text-sm">{STRINGS.voting.result}: </p>
           </div>
           <div className="sm:min-w-[200px] flex sm:justify-end">
             <VoteResultBadge

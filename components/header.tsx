@@ -1,11 +1,12 @@
 "use client";
-import { LogIn, LogOut, Menu, Wallet, X } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LogIn, LogOut, Menu, Wallet, X } from "lucide-react";
+
 import { WalletInfo } from "./wallet-info";
 import { useWallet } from "@/context/wallet-context";
 import { Button } from "./ui/button";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 interface HeaderProps {
   showNav?: boolean;
@@ -63,6 +64,10 @@ export function Header({ showNav = true }: HeaderProps) {
                     size="icon"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                     className="relative z-50"
+                    aria-label={
+                      isMobileMenuOpen ? "Затвори мени" : "Отвори мени"
+                    }
+                    aria-expanded={isMobileMenuOpen}
                   >
                     {isMobileMenuOpen ? (
                       <X className="h-5 w-5" />
