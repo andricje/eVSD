@@ -275,8 +275,12 @@ export class BlockchainProposalService implements ProposalService {
   async getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]
   > {
-    const proposals = await this.getProposals();
-    const createEvents = proposals.map((proposal) => {
+    const currentUserAddress = await this.signer.getAddress();
+    const currentUserProposals = (await this.getProposals()).filter(
+      (proposal) => proposal.author.address === currentUserAddress
+    );
+
+    const createEvents = currentUserProposals.map((proposal) => {
       const proposalCreateEvt: UserActivityEventProposal = {
         type: "Create",
         proposal,
@@ -288,7 +292,7 @@ export class BlockchainProposalService implements ProposalService {
     const voteEventsWithId = await this.getAllVoteEvents();
     const voteEvents: UserActivityEventVote[] = [];
     for (const x of voteEventsWithId) {
-      for (const proposal of proposals) {
+      for (const proposal of currentUserProposals) {
         const voteItem = proposal.voteItems.find(
           (voteItem) => voteItem.id === BigInt(x.proposalId)
         );
@@ -307,7 +311,7 @@ export class BlockchainProposalService implements ProposalService {
     const cancelEventsWithId = await this.getAllCancelEvents();
     const cancelEvents: UserActivityEventProposal[] = [];
     for (const x of cancelEventsWithId) {
-      const proposal = proposals.find(
+      const proposal = currentUserProposals.find(
         (proposal) => proposal.id === BigInt(x.proposalId)
       );
       if (proposal) {
@@ -323,11 +327,9 @@ export class BlockchainProposalService implements ProposalService {
     return [...createEvents, ...voteEvents, ...cancelEvents];
   }
   private async getAllVoteEvents() {
-    // Filteriramo događaje za glasanje korisnika
     const filter = this.governor.filters.VoteCast();
     const events = await this.governor.queryFilter(filter, 0, "latest");
 
-    // Mapiramo događaje u format za istoriju glasanja
     const votingHistory = events.map(async (event) => {
       const args = (event as EventLog).args;
       if (!args) {
