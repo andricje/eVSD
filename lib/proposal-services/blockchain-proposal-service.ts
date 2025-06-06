@@ -9,6 +9,8 @@ import {
   IsUIAddVoterVotableItem,
   AddVoterVotableItem,
   IsAddVoterVotableItem,
+  UserActivityEventVote,
+  UserActivityEventProposal,
 } from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
 import { ProposalFileService, fileToDigestHex } from "../file-upload";
@@ -31,10 +33,6 @@ import {
   IneligibleProposerError,
   IneligibleVoterError,
 } from "../../types/proposal-service-errors";
-import {
-  UserActivityEventProposal,
-  UserActivityEventVote,
-} from "@/components/user-activity/user-activity";
 
 export type onProposalsChangedUnsubscribe = () => void;
 type UserVotingStatus = "NotEligible" | "CanAcceptVotingRights" | "Eligible";
@@ -289,9 +287,12 @@ export class BlockchainProposalService implements ProposalService {
       return proposalCreateEvt;
     });
 
-    const voteEventsWithId = await this.getAllVoteEvents();
+    const allVoteEvents = await this.getAllVoteEvents();
     const voteEvents: UserActivityEventVote[] = [];
-    for (const x of voteEventsWithId) {
+    for (const x of allVoteEvents) {
+      if (x.voteEvent.voter.address !== currentUserAddress) {
+        continue;
+      }
       for (const proposal of currentUserProposals) {
         const voteItem = proposal.voteItems.find(
           (voteItem) => voteItem.id === BigInt(x.proposalId)
@@ -308,9 +309,9 @@ export class BlockchainProposalService implements ProposalService {
       }
     }
 
-    const cancelEventsWithId = await this.getAllCancelEvents();
+    const allCancelEvents = await this.getAllCancelEvents();
     const cancelEvents: UserActivityEventProposal[] = [];
-    for (const x of cancelEventsWithId) {
+    for (const x of allCancelEvents) {
       const proposal = currentUserProposals.find(
         (proposal) => proposal.id === BigInt(x.proposalId)
       );
