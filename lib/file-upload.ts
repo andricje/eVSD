@@ -1,4 +1,4 @@
-import { FileNotFound } from "@/types/proposal-service-errors";
+import { FileNotFound } from "../types/proposal-service-errors";
 
 export interface ProposalFileService {
   upload: (file: File) => Promise<string>;
