@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { STRINGS } from "@/constants/strings";
-import { getRemainingTime, getTranslatedVoteOption } from "@/lib/utils";
+import { getRemainingTime, getTranslatedVoteOption, QUORUM } from "@/lib/utils";
 import { ProposalState, VoteOption, VoteResult } from "@/types/proposal";
 import { CheckCircle2, MinusCircle, Timer, XCircle } from "lucide-react";
 
@@ -50,7 +50,7 @@ export const StatusBadge = ({
       );
     case "closed":
       return (
-        <Badge className="bg-red-500">{STRINGS.proposal.statusClosed}</Badge>
+        <Badge className="bg-gray-500">{STRINGS.proposal.statusClosed}</Badge>
       );
     case "cancelled":
       return (
@@ -59,7 +59,13 @@ export const StatusBadge = ({
   }
 };
 
-export const VoteResultBadge = ({ status }: { status: VoteResult }) => {
+export const VoteResultBadge = ({
+  status,
+  totalVotes,
+}: {
+  status: VoteResult;
+  totalVotes?: number;
+}) => {
   switch (status) {
     case "passed":
       return (
@@ -71,7 +77,10 @@ export const VoteResultBadge = ({ status }: { status: VoteResult }) => {
       );
     case "no-quorum":
       return (
-        <Badge className="bg-red-500">{STRINGS.voting.results.noQuorum}</Badge>
+        <Badge className="bg-red-500">
+          {STRINGS.voting.results.noQuorum}
+          {` ${totalVotes}/${QUORUM}`}
+        </Badge>
       );
   }
 };

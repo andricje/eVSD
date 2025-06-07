@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { WalletAddress } from "@/components/wallet-address";
+import { Header } from "@/components/header";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
@@ -294,6 +295,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
+      <Header showNav={false} />
+
       {/* Dodajemo komponentu za prihvatanje članstva */}
       <MembershipAcceptanceDialog
         isOpen={showMembershipDialog}
