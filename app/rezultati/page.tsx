@@ -101,8 +101,13 @@ export default function RezultatiPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
 
+  // Sortiranje predloga hronološki - najnoviji na vrhu
+  const sortedProposals = proposals.sort((a, b) => {
+    return b.dateAdded.getTime() - a.dateAdded.getTime();
+  });
+
   // Филтрирање предлога
-  const filteredProposals = proposals.filter((proposal) => {
+  const filteredProposals = sortedProposals.filter((proposal) => {
     // Претрага по наслову или опису
     const matchesSearch =
       proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
