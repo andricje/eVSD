@@ -3,7 +3,7 @@ import {
   IsUserActivityVote,
   UserActivityEvent,
   UserActivityEventVote,
-} from "./user-activity";
+} from "@/types/proposal";
 import { formatDate } from "@/lib/utils";
 import { getTextForActivityEvent } from "./util";
 import { STRINGS } from "@/constants/strings";
