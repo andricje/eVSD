@@ -1,7 +1,6 @@
 import hardhat from "hardhat";
-import { AddressLike, BaseContract, ethers, Signer } from "ethers";
+import { AddressLike, ethers, Signer } from "ethers";
 import { EvsdGovernor, EvsdToken } from "../typechain-types";
-import fs from "fs";
 
 export const ONE_TOKEN = hardhat.ethers.parseUnits("1", 18);
 

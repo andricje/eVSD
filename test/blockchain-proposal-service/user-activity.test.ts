@@ -2,46 +2,69 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
 import {
   IsUserActivityVote,
   UIProposal,
+  User,
   UserActivityEventProposal,
 } from "../../types/proposal";
 import { deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
 import { areProposalsEqual } from "../../lib/utils";
+import { BlockchainProposalService } from "@/lib/proposal-services/blockchain/blockchain-proposal-service";
 
 describe("BlockchainProposalService integration", function () {
   describe("getAllUserActivity", function () {
-    let registeredVoterProposalServices: BlockchainProposalService[];
-    let registeredVoterAddresses: string[];
+    let eligibleVoterProposalServices: BlockchainProposalService[];
+    let eligibleVoters: User[];
 
     beforeEach(async () => {
       const initData = await deployAndCreateMocks();
-      registeredVoterProposalServices =
-        initData.registeredVoterProposalServices;
-      registeredVoterAddresses = initData.registeredVoterAddresses;
+      eligibleVoterProposalServices = initData.eligibleVoterProposalServices;
+      eligibleVoters = initData.eligibleVoters;
     });
-    it("should not show other users' activity", async () => {
+    it("should not show other users' activity (create and vote)", async () => {
       const generatedProposal: UIProposal = {
         title: "Test proposal",
         description: "Test proposal description",
         voteItems: [voteItems[0]],
       };
       const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
+        await eligibleVoterProposalServices[0].uploadProposal(
           generatedProposal
         );
       const proposal =
-        await registeredVoterProposalServices[0].getProposal(proposalId);
-      await registeredVoterProposalServices[0].voteForItem(
+        await eligibleVoterProposalServices[0].getProposal(proposalId);
+      await eligibleVoterProposalServices[0].voteForItem(
         proposal.voteItems[0],
         "for"
       );
 
       const activity =
-        await registeredVoterProposalServices[1].getAllUserActivity();
+        await eligibleVoterProposalServices[1].getAllUserActivity(
+          eligibleVoters[1]
+        );
+
+      expect(activity.length).to.equal(0);
+    });
+    it("should not show other users' activity (create and cancel)", async () => {
+      const generatedProposal: UIProposal = {
+        title: "Test proposal",
+        description: "Test proposal description",
+        voteItems: [voteItems[0]],
+      };
+      const proposalId =
+        await eligibleVoterProposalServices[0].uploadProposal(
+          generatedProposal
+        );
+      const proposal =
+        await eligibleVoterProposalServices[0].getProposal(proposalId);
+      await eligibleVoterProposalServices[0].cancelProposal(proposal);
+
+      const activity =
+        await eligibleVoterProposalServices[1].getAllUserActivity(
+          eligibleVoters[1]
+        );
 
       expect(activity.length).to.equal(0);
     });
@@ -52,18 +75,20 @@ describe("BlockchainProposalService integration", function () {
         voteItems: [voteItems[0]],
       };
       const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
+        await eligibleVoterProposalServices[0].uploadProposal(
           generatedProposal
         );
       const proposal =
-        await registeredVoterProposalServices[0].getProposal(proposalId);
-      await registeredVoterProposalServices[0].voteForItem(
+        await eligibleVoterProposalServices[0].getProposal(proposalId);
+      await eligibleVoterProposalServices[0].voteForItem(
         proposal.voteItems[0],
         "for"
       );
 
       const activity =
-        await registeredVoterProposalServices[0].getAllUserActivity();
+        await eligibleVoterProposalServices[0].getAllUserActivity(
+          eligibleVoters[0]
+        );
 
       const voteAcitivty = activity.filter((x) => IsUserActivityVote(x));
       const proposalActivity = activity
@@ -74,7 +99,7 @@ describe("BlockchainProposalService integration", function () {
       expect(voteAcitivty[0].voteItem.id).to.equal(proposal.voteItems[0].id);
       expect(voteAcitivty[0].voteEvent.vote).to.equal("for");
       expect(voteAcitivty[0].voteEvent.voter.address).to.equal(
-        registeredVoterAddresses[0]
+        eligibleVoters[0].address
       );
 
       expect(proposalActivity.length).to.equal(1);

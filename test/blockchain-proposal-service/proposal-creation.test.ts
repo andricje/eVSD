@@ -51,9 +51,9 @@ describe("BlockchainProposalService integration", function () {
   }
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
-    registeredVoterProposalServices = initData.registeredVoterProposalServices;
+    registeredVoterProposalServices = initData.eligibleVoterProposalServices;
     unregisteredVoterProposalServices =
-      initData.unregisteredVoterProposalServices;
+      initData.ineligibleVoterProposalServices;
     addVoterVoteItem = initData.addVoterVoteItem;
   });
   it("should create a proposal on-chain with correct title and description when there is only one simple vote item and fetch it", async () => {

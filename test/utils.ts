@@ -22,14 +22,14 @@ import { InMemoryProposalFileService } from "../lib/file-upload";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 export const rng = seedrandom("42");
 export interface TestInitData {
-  registeredVoterProposalServices: BlockchainProposalService[];
-  unregisteredVoterProposalServices: BlockchainProposalService[];
+  eligibleVoterProposalServices: BlockchainProposalService[];
+  ineligibleVoterProposalServices: BlockchainProposalService[];
   addVoterVoteItem: UIAddVoterVotableItem;
   votingPeriod: number;
   evsdGovernor: EvsdGovernor;
   evsdToken: EvsdToken;
-  registeredVoterAddresses: string[];
-  unregisteredVoterAddress: string;
+  eligibleVoters: User[];
+  ineligibleVoterAddress: string;
 }
 
 export async function deployContracts(deployer: ethers.Signer) {
@@ -103,8 +103,6 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
 
   await delegateVotesToAllSigners(token);
 
-  const governorAddress = await governor.getAddress();
-  const tokenAddress = await token.getAddress();
   // Create mock services
   const fileService = new InMemoryProposalFileService();
   const registeredVoterProposalServices = voters.map(
@@ -130,14 +128,16 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
   const addVoterVoteItem = { newVoterAddress: unregisteredVoter.address };
   const votingPeriod = Number(await governor.votingPeriod());
   const initData: TestInitData = {
-    registeredVoterProposalServices,
-    unregisteredVoterProposalServices,
+    eligibleVoterProposalServices: registeredVoterProposalServices,
+    ineligibleVoterProposalServices: unregisteredVoterProposalServices,
     addVoterVoteItem,
     votingPeriod,
     evsdGovernor: governor,
     evsdToken: token,
-    unregisteredVoterAddress: unregisteredVoter.address,
-    registeredVoterAddresses: voters.map((voter) => voter.address),
+    ineligibleVoterAddress: unregisteredVoter.address,
+    eligibleVoters: voters.map((voter) => {
+      return { name: voter.address, address: voter.address };
+    }),
   };
   return initData;
 }

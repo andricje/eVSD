@@ -1,9 +1,5 @@
 import { AlertCircle, CalendarDays, Check, X } from "lucide-react";
-import {
-  IsUserActivityVote,
-  UserActivityEvent,
-  UserActivityEventVote,
-} from "@/types/proposal";
+import { IsUserActivityVote, UserActivityEvent } from "@/types/proposal";
 import { formatDate } from "@/lib/utils";
 import { getTextForActivityEvent } from "./util";
 import { STRINGS } from "@/constants/strings";

@@ -71,12 +71,12 @@ describe("BlockchainProposalService integration", function () {
   let token: EvsdToken;
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
-    registeredVoterProposalServices = initData.registeredVoterProposalServices;
+    registeredVoterProposalServices = initData.eligibleVoterProposalServices;
     unregisteredVoterProposalServices =
-      initData.unregisteredVoterProposalServices;
+      initData.ineligibleVoterProposalServices;
     addVoterVoteItem = initData.addVoterVoteItem;
     votingPeriod = initData.votingPeriod;
-    unregisteredVoterAddress = initData.unregisteredVoterAddress;
+    unregisteredVoterAddress = initData.ineligibleVoterAddress;
     token = initData.evsdToken;
   });
 

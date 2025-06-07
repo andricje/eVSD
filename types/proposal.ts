@@ -59,11 +59,6 @@ export type UserActivityEvent =
   | UserActivityEventVote
   | UserActivityEventProposal;
 
-export type UserVotingStatus =
-  | "NotEligible"
-  | "CanAcceptVotingRights"
-  | "Eligible";
-
 export function countVoteForOption(
   votableItem: VotableItem,
   option: VoteOption

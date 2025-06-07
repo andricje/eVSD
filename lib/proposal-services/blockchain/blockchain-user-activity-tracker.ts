@@ -20,15 +20,16 @@ export class BlockchainUserActivityTracker implements UserActivityTracker {
   }
   async canUserAcceptVotingRights(user: User): Promise<boolean> {
     return (
-      (await this.reader.getUserVotingStatus(user.address)) ===
-      "CanAcceptVotingRights"
+      (await this.reader.getUserVotingStatus(user)) === "CanAcceptVotingRights"
     );
   }
-  public async getAllUserActivity(): Promise<
-    (UserActivityEventVote | UserActivityEventProposal)[]
-  > {
-    const proposals = await this.reader.getProposals();
-    const createEvents = proposals.map((proposal) => {
+  public async getAllUserActivity(
+    user: User
+  ): Promise<(UserActivityEventVote | UserActivityEventProposal)[]> {
+    const proposalsForUser = (await this.reader.getProposals()).filter(
+      (proposal) => proposal.author.address === user.address
+    );
+    const createEvents = proposalsForUser.map((proposal) => {
       const proposalCreateEvt: UserActivityEventProposal = {
         type: "Create",
         proposal,
@@ -37,10 +38,10 @@ export class BlockchainUserActivityTracker implements UserActivityTracker {
       return proposalCreateEvt;
     });
 
-    const voteEventsWithId = await this.eventProvider.getAllVoteEvents();
+    const allVoteEvents = await this.eventProvider.getAllVoteEvents();
     const voteEvents: UserActivityEventVote[] = [];
-    for (const x of voteEventsWithId) {
-      for (const proposal of proposals) {
+    for (const x of allVoteEvents) {
+      for (const proposal of proposalsForUser) {
         const voteItem = proposal.voteItems.find(
           (voteItem) => voteItem.id === BigInt(x.proposalId)
         );
@@ -59,7 +60,7 @@ export class BlockchainUserActivityTracker implements UserActivityTracker {
     const cancelEventsWithId = await this.eventProvider.getAllCancelEvents();
     const cancelEvents: UserActivityEventProposal[] = [];
     for (const x of cancelEventsWithId) {
-      const proposal = proposals.find(
+      const proposal = proposalsForUser.find(
         (proposal) => proposal.id === BigInt(x.proposalId)
       );
       if (proposal) {

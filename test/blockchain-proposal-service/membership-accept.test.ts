@@ -15,13 +15,12 @@ describe("BlockchainProposalService integration", function () {
 
     beforeEach(async () => {
       const initData = await deployAndCreateMocks();
-      registeredVoterProposalServices =
-        initData.registeredVoterProposalServices;
+      registeredVoterProposalServices = initData.eligibleVoterProposalServices;
       ineligibleVoterProposalServices =
-        initData.unregisteredVoterProposalServices;
+        initData.ineligibleVoterProposalServices;
       addVoterVoteItem = initData.addVoterVoteItem;
       ineligibleVoter = {
-        address: initData.unregisteredVoterAddress,
+        address: initData.ineligibleVoterAddress,
         name: "Ineligible voter",
       };
     });

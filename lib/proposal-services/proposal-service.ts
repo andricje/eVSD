@@ -19,9 +19,9 @@ export interface ProposalReader {
 }
 
 export interface UserActivityTracker {
-  getAllUserActivity: () => Promise<
-    (UserActivityEventVote | UserActivityEventProposal)[]
-  >;
+  getAllUserActivity: (
+    user: User
+  ) => Promise<(UserActivityEventVote | UserActivityEventProposal)[]>;
   canUserAcceptVotingRights(user: User): Promise<boolean>;
 }
 

@@ -79,9 +79,9 @@ export class BlockchainProposalService implements ProposalService {
   public async executeItem(proposal: Proposal, itemIndex: number) {
     return this.writer.executeItem(proposal, itemIndex);
   }
-  public async getAllUserActivity(): Promise<
-    (UserActivityEventVote | UserActivityEventProposal)[]
-  > {
-    return this.activityTracker.getAllUserActivity();
+  public async getAllUserActivity(
+    user: User
+  ): Promise<(UserActivityEventVote | UserActivityEventProposal)[]> {
+    return this.activityTracker.getAllUserActivity(user);
   }
 }
