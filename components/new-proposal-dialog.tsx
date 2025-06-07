@@ -574,7 +574,7 @@ export function NewProposalDialog({
                 </ScrollArea>
               </div>
 
-              <div className="grid gap-2">
+              {/* <div className="grid gap-2">
                 <Label htmlFor="document">
                   {STRINGS.newProposal.form.attachment.label}
                 </Label>
@@ -600,7 +600,7 @@ export function NewProposalDialog({
                     </span>
                   )}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <DialogFooter>
