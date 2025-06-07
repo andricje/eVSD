@@ -29,6 +29,7 @@ export interface TestInitData {
   votingPeriod: number;
   evsdGovernor: EvsdGovernor;
   evsdToken: EvsdToken;
+  registeredVoterAddresses: string[];
   unregisteredVoterAddress: string;
 }
 
@@ -139,6 +140,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     evsdGovernor,
     evsdToken,
     unregisteredVoterAddress: unregisteredVoter.address,
+    registeredVoterAddresses: voters.map((voter) => voter.address),
   };
   return initData;
 }

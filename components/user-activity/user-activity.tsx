@@ -1,7 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Proposal, VotableItem, VoteEvent } from "@/types/proposal";
+import { UserActivityEvent } from "@/types/proposal";
 import { Timer, Activity } from "lucide-react";
 import { useProposals } from "@/hooks/use-proposals";
 import { useWallet } from "@/context/wallet-context";
@@ -9,29 +9,6 @@ import { Timeline } from "./timeline";
 import { useEffect, useState } from "react";
 import { UserProposals } from "./user-proposals";
 import { STRINGS } from "@/constants/strings";
-
-export interface UserActivityEventVote {
-  voteEvent: VoteEvent;
-  proposal: Proposal;
-  voteItem: VotableItem;
-  date: Date;
-}
-
-export interface UserActivityEventProposal {
-  type: "Create" | "Delete";
-  proposal: Proposal;
-  date: Date;
-}
-
-export function IsUserActivityVote(
-  userActivityEvent: UserActivityEvent
-): userActivityEvent is UserActivityEventVote {
-  return (userActivityEvent as UserActivityEventVote).voteEvent !== undefined;
-}
-
-export type UserActivityEvent =
-  | UserActivityEventVote
-  | UserActivityEventProposal;
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();

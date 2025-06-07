@@ -3,30 +3,9 @@ import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
 import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
-import {
-  UIAddVoterVotableItem,
-  UIProposal,
-  UIVotableItem,
-} from "../../types/proposal";
+import { UIAddVoterVotableItem, UIProposal } from "../../types/proposal";
 import { deployAndCreateMocks, fastForwardTime } from "../utils";
 import { voteItems } from "./voting.test";
-import { v4 as uuidv4 } from "uuid";
-function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal {
-  const items: UIVotableItem[] = [];
-  for (let i = 0; i < numVoteItems; i++) {
-    items.push({
-      title: `Vote item ${i}`,
-      description: `Test description ${uuidv4()}`,
-      UIOnlyId: `${i}`,
-    });
-  }
-
-  return {
-    title: `Test proposal ${uuidv4()}`,
-    description: "Test proposal description",
-    voteItems: items,
-  };
-}
 
 describe("BlockchainProposalService integration", function () {
   describe("canCurrentUserAcceptVotingRights", function () {
@@ -49,11 +28,6 @@ describe("BlockchainProposalService integration", function () {
         voteItems: [voteItems[0]],
       };
 
-      const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
-          generatedProposal
-        );
-
       const canAccept =
         await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
       expect(canAccept).to.equal(false);
@@ -64,11 +38,6 @@ describe("BlockchainProposalService integration", function () {
         description: "Test proposal description",
         voteItems: [addVoterVoteItem],
       };
-
-      const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
-          generatedProposal
-        );
 
       const canAccept =
         await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();

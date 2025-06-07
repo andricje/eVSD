@@ -9,6 +9,8 @@ import {
   IsUIAddVoterVotableItem,
   AddVoterVotableItem,
   IsAddVoterVotableItem,
+  UserActivityEventVote,
+  UserActivityEventProposal,
 } from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
 import { ProposalFileService, fileToDigestHex } from "../file-upload";
@@ -33,10 +35,6 @@ import {
   IneligibleVoterError,
   ProposalParseError,
 } from "../../types/proposal-service-errors";
-import {
-  UserActivityEventProposal,
-  UserActivityEventVote,
-} from "@/components/user-activity/user-activity";
 
 export type onProposalsChangedUnsubscribe = () => void;
 type UserVotingStatus = "NotEligible" | "CanAcceptVotingRights" | "Eligible";
@@ -284,8 +282,12 @@ export class BlockchainProposalService implements ProposalService {
   async getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]
   > {
-    const proposals = await this.getProposals();
-    const createEvents = proposals.map((proposal) => {
+    const currentUserAddress = await this.signer.getAddress();
+    const currentUserProposals = (await this.getProposals()).filter(
+      (proposal) => proposal.author.address === currentUserAddress
+    );
+
+    const createEvents = currentUserProposals.map((proposal) => {
       const proposalCreateEvt: UserActivityEventProposal = {
         type: "Create",
         proposal,
@@ -294,10 +296,13 @@ export class BlockchainProposalService implements ProposalService {
       return proposalCreateEvt;
     });
 
-    const voteEventsWithId = await this.getAllVoteEvents();
+    const allVoteEvents = await this.getAllVoteEvents();
     const voteEvents: UserActivityEventVote[] = [];
-    for (const x of voteEventsWithId) {
-      for (const proposal of proposals) {
+    for (const x of allVoteEvents) {
+      if (x.voteEvent.voter.address !== currentUserAddress) {
+        continue;
+      }
+      for (const proposal of currentUserProposals) {
         const voteItem = proposal.voteItems.find(
           (voteItem) => voteItem.id === BigInt(x.proposalId)
         );
@@ -313,10 +318,10 @@ export class BlockchainProposalService implements ProposalService {
       }
     }
 
-    const cancelEventsWithId = await this.getAllCancelEvents();
+    const allCancelEvents = await this.getAllCancelEvents();
     const cancelEvents: UserActivityEventProposal[] = [];
-    for (const x of cancelEventsWithId) {
-      const proposal = proposals.find(
+    for (const x of allCancelEvents) {
+      const proposal = currentUserProposals.find(
         (proposal) => proposal.id === BigInt(x.proposalId)
       );
       if (proposal) {
@@ -332,11 +337,9 @@ export class BlockchainProposalService implements ProposalService {
     return [...createEvents, ...voteEvents, ...cancelEvents];
   }
   private async getAllVoteEvents() {
-    // Filteriramo događaje za glasanje korisnika
     const filter = this.governor.filters.VoteCast();
     const events = await this.governor.queryFilter(filter, 0, "latest");
 
-    // Mapiramo događaje u format za istoriju glasanja
     const votingHistory = events.map(async (event) => {
       const args = (event as EventLog).args;
       if (!args) {
