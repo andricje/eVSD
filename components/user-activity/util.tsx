@@ -1,5 +1,5 @@
 import { STRINGS } from "@/constants/strings";
-import { IsUserActivityVote, UserActivityEvent } from "./user-activity";
+import { IsUserActivityVote, UserActivityEvent } from "@/types/proposal";
 import { getTranslatedVoteOption } from "@/lib/utils";
 
 export function getTextForActivityEvent(activityEvt: UserActivityEvent) {
