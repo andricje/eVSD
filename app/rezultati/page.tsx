@@ -52,7 +52,9 @@ function FilterResults({
                   <div className="flex flex-col sm:flex-row">
                     <div>Предложио: {proposal.author.name} </div>
                     <div>
-                      <span className="hidden sm:inline sm:px-1">|</span>
+                      {isVotingComplete(proposal) && (
+                        <span className="hidden sm:inline sm:px-1">|</span>
+                      )}
                       {isVotingComplete(proposal) &&
                         `Гласање завршено: ${formatDate(proposal.closesAt)}`}
                     </div>

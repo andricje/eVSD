@@ -37,15 +37,19 @@ export const StatusBadge = ({
     case "open":
       return (
         <>
-          <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
-          {expiresAt ? (
-            <Badge className="bg-amber-500">
-              <Timer className="h-3 w-3 mr-1" />
-              {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+          <div className="flex items-center gap-2">
+            <Badge className="bg-blue-500">
+              {STRINGS.proposal.statusActive}
             </Badge>
-          ) : (
-            <></>
-          )}
+            {expiresAt ? (
+              <Badge className="bg-amber-500">
+                <Timer className="h-3 w-3 mr-1" />
+                {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+              </Badge>
+            ) : (
+              <></>
+            )}
+          </div>
         </>
       );
     case "closed":
@@ -62,10 +66,18 @@ export const StatusBadge = ({
 export const VoteResultBadge = ({
   status,
   totalVotes,
+  votingComplete = false,
 }: {
   status: VoteResult;
   totalVotes?: number;
+  votingComplete?: boolean;
 }) => {
+  if (!votingComplete) {
+    return (
+      <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
+    );
+  }
+
   switch (status) {
     case "passed":
       return (

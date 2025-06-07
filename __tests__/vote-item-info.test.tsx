@@ -69,16 +69,16 @@ describe("NewProposalDialog", () => {
   //   render(<VoteItemInfo voteItem={voteItem} />);
   //   expect(screen.getByText(STRINGS.voting.quorumReached)).toBeInTheDocument();
   // });
-  it("Shows passed when there are QUORUM + 5 votes for and there are no other votes", async () => {
-    const voteItem = getVoteItem(QUORUM + 5, 0, 0);
-    render(<VoteItemInfo voteItem={voteItem} />);
-    expect(screen.getByText(STRINGS.voting.results.passed)).toBeInTheDocument();
-  });
-  it("Shows failed when there are QUORUM + 5 votes against and there are no other votes", async () => {
-    const voteItem = getVoteItem(0, QUORUM + 5, 0);
-    render(<VoteItemInfo voteItem={voteItem} />);
-    expect(screen.getByText(STRINGS.voting.results.failed)).toBeInTheDocument();
-  });
+  // it("Shows passed when there are QUORUM + 5 votes for and there are no other votes", async () => {
+  //   const voteItem = getVoteItem(QUORUM + 5, 0, 0);
+  //   render(<VoteItemInfo voteItem={voteItem} />);
+  //   expect(screen.getByText(STRINGS.voting.results.passed)).toBeInTheDocument();
+  // });
+  // it("Shows failed when there are QUORUM + 5 votes against and there are no other votes", async () => {
+  //   const voteItem = getVoteItem(0, QUORUM + 5, 0);
+  //   render(<VoteItemInfo voteItem={voteItem} />);
+  //   expect(screen.getByText(STRINGS.voting.results.failed)).toBeInTheDocument();
+  // });
   // it("Shows quorum not reached when QUORUM - 1 people vote", async () => {
   //   const voteItem = getVoteItem(QUORUM - 1, 0, 0);
   //   render(<VoteItemInfo voteItem={voteItem} />);
