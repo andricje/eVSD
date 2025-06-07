@@ -31,7 +31,7 @@ export function ProposalInfo({ proposal }: ProposalInfoProps) {
                     {index + 1}. {voteItem.title}
                   </p>
                 </div>
-                <VoteItemInfo voteItem={voteItem} />
+                <VoteItemInfo voteItem={voteItem} proposal={proposal} />
               </div>
               <Accordion type="single" collapsible>
                 <AccordionItem value="item-1" className="border-b-0">
