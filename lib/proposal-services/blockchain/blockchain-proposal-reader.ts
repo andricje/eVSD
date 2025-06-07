@@ -8,6 +8,7 @@ import {
   IsAddVoterVotableItem,
   Proposal,
   UIProposal,
+  User,
   UserVotingStatus,
   VotableItem,
   VoteEvent,
@@ -46,11 +47,11 @@ export class BlockchainProposalReader implements ProposalReader {
     );
     this.eventProvider = new BlockchainEventProvider(governor, provider);
   }
-  async getUserVotingStatus(userAddress: string): Promise<UserVotingStatus> {
-    const currentVotingPower = await this.token.getVotes(userAddress);
+  async getUserVotingStatus(user: User): Promise<UserVotingStatus> {
+    const currentVotingPower = await this.token.getVotes(user.address);
     if (currentVotingPower > 0n) {
       return "Eligible";
-    } else if (await this.getProposalToAddUser(userAddress)) {
+    } else if (await this.getProposalToAddUser(user.address)) {
       return "CanAcceptVotingRights";
     }
     return "NotEligible";

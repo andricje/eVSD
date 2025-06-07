@@ -1,17 +1,9 @@
-import {
-  Timer,
-  Check,
-  X,
-  AlertCircle,
-  Activity,
-  FilePlus,
-  FileX,
-} from "lucide-react";
-import { IsUserActivityVote, UserActivityEvent } from "./user-activity";
+import { Check, X, AlertCircle, Activity, FilePlus, FileX } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { STRINGS } from "@/constants/strings";
 import { CancelProposalButton } from "./cancel-proposal-button";
 import { getTextForActivityEvent } from "./util";
+import { IsUserActivityVote, UserActivityEvent } from "@/types/proposal";
 
 function getBorderColor(activityEvt: UserActivityEvent) {
   if (IsUserActivityVote(activityEvt)) {

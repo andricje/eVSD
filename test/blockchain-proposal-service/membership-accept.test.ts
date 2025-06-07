@@ -2,32 +2,9 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import {
-  UIAddVoterVotableItem,
-  UIProposal,
-  UIVotableItem,
-  User,
-} from "../../types/proposal";
+import { UIAddVoterVotableItem, UIProposal, User } from "../../types/proposal";
 import { deployAndCreateMocks, fastForwardTime } from "../utils";
-import { voteItems } from "./voting.test";
-import { v4 as uuidv4 } from "uuid";
-import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
-function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal {
-  const items: UIVotableItem[] = [];
-  for (let i = 0; i < numVoteItems; i++) {
-    items.push({
-      title: `Vote item ${i}`,
-      description: `Test description ${uuidv4()}`,
-      UIOnlyId: `${i}`,
-    });
-  }
-
-  return {
-    title: `Test proposal ${uuidv4()}`,
-    description: "Test proposal description",
-    voteItems: items,
-  };
-}
+import { BlockchainProposalService } from "@/lib/proposal-services/blockchain/blockchain-proposal-service";
 
 describe("BlockchainProposalService integration", function () {
   describe("canCurrentUserAcceptVotingRights", function () {
@@ -49,17 +26,6 @@ describe("BlockchainProposalService integration", function () {
       };
     });
     it("should return false if there is no proposal to add the user", async () => {
-      const generatedProposal: UIProposal = {
-        title: "Test proposal",
-        description: "Test proposal description",
-        voteItems: [voteItems[0]],
-      };
-
-      const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
-          generatedProposal
-        );
-
       const canAccept =
         await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
           ineligibleVoter
@@ -67,17 +33,6 @@ describe("BlockchainProposalService integration", function () {
       expect(canAccept).to.equal(false);
     });
     it("should return false if there is a proposal to add the user but it has not passed yet", async () => {
-      const generatedProposal: UIProposal = {
-        title: "Test proposal",
-        description: "Test proposal description",
-        voteItems: [addVoterVoteItem],
-      };
-
-      const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
-          generatedProposal
-        );
-
       const canAccept =
         await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
           ineligibleVoter

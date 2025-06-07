@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronRight,
   FileText,
   PieChart,
   Users,
@@ -15,10 +14,6 @@ import {
   X,
   History,
   User as UserIcon,
-  Bell,
-  CheckCircle2,
-  AlertCircle,
-  Info,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
@@ -27,27 +22,27 @@ import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import { isVotingComplete, formatDate, QUORUM } from "@/lib/utils";
+import { isVotingComplete, QUORUM } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { WalletAddress } from "@/components/wallet-address";
+import { Header } from "@/components/header";
 
 // Action Buttons
-const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
+const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
   const { disconnect, user } = useWallet();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
 
   return (
-    <div className="flex gap-3 w-full">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
       <NewProposalDialog
         customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
         customText={
@@ -63,21 +58,20 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
         asChild
       >
         <Link href="/rezultati">
-          <PieChart className="h-4 w-4 mr-2" />
+          <PieChart className="size-4 mr-2" />
           Резултати
         </Link>
       </Button>
-      <div className="border-l border-border h-8 mx-2" />
+      <div className="hidden sm:flex border-l border-border h-8 mx-2" />
       <Button
-        variant="outline"
         size="sm"
-        className="flex-1 border border-border/40 hover:bg-destructive/5 hover:text-destructive py-3 text-sm h-full"
+        className="flex-1 border border-border/40 py-3 text-sm h-full bg-destructive text-destructive-foreground hover:bg-destructive sm:bg-background sm:text-foreground sm:hover:bg-background sm:hover:text-destructive"
         onClick={() => {
           disconnect();
           router.push("/");
         }}
       >
-        <X className="h-4 w-4 mr-1.5" /> Одјави се
+        <X className="size-4 mr-1.5" /> Одјави се
       </Button>
     </div>
   );
@@ -101,8 +95,7 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
           <div className="flex items-center gap-2 mt-1">
             <Badge variant="secondary" className="px-2 py-0.5 text-sm">
               <span className="text-muted-foreground">
-                {address.substring(0, 6)}...
-                {address.substring(address.length - 4)}
+                <WalletAddress address={address} />
               </span>
             </Badge>
           </div>
@@ -113,114 +106,16 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
 };
 
 // SystemAnnouncements Component
-const SystemAnnouncements: React.FC = () => {
-  const announcements = [
-    {
-      id: 1,
-      title: "Ажурирање система",
-      date: new Date(),
-      content:
-        "Обавештавамо вас да ће систем бити недоступан због планираног одржавања у суботу од 22:00 до 23:00 часова.",
-      type: "info",
-      icon: Info,
-    },
-    {
-      id: 2,
-      title: "Успешно завршено гласање",
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      content:
-        "Гласање за предлог 'Измене правилника о студирању' је успешно завршено са постигнутим кворумом.",
-      type: "success",
-      icon: CheckCircle2,
-    },
-    {
-      id: 3,
-      title: "Важно обавештење",
-      date: new Date(Date.now() - 48 * 60 * 60 * 1000),
-      content:
-        "Потребно је да сви корисници ажурирају своје профиле најкасније до 15.12. ради усклађивања са новим прописима.",
-      type: "warning",
-      icon: AlertCircle,
-    },
-  ];
-
-  const getIconBgColor = (type: string) => {
-    switch (type) {
-      case "info":
-        return "bg-blue-100";
-      case "success":
-        return "bg-green-100";
-      case "warning":
-        return "bg-amber-100";
-      default:
-        return "bg-gray-100";
-    }
-  };
-
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case "info":
-        return "text-blue-600";
-      case "success":
-        return "text-green-600";
-      case "warning":
-        return "text-amber-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold text-foreground mb-2 flex items-center">
-        <Bell className="h-4 w-4 mr-2" />
-        Обавештења система
-      </h2>
-      {announcements.map((announcement) => (
-        <Card
-          key={announcement.id}
-          className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className={`p-2 ${getIconBgColor(announcement.type)} rounded-full mt-1`}
-            >
-              <announcement.icon
-                className={`h-4 w-4 ${getIconColor(announcement.type)}`}
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="text-base font-medium text-foreground">
-                  {announcement.title}
-                </h4>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(announcement.date)}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                {announcement.content}
-              </p>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-                Детаљније <ChevronRight className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-};
 
 // ActiveMembers Component
 const ActiveMembers: React.FC = () => {
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base font-semibold text-foreground flex items-center">
-          <Users className="h-4 w-4 mr-2" />
+      <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-2">
+        <h2 className="text-lg font-semibold text-foreground">
           Активни чланови еВСД
         </h2>
+
         <NewVoterDialog />
       </div>
       <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
@@ -237,7 +132,11 @@ const ActiveMembers: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{address}</p>
+                  <WalletAddress
+                    address={address}
+                    className="text-sm font-medium ml-1"
+                    iconSize={3}
+                  />
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs px-1.5 py-0">
                       {name}
@@ -293,6 +192,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
+      <Header showNav={false} />
+
       {/* Dodajemo komponentu za prihvatanje članstva */}
       <MembershipAcceptanceDialog
         isOpen={showMembershipDialog}
@@ -318,23 +219,27 @@ export default function Dashboard() {
 
           {/* Main tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-            <TabsList className="grid grid-cols-2 w-full bg-muted/50 p-1">
+            <TabsList className="grid grid-cols-3 w-full bg-muted/50 p-1">
               <TabsTrigger value="voting" className="text-sm py-2 font-medium">
-                <Vote className="h-4 w-4 mr-2" />
+                <Vote className="h-4 w-4 mr-2 hidden sm:block" />
                 Гласање
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
                 className="text-sm py-2 font-medium"
               >
-                <History className="h-4 w-4 mr-2" />
+                <History className="h-4 w-4 mr-2 hidden sm:block" />
                 Активност
+              </TabsTrigger>
+              <TabsTrigger value="members" className="text-sm py-2 font-medium">
+                <Users className="h-4 w-4 mr-2 hidden sm:block" />
+                Чланови
               </TabsTrigger>
             </TabsList>
 
             {/* Voting tab */}
             <TabsContent value="voting" className="mt-5">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <h2 className="text-lg font-semibold text-foreground">
                   Предлози за гласање
                 </h2>
@@ -382,9 +287,6 @@ export default function Dashboard() {
                 <SystemAnnouncements />
                 <ActiveMembers />
               </div> */}
-              <div className="mt-7">
-                <ActiveMembers />
-              </div>
             </TabsContent>
 
             {/* Activity tab */}
@@ -393,6 +295,12 @@ export default function Dashboard() {
                 Моје активности
               </h2>
               <UserActivity />
+            </TabsContent>
+
+            <TabsContent value="members" className="mt-5">
+              <div>
+                <ActiveMembers />
+              </div>
             </TabsContent>
           </Tabs>
         </div>

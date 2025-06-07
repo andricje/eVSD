@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -37,23 +37,30 @@ function FilterResults({
           <Card key={proposal.id}>
             <CardHeader className="pb-3">
               <div className="flex flex-col">
-                <CardTitle className="w-full">
-                  <div className="flex flex-row gap-4">
+                <CardTitle className="sm:w-full">
+                  <div className="flex flex-col sm:flex-row sm:gap-4">
                     <p className="flex-grow text-xl">{proposal.title}</p>
-                    <p className="text-sm font-medium mb-1">Статус</p>
-                    <StatusBadge
-                      status={proposal.status}
-                      expiresAt={proposal.closesAt}
-                    />
+                    <div>
+                      <StatusBadge
+                        status={proposal.status}
+                        expiresAt={proposal.closesAt}
+                      />
+                    </div>
                   </div>
                 </CardTitle>
-                <CardDescription className="mt-1">
-                  Предложио: {proposal.author.name}
-                  {isVotingComplete(proposal) &&
-                    `| Гласање завршено: ${formatDate(proposal.closesAt)}`}
+                <CardDescription className="mt-1 sm:mt-2">
+                  <div className="flex flex-col sm:flex-row">
+                    <div>Предложио: {proposal.author.name} </div>
+                    <div>
+                      <span className="hidden sm:inline sm:px-1">|</span>
+                      {isVotingComplete(proposal) &&
+                        `Гласање завршено: ${formatDate(proposal.closesAt)}`}
+                    </div>
+                  </div>
                 </CardDescription>
               </div>
             </CardHeader>
+
             <CardContent>
               <p className="text-sm mb-4">{proposal.description}</p>
 
@@ -85,12 +92,9 @@ export default function RezultatiPage() {
   const { proposals } = useProposals();
   const { user } = useWallet();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
 
@@ -127,10 +131,12 @@ export default function RezultatiPage() {
       <Header />
       <main className="flex-1 w-full max-w-full py-6 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <h1 className="text-3xl font-bold">Објављени резултати гласања</h1>
-            <div className="flex items-center gap-2">
-              <div className="relative">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center lg:justify-between gap-4">
+            <h1 className="text-3xl w-full font-bold flex-shrink-0 md:max-w-[50%]">
+              Објављени резултати гласања
+            </h1>
+            <div className="flex items-center gap-2 min-w-[300px]">
+              <div className="relative min-w-[200px]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
@@ -141,13 +147,13 @@ export default function RezultatiPage() {
                 />
               </div>
               <Select value={filterDate} onValueChange={setFilterDate}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full md:w-[180px] min-w-[150px]">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <SelectValue placeholder="Филтер по датуму" />
                   </div>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-full min-w-[150px]">
                   <SelectItem value="all">Све време</SelectItem>
                   <SelectItem value="month">Последњи месец</SelectItem>
                   <SelectItem value="quarter">Последња 3 месеца</SelectItem>

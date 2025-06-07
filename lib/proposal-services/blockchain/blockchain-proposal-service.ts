@@ -7,13 +7,11 @@ import {
 } from "../proposal-service";
 import { ProposalFileService } from "../../file-upload";
 import {
-  UserActivityEventVote,
-  UserActivityEventProposal,
-} from "@/components/user-activity/user-activity";
-import {
   Proposal,
   UIProposal,
   User,
+  UserActivityEventProposal,
+  UserActivityEventVote,
   UserVotingStatus,
   VotableItem,
   VoteOption,
@@ -48,6 +46,9 @@ export class BlockchainProposalService implements ProposalService {
       this.reader,
       new BlockchainEventProvider(governor, provider)
     );
+  }
+  getUserVotingStatus(user: User): Promise<UserVotingStatus> {
+    return this.reader.getUserVotingStatus(user);
   }
   canUserAcceptVotingRights(user: User): Promise<boolean> {
     return this.activityTracker.canUserAcceptVotingRights(user);

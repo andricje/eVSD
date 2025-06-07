@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -290,11 +290,9 @@ export default function ProposalDetails() {
   const { user } = useWallet();
   const { proposals, proposalService } = useProposals();
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
 
   const [error, setError] = useState("");
 

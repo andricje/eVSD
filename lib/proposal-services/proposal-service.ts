@@ -2,15 +2,12 @@ import {
   Proposal,
   UIProposal,
   User,
+  UserActivityEventProposal,
+  UserActivityEventVote,
   UserVotingStatus,
   VotableItem,
   VoteOption,
 } from "@/types/proposal";
-import {
-  UserActivityEventVote,
-  UserActivityEventProposal,
-} from "@/components/user-activity/user-activity";
-
 export type onProposalsChangedUnsubscribe = () => void;
 
 export interface ProposalReader {
@@ -18,6 +15,7 @@ export interface ProposalReader {
   onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
   ): onProposalsChangedUnsubscribe;
+  getUserVotingStatus(user: User): Promise<UserVotingStatus>;
 }
 
 export interface UserActivityTracker {

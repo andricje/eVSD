@@ -1,13 +1,6 @@
 import React from "react";
 import "@testing-library/jest-dom";
-import {
-  fireEvent,
-  render,
-  screen,
-  prettyDOM,
-  act,
-  waitFor,
-} from "@testing-library/react";
+import { fireEvent, render, screen, act } from "@testing-library/react";
 import { useProposals } from "../hooks/use-proposals";
 import { ProposalsContextValue } from "@/context/proposals-context";
 import { InMemoryProposalService } from "@/lib/proposal-services/in-memory/in-memory-proposal-service";
@@ -65,10 +58,6 @@ describe("NewProposalDialog", () => {
       STRINGS.newProposal.form.title.placeholder
     );
     await userEvent.type(titleInput, "Test naslov");
-
-    const descriptionInput = screen.getByPlaceholderText(
-      STRINGS.newProposal.form.description.placeholder
-    );
 
     const submitButton = screen.getByText(
       STRINGS.newProposal.form.submit.default

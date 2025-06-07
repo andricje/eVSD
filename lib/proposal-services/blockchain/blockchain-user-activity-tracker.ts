@@ -1,11 +1,11 @@
-import {
-  UserActivityEventProposal,
-  UserActivityEventVote,
-} from "@/components/user-activity/user-activity";
 import { BlockchainProposalReader } from "./blockchain-proposal-reader";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
 import { UserActivityTracker } from "../proposal-service";
-import { User } from "@/types/proposal";
+import {
+  User,
+  UserActivityEventProposal,
+  UserActivityEventVote,
+} from "@/types/proposal";
 
 export class BlockchainUserActivityTracker implements UserActivityTracker {
   private readonly reader: BlockchainProposalReader;

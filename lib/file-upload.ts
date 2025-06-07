@@ -1,6 +1,8 @@
+import { FileNotFound } from "../types/proposal-service-errors";
+
 export interface ProposalFileService {
   upload: (file: File) => Promise<string>;
-  fetch: (hexDigest: string) => Promise<File>;
+  fetch: (hexDigest: string) => Promise<File | undefined>;
 }
 
 export class InMemoryProposalFileService implements ProposalFileService {
@@ -14,7 +16,7 @@ export class InMemoryProposalFileService implements ProposalFileService {
   async fetch(digestHex: string): Promise<File> {
     const file = this.files.get(digestHex);
     if (!file) {
-      throw new Error("File not found");
+      throw new FileNotFound(digestHex);
     }
     return file;
   }

@@ -37,3 +37,19 @@ export class ExecuteFailedError extends BlockchainError {
     Object.setPrototypeOf(this, ExecuteFailedError.prototype);
   }
 }
+// Thrown if a file listed in a proposal is not
+export class FileNotFound extends BlockchainError {
+  constructor(digestHex: string) {
+    super(`File with digest hex: ${digestHex} could not be found`);
+    Object.setPrototypeOf(this, FileNotFound.prototype);
+  }
+}
+// Thrown if proposal parse fails
+export class ProposalParseError extends BlockchainError {
+  constructor(proposalId: string, message: string) {
+    super(
+      `Failed to parse proposal with id: ${proposalId} parsing failed with error: ${message}`
+    );
+    Object.setPrototypeOf(this, ProposalParseError.prototype);
+  }
+}
