@@ -5,11 +5,10 @@ const { expect } = chai;
 import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
 import {
   IsUserActivityVote,
-  UIAddVoterVotableItem,
   UIProposal,
   UserActivityEventProposal,
 } from "../../types/proposal";
-import { deployAndCreateMocks, fastForwardTime } from "../utils";
+import { deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
 import { areProposalsEqual } from "../../lib/utils";
 
@@ -17,16 +16,11 @@ describe("BlockchainProposalService integration", function () {
   describe("getAllUserActivity", function () {
     let registeredVoterProposalServices: BlockchainProposalService[];
     let registeredVoterAddresses: string[];
-    let unregisteredVoterProposalServices: BlockchainProposalService[];
-    let addVoterVoteItem: UIAddVoterVotableItem;
 
     beforeEach(async () => {
       const initData = await deployAndCreateMocks();
       registeredVoterProposalServices =
         initData.registeredVoterProposalServices;
-      unregisteredVoterProposalServices =
-        initData.unregisteredVoterProposalServices;
-      addVoterVoteItem = initData.addVoterVoteItem;
       registeredVoterAddresses = initData.registeredVoterAddresses;
     });
     it("should not show other users' activity", async () => {
@@ -84,9 +78,11 @@ describe("BlockchainProposalService integration", function () {
       );
 
       expect(proposalActivity.length).to.equal(1);
-      expect(
-        await areProposalsEqual(generatedProposal, proposalActivity[0].proposal)
-      ).to.be.true;
+      const proposalsEqual = await areProposalsEqual(
+        generatedProposal,
+        proposalActivity[0].proposal
+      );
+      expect(proposalsEqual).to.equal(true);
       expect(proposalActivity[0].type).to.equal("Create");
     });
   });

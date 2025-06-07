@@ -223,8 +223,12 @@ async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {
   }
   if (file1 && file2) {
     // Try some early outs
-    if (file1.size !== file2.size) return false;
-    if (file1.name === file2.name && file1 === file2) return true;
+    if (file1.size !== file2.size) {
+      return false;
+    }
+    if (file1.name === file2.name && file1 === file2) {
+      return true;
+    }
 
     // Read and compare buffers byte by byte
     const [buffer1, buffer2] = await Promise.all([
@@ -234,7 +238,9 @@ async function areFilesEqual(file1?: File, file2?: File): Promise<boolean> {
     const view1 = new Uint8Array(buffer1);
     const view2 = new Uint8Array(buffer2);
     for (let i = 0; i < view1.length; i++) {
-      if (view1[i] !== view2[i]) return false;
+      if (view1[i] !== view2[i]) {
+        return false;
+      }
     }
 
     return true;
@@ -254,6 +260,8 @@ export async function areProposalsEqual(
 }
 
 export function clipAddress(address: string): string {
-  if (address.length <= 10) return address;
+  if (address.length <= 10) {
+    return address;
+  }
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }

@@ -92,12 +92,9 @@ export default function RezultatiPage() {
   const { proposals } = useProposals();
   const { user } = useWallet();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
 

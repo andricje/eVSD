@@ -5,7 +5,6 @@ const { expect } = chai;
 import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
 import { UIAddVoterVotableItem, UIProposal } from "../../types/proposal";
 import { deployAndCreateMocks, fastForwardTime } from "../utils";
-import { voteItems } from "./voting.test";
 
 describe("BlockchainProposalService integration", function () {
   describe("canCurrentUserAcceptVotingRights", function () {
@@ -22,23 +21,11 @@ describe("BlockchainProposalService integration", function () {
       addVoterVoteItem = initData.addVoterVoteItem;
     });
     it("should return false if there is no proposal to add the user", async () => {
-      const generatedProposal: UIProposal = {
-        title: "Test proposal",
-        description: "Test proposal description",
-        voteItems: [voteItems[0]],
-      };
-
       const canAccept =
         await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
       expect(canAccept).to.equal(false);
     });
     it("should return false if there is a proposal to add the user but it has not passed yet", async () => {
-      const generatedProposal: UIProposal = {
-        title: "Test proposal",
-        description: "Test proposal description",
-        voteItems: [addVoterVoteItem],
-      };
-
       const canAccept =
         await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
       expect(canAccept).to.equal(false);

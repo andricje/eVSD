@@ -11,6 +11,7 @@ import {
   IsAddVoterVotableItem,
   UserActivityEventVote,
   UserActivityEventProposal,
+  UserVotingStatus,
 } from "../../types/proposal";
 import { ethers, EventLog } from "ethers";
 import { ProposalFileService, fileToDigestHex } from "../file-upload";
@@ -21,7 +22,6 @@ import {
   convertVoteOptionToGovernor,
   convertGovernorState,
   areProposalsEqual,
-  getVoteResult,
   getVoteResultForItem,
 } from "../utils";
 import evsdGovernorArtifacts from "../../contracts/evsd-governor.json";
@@ -37,7 +37,6 @@ import {
 } from "../../types/proposal-service-errors";
 
 export type onProposalsChangedUnsubscribe = () => void;
-type UserVotingStatus = "NotEligible" | "CanAcceptVotingRights" | "Eligible";
 export class BlockchainProposalService implements ProposalService {
   private readonly governor: ethers.Contract;
   private readonly token: ethers.Contract;

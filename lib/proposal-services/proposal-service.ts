@@ -1,15 +1,13 @@
 import {
   Proposal,
   UIProposal,
+  UserActivityEventProposal,
+  UserActivityEventVote,
+  UserVotingStatus,
   VotableItem,
   VoteOption,
 } from "@/types/proposal";
 import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import {
-  UserActivityEventVote,
-  UserActivityEventProposal,
-} from "@/components/user-activity/user-activity";
-
 export interface ProposalService {
   getProposals: () => Promise<Proposal[]>;
   uploadProposal: (proposal: UIProposal) => Promise<bigint>;
@@ -23,4 +21,5 @@ export interface ProposalService {
   >;
   canCurrentUserAcceptVotingRights(): Promise<boolean>;
   acceptVotingRights(): Promise<void>;
+  getCurrentUserVotingStatus(): Promise<UserVotingStatus>;
 }

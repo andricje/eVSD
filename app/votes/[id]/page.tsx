@@ -290,11 +290,9 @@ export default function ProposalDetails() {
   const { user } = useWallet();
   const { proposals, proposalService } = useProposals();
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
 
   const [error, setError] = useState("");
 

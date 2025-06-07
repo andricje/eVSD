@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, Info, ChevronRight } from "lucide-react";
 import { Announcement } from "@/types/announcements";
@@ -46,7 +41,9 @@ export function AnnouncementPopup({
     }
   };
 
-  if (!currentAnnouncement) return null;
+  if (!currentAnnouncement) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen} modal={true}>

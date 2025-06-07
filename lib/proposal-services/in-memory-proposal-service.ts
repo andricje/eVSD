@@ -5,16 +5,15 @@ import {
   UIProposal,
   UIVotableItem,
   User,
+  UserActivityEventProposal,
+  UserActivityEventVote,
+  UserVotingStatus,
   VotableItem,
   VoteOption,
 } from "../../types/proposal";
 import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
 import { getNewVoterProposalDescription } from "../utils";
 import { ProposalService } from "./proposal-service";
-import {
-  UserActivityEventVote,
-  UserActivityEventProposal,
-} from "@/components/user-activity/user-activity";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;
@@ -24,6 +23,9 @@ export class InMemoryProposalService implements ProposalService {
 
   constructor(user: User) {
     this.user = user;
+  }
+  getCurrentUserVotingStatus(): Promise<UserVotingStatus> {
+    throw new Error("Method not implemented.");
   }
   async canCurrentUserAcceptVotingRights(): Promise<boolean> {
     return false;

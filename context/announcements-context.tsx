@@ -28,7 +28,9 @@ export function AnnouncementsProvider({
 
   // Učitavanje viđenih obraćanja iz localStorage
   const getSeenAnnouncementIds = (): string[] => {
-    if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") {
+      return [];
+    }
     const saved = localStorage.getItem("seenAnnouncements");
     return saved ? JSON.parse(saved) : [];
   };
@@ -85,7 +87,7 @@ export function AnnouncementsProvider({
     // Slušanje novih kreiranja obraćanja
     ethersGovernor.on(
       ethersGovernor.filters.AnnouncementCreated,
-      (announcementId, announcer, content, timestamp, event) => {
+      (announcementId, announcer, content, timestamp) => {
         const newAnnouncement: Announcement = {
           id: announcementId.toString(),
           announcer: announcer,

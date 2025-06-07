@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect, ReactElement } from "react";
 import { useProposals } from "@/hooks/use-proposals";
 import { UIAddVoterVotableItem, UIProposal } from "@/types/proposal";
-import { getNewVoterProposalDescription } from "@/lib/utils";
 
 interface NewVoterDialogProps {
   customClassName?: string;

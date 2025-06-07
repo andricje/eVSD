@@ -19,7 +19,7 @@ interface MembershipAcceptanceProps {
 
 export const MembershipAcceptanceDialog: React.FC<
   MembershipAcceptanceProps
-> = ({ isOpen, onAccept, onDecline }) => {
+> = ({ isOpen, onAccept }) => {
   const strings = STRINGS.membershipAcceptance;
 
   return (

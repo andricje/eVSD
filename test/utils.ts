@@ -5,7 +5,6 @@ const { expect } = chai;
 import { ethers, AddressLike } from "ethers";
 import hardhat, { network } from "hardhat";
 import { EvsdToken, EvsdGovernor } from "../typechain-types";
-import evsdTokenArtifacts from "../contracts/evsd-token.json";
 import {
   UIVotableItem,
   UIAddVoterVotableItem,

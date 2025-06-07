@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
-  ChevronRight,
   FileText,
   PieChart,
   Users,
@@ -15,10 +14,6 @@ import {
   X,
   History,
   User as UserIcon,
-  Bell,
-  CheckCircle2,
-  AlertCircle,
-  Info,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
@@ -27,7 +22,7 @@ import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import { isVotingComplete, formatDate, QUORUM } from "@/lib/utils";
+import { isVotingComplete, QUORUM } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
@@ -38,15 +33,13 @@ import { WalletAddress } from "@/components/wallet-address";
 import { Header } from "@/components/header";
 
 // Action Buttons
-const ActionButtons: React.FC<{ isAdmin: boolean }> = ({ isAdmin }) => {
+const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
   const { disconnect, user } = useWallet();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
@@ -113,104 +106,6 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
 };
 
 // SystemAnnouncements Component
-const SystemAnnouncements: React.FC = () => {
-  const announcements = [
-    {
-      id: 1,
-      title: "Ажурирање система",
-      date: new Date(),
-      content:
-        "Обавештавамо вас да ће систем бити недоступан због планираног одржавања у суботу од 22:00 до 23:00 часова.",
-      type: "info",
-      icon: Info,
-    },
-    {
-      id: 2,
-      title: "Успешно завршено гласање",
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      content:
-        "Гласање за предлог 'Измене правилника о студирању' је успешно завршено са постигнутим кворумом.",
-      type: "success",
-      icon: CheckCircle2,
-    },
-    {
-      id: 3,
-      title: "Важно обавештење",
-      date: new Date(Date.now() - 48 * 60 * 60 * 1000),
-      content:
-        "Потребно је да сви корисници ажурирају своје профиле најкасније до 15.12. ради усклађивања са новим прописима.",
-      type: "warning",
-      icon: AlertCircle,
-    },
-  ];
-
-  const getIconBgColor = (type: string) => {
-    switch (type) {
-      case "info":
-        return "bg-blue-100";
-      case "success":
-        return "bg-green-100";
-      case "warning":
-        return "bg-amber-100";
-      default:
-        return "bg-gray-100";
-    }
-  };
-
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case "info":
-        return "text-blue-600";
-      case "success":
-        return "text-green-600";
-      case "warning":
-        return "text-amber-600";
-      default:
-        return "text-gray-600";
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold text-foreground mb-2 flex items-center">
-        <Bell className="size-4 mr-2" />
-        Обавештења система
-      </h2>
-      {announcements.map((announcement) => (
-        <Card
-          key={announcement.id}
-          className="p-4 bg-background border border-border/40 rounded-xl shadow-md hover:shadow-lg transition-shadow"
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className={`p-2 ${getIconBgColor(announcement.type)} rounded-full mt-1`}
-            >
-              <announcement.icon
-                className={`h-4 w-4 ${getIconColor(announcement.type)}`}
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="text-base font-medium text-foreground">
-                  {announcement.title}
-                </h4>
-                <span className="text-xs text-muted-foreground">
-                  {formatDate(announcement.date)}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                {announcement.content}
-              </p>
-              <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-                Детаљније <ChevronRight className="h-3 w-3 ml-1" />
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-};
 
 // ActiveMembers Component
 const ActiveMembers: React.FC = () => {
