@@ -28,8 +28,10 @@ import { ProposalService } from "./proposal-service";
 import {
   DuplicateProposalError,
   ExecuteFailedError,
+  FileNotFound,
   IneligibleProposerError,
   IneligibleVoterError,
+  ProposalParseError,
 } from "../../types/proposal-service-errors";
 import {
   UserActivityEventProposal,
@@ -209,11 +211,18 @@ export class BlockchainProposalService implements ProposalService {
       // All serializable data is stored as a json string inside the proposal description
       const deserializedData = this.deserializeChainData(args.description);
       if (deserializedData.type === "proposal") {
-        const proposal = await this.parseProposal(deserializedData, args);
-        if (!proposal) {
-          continue;
+        try {
+          const proposal = await this.parseProposal(deserializedData, args);
+          if (!proposal) {
+            continue;
+          }
+          proposals.push(proposal);
+        } catch (err) {
+          if (err instanceof ProposalParseError) {
+            continue;
+          }
+          throw new Error(`Unexpected error occured during parsing: ${err}`);
         }
-        proposals.push(proposal);
       } else if (deserializedData.type === "voteItem") {
         const voteItemData = deserializedData as VotableItemSerializationData;
         const votableItem = await this.parseVotableItem(
@@ -544,31 +553,39 @@ export class BlockchainProposalService implements ProposalService {
   ): Promise<Proposal | undefined> {
     const proposalId = args.proposalId;
     const voteStart = new Date(Number(args.voteStart) * 1000);
-    const stateIndex = Number(
-      (await this.governor.state(proposalId)) as bigint
-    );
-    const proposalState = convertGovernorState(stateIndex);
-    const deadline = await this.governor.proposalDeadline(proposalId);
-    const closesAt = new Date(Number(deadline) * 1000);
-    // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
-    const proposalData = deserializedData as ProposalSerializationData;
-    return {
-      id: proposalId,
-      title: proposalData.title,
-      description: proposalData.description,
-      author: {
-        address: args.proposer,
-        name: convertAddressToName(args.proposer),
-      },
-      file:
-        proposalData.fileHash !== ""
-          ? await this.fileService.fetch(proposalData.fileHash)
-          : undefined,
-      dateAdded: voteStart,
-      status: proposalState,
-      closesAt: closesAt,
-      voteItems: [],
-    };
+    try {
+      const stateIndex = Number(
+        (await this.governor.state(proposalId)) as bigint
+      );
+      const proposalState = convertGovernorState(stateIndex);
+      const deadline = await this.governor.proposalDeadline(proposalId);
+      const closesAt = new Date(Number(deadline) * 1000);
+      // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
+      const proposalData = deserializedData as ProposalSerializationData;
+      return {
+        id: proposalId,
+        title: proposalData.title,
+        description: proposalData.description,
+        author: {
+          address: args.proposer,
+          name: convertAddressToName(args.proposer),
+        },
+        file:
+          proposalData.fileHash !== ""
+            ? await this.fileService.fetch(proposalData.fileHash)
+            : undefined,
+        dateAdded: voteStart,
+        status: proposalState,
+        closesAt: closesAt,
+        voteItems: [],
+      };
+    } catch (err) {
+      let msg = "Unknown error";
+      if (err instanceof FileNotFound || err instanceof Error) {
+        msg = err.message;
+      }
+      throw new ProposalParseError(proposalId, msg);
+    }
   }
   private async parseVotableItem(
     deserializedData: VotableItemSerializationData,
