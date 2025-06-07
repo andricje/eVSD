@@ -1,9 +1,11 @@
 import { STRINGS } from "@/constants/strings";
 import { Proposal, User } from "@/types/proposal";
-import { Timer } from "lucide-react";
+import { Timer, Eye } from "lucide-react";
 import { CancelProposalButton } from "./cancel-proposal-button";
 import { StatusBadge } from "../badges";
 import { formatDate } from "@/lib/utils";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 function ProposalDescriptionBody({ proposal }: { proposal: Proposal }) {
   switch (proposal.status) {
@@ -15,6 +17,17 @@ function ProposalDescriptionBody({ proposal }: { proposal: Proposal }) {
             {formatDate(proposal.dateAdded)}
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+              asChild
+            >
+              <Link href={`/votes/${proposal.id}`}>
+                <Eye className="h-3.5 w-3.5 mr-1" />
+                Pogledaj
+              </Link>
+            </Button>
             <CancelProposalButton proposal={proposal} />
           </div>
         </div>
@@ -26,12 +39,34 @@ function ProposalDescriptionBody({ proposal }: { proposal: Proposal }) {
             {STRINGS.userActivity.userProposals.closedAt}:{" "}
             {formatDate(proposal.dateAdded)}
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+            asChild
+          >
+            <Link href={`/votes/${proposal.id}`}>
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              Pogledaj
+            </Link>
+          </Button>
         </div>
       );
     case "cancelled":
       return (
         <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
           <div>{STRINGS.proposal.statusClosed}</div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+            asChild
+          >
+            <Link href={`/votes/${proposal.id}`}>
+              <Eye className="h-3.5 w-3.5 mr-1" />
+              Pogledaj
+            </Link>
+          </Button>
         </div>
       );
   }
