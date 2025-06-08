@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import MetamaskLogo from "@/public/metamask.webp";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,11 @@ import { useWallet } from "@/context/wallet-context";
 import { Loader2, Wallet } from "lucide-react";
 
 export function WalletConnectButton() {
-  const { connect: connectMetaMask, connectionStatus } = useWallet();
+  const {
+    connect: connectMetaMask,
+    connectionStatus,
+    walletError,
+  } = useWallet();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleConnect = async () => {
@@ -25,6 +29,12 @@ export function WalletConnectButton() {
       setIsOpen(false);
     }
   };
+
+  useEffect(() => {
+    if (walletError) {
+      setIsOpen(false);
+    }
+  }, [walletError]);
 
   return (
     <>
