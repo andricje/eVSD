@@ -25,6 +25,13 @@ import { useWallet } from "@/context/wallet-context";
 import { useRouter } from "next/navigation";
 import { Proposal } from "@/types/proposal";
 
+/**
+ * Displays a list of proposal cards based on the provided filtered proposals.
+ *
+ * If the list is empty, shows a message indicating no results were found and suggests adjusting filters or search criteria.
+ *
+ * @param filteredProposals - The proposals to display.
+ */
 function FilterResults({
   filteredProposals,
 }: {
@@ -90,6 +97,11 @@ function FilterResults({
   );
 }
 
+/**
+ * Displays the voting results page with filtering and search for proposals.
+ *
+ * Redirects unauthenticated users to the login page. Allows users to search proposals by title, description, or author, and filter them by closing date range. Shows proposals sorted by most recently added.
+ */
 export default function RezultatiPage() {
   const { proposals } = useProposals();
   const { user } = useWallet();

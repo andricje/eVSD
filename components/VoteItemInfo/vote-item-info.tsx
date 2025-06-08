@@ -15,6 +15,14 @@ interface VoteItemInfoProps {
   proposal?: Proposal;
 }
 
+/**
+ * Displays summarized voting information for a given votable item, including counts for each vote option and the overall voting result.
+ *
+ * Renders badges showing the number of "for", "against", and "abstain" votes, along with a result badge that reflects the current voting outcome. Optionally incorporates proposal-specific details if a proposal is provided.
+ *
+ * @param voteItem - The item for which voting information is displayed.
+ * @param proposal - Optional proposal associated with the vote item, used for displaying additional result context.
+ */
 export function VoteItemInfo({ voteItem, proposal }: VoteItemInfoProps) {
   const votesFor = countVoteForOption(voteItem, "for");
   const votesAgainst = countVoteForOption(voteItem, "against");

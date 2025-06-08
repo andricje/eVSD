@@ -12,6 +12,13 @@ import { useRef } from "react";
 interface ProposalInfoProps {
   proposal: Proposal;
 }
+/**
+ * Displays detailed information for each vote item in a proposal, including expandable per-faculty voting details.
+ *
+ * Renders a list of the proposal's vote items, each with summary information and an accordion to reveal additional per-faculty vote breakdowns.
+ *
+ * @param proposal - The proposal object containing vote items to display.
+ */
 export function ProposalInfo({ proposal }: ProposalInfoProps) {
   return (
     <>
