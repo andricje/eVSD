@@ -60,7 +60,7 @@ export function VoteItemInfo({ voteItem, proposal }: VoteItemInfoProps) {
             <VoteResultBadge
               status={getVoteResult(votesFor, votesAgainst, votesAbstain)}
               totalVotes={countTotalVotes(voteItem)}
-              votingComplete={proposal && isVotingComplete(proposal)}
+              proposal={proposal}
             />
           </div>
         </div>

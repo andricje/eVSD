@@ -104,32 +104,37 @@ export default function RezultatiPage() {
   const [filterDate, setFilterDate] = useState("all");
 
   // Филтрирање предлога
-  const filteredProposals = proposals.filter((proposal) => {
-    // Претрага по наслову или опису
-    const matchesSearch =
-      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      proposal.author.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProposals = proposals
+    .filter((proposal) => {
+      // Претрага по наслову или опису
+      const matchesSearch =
+        proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        proposal.author.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Филтер по датуму
-    let matchesDate = true;
+      // Филтер по датуму
+      let matchesDate = true;
 
-    if (filterDate === "month") {
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      matchesDate = proposal.closesAt > oneMonthAgo;
-    } else if (filterDate === "quarter") {
-      const threeMonthsAgo = new Date();
-      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-      matchesDate = proposal.closesAt > threeMonthsAgo;
-    } else if (filterDate === "year") {
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      matchesDate = proposal.closesAt > oneYearAgo;
-    }
+      if (filterDate === "month") {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        matchesDate = proposal.closesAt > oneMonthAgo;
+      } else if (filterDate === "quarter") {
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        matchesDate = proposal.closesAt > threeMonthsAgo;
+      } else if (filterDate === "year") {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        matchesDate = proposal.closesAt > oneYearAgo;
+      }
 
-    return matchesSearch && matchesDate;
-  });
+      return matchesSearch && matchesDate;
+    })
+    // Сортирање по датуму додавања
+    .sort((a, b) => {
+      return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
+    });
 
   return (
     <div className="flex flex-col min-h-screen">
