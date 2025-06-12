@@ -7,69 +7,40 @@ import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
+const ViewProposalButton = ({ proposal }: { proposal: Proposal }) => (
+  <Button
+    variant="outline"
+    size="sm"
+    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+    asChild
+  >
+    <Link href={`/votes/${proposal.id}`}>
+      <Eye className="h-3.5 w-3.5 mr-1" />
+      Pogledaj
+    </Link>
+  </Button>
+);
+
 function ProposalDescriptionBody({ proposal }: { proposal: Proposal }) {
-  switch (proposal.status) {
-    case "open":
-      return (
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-          <div>
-            {STRINGS.userActivity.userProposals.addedAt}:{" "}
-            {formatDate(proposal.dateAdded)}
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
-              asChild
-            >
-              <Link href={`/votes/${proposal.id}`}>
-                <Eye className="h-3.5 w-3.5 mr-1" />
-                Pogledaj
-              </Link>
-            </Button>
-            <CancelProposalButton proposal={proposal} />
-          </div>
-        </div>
-      );
-    case "closed":
-      return (
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-          <div>
-            {STRINGS.userActivity.userProposals.closedAt}:{" "}
-            {formatDate(proposal.dateAdded)}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
-            asChild
-          >
-            <Link href={`/votes/${proposal.id}`}>
-              <Eye className="h-3.5 w-3.5 mr-1" />
-              Pogledaj
-            </Link>
-          </Button>
-        </div>
-      );
-    case "cancelled":
-      return (
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-          <div>{STRINGS.proposal.statusClosed}</div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
-            asChild
-          >
-            <Link href={`/votes/${proposal.id}`}>
-              <Eye className="h-3.5 w-3.5 mr-1" />
-              Pogledaj
-            </Link>
-          </Button>
-        </div>
-      );
-  }
+  const getBodyFromProposalStatus = (status: string) => {
+    switch (status) {
+      case "open":
+        return `${STRINGS.userActivity.userProposals.addedAt} ${formatDate(proposal.dateAdded)}`;
+      case "closed":
+        return `${STRINGS.userActivity.userProposals.closedAt} ${formatDate(proposal.dateAdded)}`;
+      case "cancelled":
+        return `${STRINGS.proposal.statusClosed}`;
+    }
+  };
+  return (
+    <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
+      <div>{getBodyFromProposalStatus(proposal.status)}</div>
+      <div className="flex gap-2">
+        <ViewProposalButton proposal={proposal} />
+        <CancelProposalButton proposal={proposal} />
+      </div>
+    </div>
+  );
 }
 
 function ProposalDescription({ proposal }: { proposal: Proposal }) {
