@@ -102,7 +102,7 @@ export default function RezultatiPage() {
   const [filterDate, setFilterDate] = useState("all");
 
   // Sortiranje predloga hronološki - najnoviji na vrhu
-  const sortedProposals = proposals.sort((a, b) => {
+  const sortedProposals = [...proposals].sort((a, b) => {
     return b.dateAdded.getTime() - a.dateAdded.getTime();
   });
 
