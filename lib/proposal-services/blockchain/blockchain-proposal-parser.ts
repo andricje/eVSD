@@ -20,7 +20,7 @@ import { ProposalCreatedEvent } from "@/typechain-types/contracts/EvsdGovernor";
 interface ChainData {
   title: string;
   description: string;
-  type: "proposal" | "voteItem";
+  type: "proposal" | "voteItem" | "addVoterVoteItem";
 }
 
 export interface ProposalChainData extends ChainData {
@@ -32,7 +32,10 @@ export interface VotableItemChainData extends ChainData {
   parentProposalId: string;
   index: number;
 }
-export interface AddVoterVotableItemChainData extends VotableItemChainData {
+export interface AddVoterVotableItemChainData extends ChainData {
+  type: "addVoterVoteItem";
+  parentProposalId: string;
+  index: number;
   newVoterAddress: string;
 }
 
@@ -44,8 +47,7 @@ export const isVotableItemChainData = (
 ): data is VotableItemChainData => data.type === "voteItem";
 export const isAddVoterVotableItemChainData = (
   data: ChainData
-): data is AddVoterVotableItemChainData =>
-  isVotableItemChainData(data) && "newVoterAddress" in data;
+): data is AddVoterVotableItemChainData => data.type === "addVoterVoteItem";
 
 export class BlockchainProposalParser {
   private readonly governor: EvsdGovernor;
@@ -92,7 +94,7 @@ export class BlockchainProposalParser {
     };
   }
   public async parseVotableItem(
-    deserializedData: VotableItemChainData,
+    deserializedData: VotableItemChainData | AddVoterVotableItemChainData,
     args: ProposalCreatedEvent.OutputTuple & ProposalCreatedEvent.OutputObject,
     voteEventsForId: Record<string, VoteEvent[]>
   ): Promise<VotableItem> {
@@ -133,7 +135,7 @@ export class BlockchainProposalParser {
       newVoterAddress: deserializedData.newVoterAddress,
     };
   }
-  public async serializeProposal(proposal: UIProposal | Proposal) {
+  public serializeProposal(proposal: UIProposal | Proposal) {
     if (proposal.file) {
       throw new Error("Proposal file upload not supported yet");
     }
@@ -155,7 +157,7 @@ export class BlockchainProposalParser {
       | VotableItemChainData
       | AddVoterVotableItemChainData = IsUIAddVoterVotableItem(item)
       ? {
-          type: "voteItem",
+          type: "addVoterVoteItem",
           parentProposalId: parentId.toString(),
           newVoterAddress: item.newVoterAddress,
           index: 0,

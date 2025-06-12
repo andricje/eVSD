@@ -18,7 +18,10 @@ import {
 } from "../types/proposal";
 import seedrandom from "seedrandom";
 import { BlockchainProposalService } from "../lib/proposal-services/blockchain/blockchain-proposal-service";
-import { InMemoryProposalFileService } from "../lib/file-upload";
+import {
+  InMemoryProposalFileService,
+  ProposalFileService,
+} from "../lib/file-upload";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 export const rng = seedrandom("42");
 export interface TestInitData {
@@ -30,6 +33,7 @@ export interface TestInitData {
   evsdToken: EvsdToken;
   eligibleVoters: User[];
   ineligibleVoterAddress: string;
+  fileService: ProposalFileService;
 }
 
 export async function deployContracts(deployer: ethers.Signer) {
@@ -138,6 +142,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     eligibleVoters: voters.map((voter) => {
       return { name: voter.address, address: voter.address };
     }),
+    fileService,
   };
   return initData;
 }
