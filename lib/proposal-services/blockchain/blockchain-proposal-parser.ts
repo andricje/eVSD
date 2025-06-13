@@ -15,7 +15,6 @@ import {
 } from "../../utils";
 import { ProposalFileService } from "../../file-upload";
 import { EvsdGovernor } from "@/typechain-types";
-import { ProposalCreatedEvent } from "@/typechain-types/contracts/EvsdGovernor";
 
 interface ChainData {
   title: string;
@@ -37,6 +36,12 @@ export interface AddVoterVotableItemChainData extends ChainData {
   parentProposalId: string;
   index: number;
   newVoterAddress: string;
+}
+
+export interface ProposalCreatedEventArgs {
+  proposalId: bigint;
+  voteStart: bigint;
+  proposerAddress: string;
 }
 
 export const isProposalChainData = (
@@ -64,7 +69,7 @@ export class BlockchainProposalParser {
 
   public async parseProposal(
     proposalData: ProposalChainData,
-    args: ProposalCreatedEvent.OutputTuple & ProposalCreatedEvent.OutputObject
+    args: ProposalCreatedEventArgs
   ): Promise<Proposal> {
     const proposalId = args.proposalId;
     const voteStart = new Date(Number(args.voteStart) * 1000);
@@ -80,8 +85,8 @@ export class BlockchainProposalParser {
       title: proposalData.title,
       description: proposalData.description,
       author: {
-        address: args.proposer,
-        name: convertAddressToName(args.proposer),
+        address: args.proposerAddress,
+        name: convertAddressToName(args.proposerAddress),
       },
       file:
         proposalData.fileHash !== ""
@@ -95,7 +100,7 @@ export class BlockchainProposalParser {
   }
   public async parseVotableItem(
     deserializedData: VotableItemChainData | AddVoterVotableItemChainData,
-    args: ProposalCreatedEvent.OutputTuple & ProposalCreatedEvent.OutputObject,
+    args: ProposalCreatedEventArgs,
     voteEventsForId: Record<string, VoteEvent[]>
   ): Promise<VotableItem> {
     const proposalId = args.proposalId;
@@ -122,7 +127,7 @@ export class BlockchainProposalParser {
   }
   public async parseAddVoterVotableItem(
     deserializedData: AddVoterVotableItemChainData,
-    args: ProposalCreatedEvent.OutputTuple & ProposalCreatedEvent.OutputObject,
+    args: ProposalCreatedEventArgs,
     voteEventsForId: Record<string, VoteEvent[]>
   ): Promise<AddVoterVotableItem> {
     const votableItem = await this.parseVotableItem(

@@ -12,6 +12,7 @@ import {
 } from "../../lib/proposal-services/blockchain/blockchain-proposal-parser";
 import { EvsdGovernor } from "../../typechain-types";
 import { deployAndCreateMocks } from "../utils";
+import { Proposal, UIProposal, UIVotableItem } from "@/types/proposal";
 
 describe("BlockchainProposalParser", () => {
   let parser: BlockchainProposalParser;
@@ -64,5 +65,21 @@ describe("BlockchainProposalParser", () => {
     expect(isVotableItemChainData(chainData)).to.eq(false);
     expect(isAddVoterVotableItemChainData(chainData)).to.eq(true);
     expect(isProposalChainData(chainData)).to.eq(false);
+  });
+  it("Throws FileNotFound if an invalid fileHash is provided", () => {
+    const uiVotableItem: UIVotableItem = {
+      title: "Test votable item",
+      description: "Test votable item description",
+      UIOnlyId: "1",
+    };
+    const uiProposal: UIProposal = {
+      title: "Test proposal",
+      description: "Test proposal description",
+      voteItems: [uiVotableItem],
+    };
+    const serialized = parser.serializeProposal(uiProposal);
+    const deserializedData = parser.deserializeChainData(serialized);
+    (deserializedData as ProposalChainData).fileHash = "123";
+    parser.parseProposal(deserializedData);
   });
 });
