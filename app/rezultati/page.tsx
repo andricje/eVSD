@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -52,9 +52,7 @@ function FilterResults({
                   <div className="flex flex-col sm:flex-row">
                     <div>Предложио: {proposal.author.name} </div>
                     <div>
-                      {isVotingComplete(proposal) && (
-                        <span className="hidden sm:inline sm:px-1">|</span>
-                      )}
+                      <span className="hidden sm:inline sm:px-1">|</span>
                       {isVotingComplete(proposal) &&
                         `Гласање завршено: ${formatDate(proposal.closesAt)}`}
                     </div>
@@ -94,47 +92,44 @@ export default function RezultatiPage() {
   const { proposals } = useProposals();
   const { user } = useWallet();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
 
+  // Sortiranje predloga hronološki - najnoviji na vrhu
+  const sortedProposals = [...proposals].sort((a, b) => {
+    return b.dateAdded.getTime() - a.dateAdded.getTime();
+  });
+
   // Филтрирање предлога
-  const filteredProposals = proposals
-    .filter((proposal) => {
-      // Претрага по наслову или опису
-      const matchesSearch =
-        proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        proposal.author.name.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredProposals = sortedProposals.filter((proposal) => {
+    // Претрага по наслову или опису
+    const matchesSearch =
+      proposal.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      proposal.author.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-      // Филтер по датуму
-      let matchesDate = true;
+    // Филтер по датуму
+    let matchesDate = true;
 
-      if (filterDate === "month") {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        matchesDate = proposal.closesAt > oneMonthAgo;
-      } else if (filterDate === "quarter") {
-        const threeMonthsAgo = new Date();
-        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-        matchesDate = proposal.closesAt > threeMonthsAgo;
-      } else if (filterDate === "year") {
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-        matchesDate = proposal.closesAt > oneYearAgo;
-      }
+    if (filterDate === "month") {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      matchesDate = proposal.closesAt > oneMonthAgo;
+    } else if (filterDate === "quarter") {
+      const threeMonthsAgo = new Date();
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+      matchesDate = proposal.closesAt > threeMonthsAgo;
+    } else if (filterDate === "year") {
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      matchesDate = proposal.closesAt > oneYearAgo;
+    }
 
-      return matchesSearch && matchesDate;
-    })
-    // Сортирање по датуму додавања
-    .sort((a, b) => {
-      return new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime();
-    });
+    return matchesSearch && matchesDate;
+  });
 
   return (
     <div className="flex flex-col min-h-screen">
