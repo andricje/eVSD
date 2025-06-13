@@ -23,10 +23,12 @@ import {
   isAddVoterVotableItemChainData,
   isProposalChainData,
   isVotableItemChainData,
+  ProposalCreatedEventArgs,
 } from "./blockchain-proposal-parser";
 import { InMemoryProposalFileService } from "../../file-upload";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
 import { EvsdGovernor, EvsdToken } from "../../../typechain-types";
+import { ProposalCreatedEvent } from "../../../typechain-types/contracts/EvsdGovernor";
 
 export class BlockchainProposalReader implements ProposalReader {
   private readonly governor: EvsdGovernor;
@@ -79,6 +81,67 @@ export class BlockchainProposalReader implements ProposalReader {
     return null;
   }
 
+  private async handleChainEvent(
+    args: ProposalCreatedEvent.OutputTuple & ProposalCreatedEvent.OutputObject,
+    proposals: Proposal[],
+    voteEventsForId: Record<string, VoteEvent[]>,
+    voteItemsForProposalId: Record<
+      string,
+      {
+        item: VotableItem | AddVoterVotableItem;
+        index: number;
+      }[]
+    >
+  ) {
+    const proposalCreatedArgs: ProposalCreatedEventArgs = {
+      proposalId: args.proposalId,
+      voteStart: args.voteStart,
+      proposerAddress: args.proposer,
+    };
+
+    // All serializable data is stored as a json string inside the proposal description
+    const deserializedData = this.parser.deserializeChainData(args.description);
+    if (isProposalChainData(deserializedData)) {
+      const proposal = await this.parser.parseProposal(
+        deserializedData,
+        proposalCreatedArgs
+      );
+      proposals.push(proposal);
+    } else if (isAddVoterVotableItemChainData(deserializedData)) {
+      // TODO: Verify args[3] is values or even better unpack the event in a better way
+      this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
+      const addVoterItem = await this.parser.parseAddVoterVotableItem(
+        deserializedData,
+        proposalCreatedArgs,
+        voteEventsForId
+      );
+
+      if (!voteItemsForProposalId[deserializedData.parentProposalId]) {
+        voteItemsForProposalId[deserializedData.parentProposalId] = [];
+      }
+      voteItemsForProposalId[deserializedData.parentProposalId].push({
+        item: addVoterItem,
+        index: deserializedData.index,
+      });
+    } else if (isVotableItemChainData(deserializedData)) {
+      const votableItem = await this.parser.parseVotableItem(
+        deserializedData,
+        proposalCreatedArgs,
+        voteEventsForId
+      );
+
+      if (!voteItemsForProposalId[deserializedData.parentProposalId]) {
+        voteItemsForProposalId[deserializedData.parentProposalId] = [];
+      }
+      voteItemsForProposalId[deserializedData.parentProposalId].push({
+        item: votableItem,
+        index: deserializedData.index,
+      });
+    } else {
+      throw new Error(`Unknown chain data type: ${deserializedData.type}`);
+    }
+  }
+
   public async getProposals(): Promise<Proposal[]> {
     const proposalCreatedFilter = this.governor.filters.ProposalCreated();
     const events = await this.governor.queryFilter(
@@ -111,49 +174,17 @@ export class BlockchainProposalReader implements ProposalReader {
       if (!args) {
         continue;
       }
-
-      // All serializable data is stored as a json string inside the proposal description
-      const deserializedData = this.parser.deserializeChainData(
-        args.description
-      );
-      if (isProposalChainData(deserializedData)) {
-        const proposal = await this.parser.parseProposal(
-          deserializedData,
-          args
-        );
-        proposals.push(proposal);
-      } else if (isAddVoterVotableItemChainData(deserializedData)) {
-        // TODO: Verify args[3] is values or even better unpack the event in a better way
-        this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
-        const addVoterItem = await this.parser.parseAddVoterVotableItem(
-          deserializedData,
+      try {
+        await this.handleChainEvent(
           args,
-          voteEventsForId
+          proposals,
+          voteEventsForId,
+          voteItemsForProposalId
         );
-        // Add to the map
-        if (!voteItemsForProposalId[deserializedData.parentProposalId]) {
-          voteItemsForProposalId[deserializedData.parentProposalId] = [];
-        }
-        voteItemsForProposalId[deserializedData.parentProposalId].push({
-          item: addVoterItem,
-          index: deserializedData.index,
-        });
-      } else if (isVotableItemChainData(deserializedData)) {
-        const votableItem = await this.parser.parseVotableItem(
-          deserializedData,
-          args,
-          voteEventsForId
+      } catch (err) {
+        console.error(
+          `Failed to handle chain event. Failed with error: ${err}`
         );
-        // Add to the map
-        if (!voteItemsForProposalId[deserializedData.parentProposalId]) {
-          voteItemsForProposalId[deserializedData.parentProposalId] = [];
-        }
-        voteItemsForProposalId[deserializedData.parentProposalId].push({
-          item: votableItem,
-          index: deserializedData.index,
-        });
-      } else {
-        throw new Error(`Unknown chain data type: ${deserializedData.type}`);
       }
     }
     // Pair child VoteItems with Proposals

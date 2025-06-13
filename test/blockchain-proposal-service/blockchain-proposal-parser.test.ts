@@ -8,17 +8,22 @@ import {
   isProposalChainData,
   isVotableItemChainData,
   ProposalChainData,
+  ProposalCreatedEventArgs,
   VotableItemChainData,
 } from "../../lib/proposal-services/blockchain/blockchain-proposal-parser";
 import { EvsdGovernor } from "../../typechain-types";
 import { deployAndCreateMocks } from "../utils";
-import { Proposal, UIProposal, UIVotableItem } from "@/types/proposal";
+import { ProposalParseError } from "../../types/proposal-service-errors";
+import { BlockchainProposalService } from "@/lib/proposal-services/blockchain/blockchain-proposal-service";
+import { getDummyUIProposal } from "../dummy-objects";
 
 describe("BlockchainProposalParser", () => {
   let parser: BlockchainProposalParser;
   let governor: EvsdGovernor;
+  let proposalService: BlockchainProposalService;
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
+    proposalService = initData.eligibleVoterProposalServices[0];
     governor = initData.evsdGovernor;
     parser = new BlockchainProposalParser(governor, initData.fileService);
   });
@@ -66,20 +71,25 @@ describe("BlockchainProposalParser", () => {
     expect(isAddVoterVotableItemChainData(chainData)).to.eq(true);
     expect(isProposalChainData(chainData)).to.eq(false);
   });
-  it("Throws FileNotFound if an invalid fileHash is provided", () => {
-    const uiVotableItem: UIVotableItem = {
-      title: "Test votable item",
-      description: "Test votable item description",
-      UIOnlyId: "1",
-    };
-    const uiProposal: UIProposal = {
-      title: "Test proposal",
-      description: "Test proposal description",
-      voteItems: [uiVotableItem],
-    };
+  it("Throws ProposalParseError if an invalid fileHash is provided", async () => {
+    const uiProposal = getDummyUIProposal("1");
+    // Proposal parser is still coupled with the blockchain (uses the governor contract directly) so we must actually upload the proposal here
+    const proposalId = await proposalService.uploadProposal(uiProposal);
+    const proposal = await proposalService.getProposal(proposalId);
+
+    // Now serialize the proposal again
     const serialized = parser.serializeProposal(uiProposal);
     const deserializedData = parser.deserializeChainData(serialized);
-    (deserializedData as ProposalChainData).fileHash = "123";
-    parser.parseProposal(deserializedData);
+    const proposalData = deserializedData as ProposalChainData;
+    // Modify the file hash to something invalid
+    proposalData.fileHash = "123";
+    const args: ProposalCreatedEventArgs = {
+      proposalId: proposal.id,
+      voteStart: 0n,
+      proposerAddress: proposal.author.address,
+    };
+    await expect(parser.parseProposal(proposalData, args)).to.be.rejectedWith(
+      ProposalParseError
+    );
   });
 });

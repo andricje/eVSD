@@ -31,6 +31,7 @@ export interface TestInitData {
   votingPeriod: number;
   evsdGovernor: EvsdGovernor;
   evsdToken: EvsdToken;
+  eligibleSigners: ethers.Signer[];
   eligibleVoters: User[];
   ineligibleVoterAddress: string;
   fileService: ProposalFileService;
@@ -138,6 +139,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     votingPeriod,
     evsdGovernor: governor,
     evsdToken: token,
+    eligibleSigners: voters.map((voter) => voter as unknown as ethers.Signer),
     ineligibleVoterAddress: unregisteredVoter.address,
     eligibleVoters: voters.map((voter) => {
       return { name: voter.address, address: voter.address };

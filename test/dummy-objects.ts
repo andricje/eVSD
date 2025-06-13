@@ -4,6 +4,8 @@ import {
   VotableItem,
   Proposal,
   VoteOption,
+  UIVotableItem,
+  UIProposal,
 } from "../types/proposal";
 import { createHash } from "crypto";
 
@@ -84,4 +86,18 @@ export function getVotes(
     votes.push("abstain");
   }
   return votes;
+}
+
+export function getDummyUIProposal(id: string) {
+  const uiVotableItem: UIVotableItem = {
+    title: `Test votable item ${id}`,
+    description: "Test votable item description",
+    UIOnlyId: "1",
+  };
+  const uiProposal: UIProposal = {
+    title: `Test proposal ${id}`,
+    description: "Test proposal description",
+    voteItems: [uiVotableItem],
+  };
+  return uiProposal;
 }

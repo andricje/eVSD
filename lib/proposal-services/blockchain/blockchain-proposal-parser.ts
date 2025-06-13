@@ -14,7 +14,8 @@ import {
   getNewVoterProposalDescription,
 } from "../../utils";
 import { ProposalFileService } from "../../file-upload";
-import { EvsdGovernor } from "@/typechain-types";
+import { EvsdGovernor } from "../../../typechain-types";
+import { ProposalParseError } from "../../../types/proposal-service-errors";
 
 interface ChainData {
   title: string;
@@ -73,30 +74,38 @@ export class BlockchainProposalParser {
   ): Promise<Proposal> {
     const proposalId = args.proposalId;
     const voteStart = new Date(Number(args.voteStart) * 1000);
-    const stateIndex = Number(
-      (await this.governor.state(proposalId)) as bigint
-    );
-    const proposalState = convertGovernorState(stateIndex);
-    const deadline = await this.governor.proposalDeadline(proposalId);
-    const closesAt = new Date(Number(deadline) * 1000);
-    // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
-    return {
-      id: proposalId,
-      title: proposalData.title,
-      description: proposalData.description,
-      author: {
-        address: args.proposerAddress,
-        name: convertAddressToName(args.proposerAddress),
-      },
-      file:
-        proposalData.fileHash !== ""
-          ? await this.fileService.fetch(proposalData.fileHash)
-          : undefined,
-      dateAdded: voteStart,
-      status: proposalState,
-      closesAt: closesAt,
-      voteItems: [],
-    };
+    try {
+      const stateIndex = Number(
+        (await this.governor.state(proposalId)) as bigint
+      );
+      const proposalState = convertGovernorState(stateIndex);
+      const deadline = await this.governor.proposalDeadline(proposalId);
+      const closesAt = new Date(Number(deadline) * 1000);
+      // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
+      return {
+        id: proposalId,
+        title: proposalData.title,
+        description: proposalData.description,
+        author: {
+          address: args.proposerAddress,
+          name: convertAddressToName(args.proposerAddress),
+        },
+        file:
+          proposalData.fileHash !== ""
+            ? await this.fileService.fetch(proposalData.fileHash)
+            : undefined,
+        dateAdded: voteStart,
+        status: proposalState,
+        closesAt: closesAt,
+        voteItems: [],
+      };
+    } catch (err) {
+      let msg = "Unknown parser error";
+      if (err instanceof Error) {
+        msg = err.message;
+      }
+      throw new ProposalParseError(`${proposalId}`, msg);
+    }
   }
   public async parseVotableItem(
     deserializedData: VotableItemChainData | AddVoterVotableItemChainData,
