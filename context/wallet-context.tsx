@@ -1,10 +1,10 @@
 "use client";
-
-import { convertAddressToName } from "@/lib/utils";
-import { User } from "@/types/proposal";
-import { MetaMaskInpageProvider } from "@metamask/providers";
-import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { ethers, Provider, Signer } from "ethers";
+import { MetaMaskInpageProvider } from "@metamask/providers";
+
+import { User } from "@/types/proposal";
+import { convertAddressToName } from "@/lib/utils";
 
 declare global {
   interface Window {
@@ -19,6 +19,7 @@ interface WalletContextType {
   connect: () => Promise<void>;
   disconnect: () => void;
   connectionStatus: "connected" | "connecting" | "disconnected";
+  walletError: string | null;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -40,8 +41,10 @@ function AbstractWalletProvider({
   const [connectionStatus, setConnectionStatus] = useState<
     "connected" | "connecting" | "disconnected"
   >("disconnected");
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   const connect = async () => {
+    setWalletError(null);
     setConnectionStatus("connecting");
     try {
       const result = await walletFactory();
@@ -51,6 +54,7 @@ function AbstractWalletProvider({
       setUser(result.user);
       setConnectionStatus("connected");
     } catch (error) {
+      setWalletError(error instanceof Error ? error.message : "Unknown error");
       console.error("Greška pri povezivanju sa novčanikom:", error);
       setConnectionStatus("disconnected");
     }
@@ -62,6 +66,7 @@ function AbstractWalletProvider({
     setSigner(null);
     setUser(null);
     setConnectionStatus("disconnected");
+    setWalletError(null);
   };
 
   return (
@@ -73,6 +78,7 @@ function AbstractWalletProvider({
         connect,
         disconnect,
         connectionStatus,
+        walletError,
       }}
     >
       {children}
@@ -87,7 +93,9 @@ async function getProviderAndSigner() {
     const signer = await provider.getSigner();
     return { provider, signer };
   } else {
-    throw new Error("MetaMask is not installed");
+    throw new Error(
+      "MetaMask није пронађен. Проверите да ли је екстензија инсталирана. Уколико јесте, поново покрените претраживач."
+    );
   }
 }
 

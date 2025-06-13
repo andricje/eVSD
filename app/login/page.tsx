@@ -10,14 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Wallet } from "lucide-react";
-import { WalletConnectButton } from "@/components/wallet-connect-button";
+import { AlertCircle, Wallet } from "lucide-react";
+
 import { useWallet } from "@/context/wallet-context";
+import { STRINGS } from "@/constants/strings";
+import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { WalletAddress } from "@/components/wallet-address";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user } = useWallet();
+  const { user, walletError } = useWallet();
 
   return (
     <div className="w-full max-w-full flex items-center justify-center min-h-screen px-4 py-12">
@@ -34,6 +36,19 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {walletError && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 text-red-600 flex items-start gap-2">
+              <AlertCircle className="h-5 w-5 mt-0.5" />
+              <div>
+                <h3 className="font-medium">
+                  {STRINGS.newProposal.error.title}
+                </h3>
+                <p className="text-sm break-words whitespace-pre-wrap">
+                  {walletError}
+                </p>
+              </div>
+            </div>
+          )}
           {user && (
             <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
               <h3 className="font-medium mb-2">Повезани новчаник</h3>
