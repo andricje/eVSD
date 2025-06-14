@@ -1,20 +1,22 @@
 "use client";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserActivityEvent } from "@/types/proposal";
+import { useEffect, useState } from "react";
 import { Timer, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { STRINGS } from "@/constants/strings";
 import { useProposals } from "@/hooks/use-proposals";
 import { useWallet } from "@/context/wallet-context";
+import { Proposal, UserActivityEvent } from "@/types/proposal";
 import { Timeline } from "./timeline";
-import { useEffect, useState } from "react";
 import { UserProposals } from "./user-proposals";
-import { STRINGS } from "@/constants/strings";
 
 export function UserActivity() {
   const { proposals, proposalService } = useProposals();
   const { user } = useWallet();
 
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
+  const [userProposals, setUserProposals] = useState<Proposal[]>([]);
+
   useEffect(() => {
     async function getUserActivity() {
       if (proposalService && user) {
@@ -23,6 +25,18 @@ export function UserActivity() {
     }
     getUserActivity();
   }, [proposalService, user]);
+
+  // Filtriranje predloga trenutno ulogovanog korisnika
+  useEffect(() => {
+    if (proposals && user) {
+      const userProposals = proposals.filter(
+        (proposal) => proposal.author.address === user.address
+      );
+      setUserProposals(userProposals);
+    } else {
+      setUserProposals([]);
+    }
+  }, [proposals, user]);
 
   if (!proposalService) {
     return (
@@ -55,7 +69,7 @@ export function UserActivity() {
 
       {/* Moji predlozi */}
       <TabsContent value="predlozi">
-        <UserProposals proposals={proposals} user={user} />
+        <UserProposals proposals={userProposals} user={user} />
       </TabsContent>
 
       {/* Sve aktivnosti */}
