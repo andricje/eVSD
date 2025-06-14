@@ -47,10 +47,11 @@ import { Badge } from "@/components/ui/badge";
 
 function FilterResults({
   filteredProposals,
+  usersToFollow,
 }: {
   filteredProposals: Proposal[];
+  usersToFollow: User[];
 }) {
-  console.log(filteredProposals);
   return (
     <>
       {filteredProposals.length > 0 ? (
@@ -91,7 +92,7 @@ function FilterResults({
                 </div>
               </div>
 
-              <ProposalInfo proposal={proposal} />
+              <ProposalInfo proposal={proposal} usersToFollow={usersToFollow} />
             </CardContent>
           </Card>
         ))
@@ -336,7 +337,10 @@ export default function RezultatiPage() {
           </div>
 
           <div className="grid gap-6">
-            <FilterResults filteredProposals={filteredProposals} />
+            <FilterResults
+              filteredProposals={filteredProposals}
+              usersToFollow={usersToFollow}
+            />
           </div>
         </div>
       </main>
