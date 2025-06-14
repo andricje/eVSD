@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Timer, Activity } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -15,7 +15,6 @@ export function UserActivity() {
   const { user } = useWallet();
 
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
-  const [userProposals, setUserProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
     async function getUserActivity() {
@@ -27,16 +26,13 @@ export function UserActivity() {
   }, [proposalService, user]);
 
   // Filtriranje predloga trenutno ulogovanog korisnika
-  useEffect(() => {
-    if (proposals && user) {
-      const userProposals = proposals.filter(
-        (proposal) => proposal.author.address === user.address
-      );
-      setUserProposals(userProposals);
-    } else {
-      setUserProposals([]);
-    }
-  }, [proposals, user]);
+  const userProposals: Proposal[] = useMemo(
+    () =>
+      proposals && user
+        ? proposals.filter((p) => p.author.address === user.address)
+        : [],
+    [proposals, user]
+  );
 
   if (!proposalService) {
     return (

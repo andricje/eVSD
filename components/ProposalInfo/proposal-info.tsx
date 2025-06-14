@@ -21,8 +21,6 @@ export function ProposalInfo({
   proposal,
   usersToFollow = [],
 }: ProposalInfoProps) {
-  console.log(proposal);
-
   return (
     <>
       <div className="flex flex-col gap-4">

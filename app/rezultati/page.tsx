@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -135,6 +135,11 @@ function UsersCombobox({
     setOpen(false);
   };
 
+  const users = useMemo(
+    () => usersFromAddressNameMapRecord(addressNameMap),
+    []
+  );
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -164,14 +169,14 @@ function UsersCombobox({
             <CommandEmpty>Нема резултата.</CommandEmpty>
             {isAuthorComboBox && (
               <CommandItem
-                value={undefined}
+                value=""
                 onSelect={() => handleSelect(null)}
                 className="cursor-pointer"
               >
                 <span className="font-semibold">Сви</span>
               </CommandItem>
             )}
-            {usersFromAddressNameMapRecord(addressNameMap).map((user) => (
+            {users?.map((user) => (
               <CommandItem
                 key={user.address}
                 value={user.name}
