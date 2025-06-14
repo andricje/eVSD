@@ -22,7 +22,7 @@ export class InMemoryProposalFileService implements ProposalFileService {
   }
 }
 
-export async function fileToDigestHex(file: File) {
+async function fileToDigestHex(file: File) {
   const buffer = await window.crypto.subtle.digest(
     "SHA-256",
     await file.arrayBuffer()

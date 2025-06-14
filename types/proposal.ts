@@ -3,6 +3,11 @@ export interface User {
   name: string;
 }
 
+export type UserVotingStatus =
+  | "NotEligible"
+  | "CanAcceptVotingRights"
+  | "Eligible";
+
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
   UIOnlyId: string;
 };
@@ -53,11 +58,6 @@ export function IsUserActivityVote(
 export type UserActivityEvent =
   | UserActivityEventVote
   | UserActivityEventProposal;
-
-export type UserVotingStatus =
-  | "NotEligible"
-  | "CanAcceptVotingRights"
-  | "Eligible";
 
 export function countVoteForOption(
   votableItem: VotableItem,

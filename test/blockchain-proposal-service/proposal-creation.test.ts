@@ -2,7 +2,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
+import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
 import {
   DuplicateProposalError,
   IneligibleProposerError,
@@ -51,9 +51,9 @@ describe("BlockchainProposalService integration", function () {
   }
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
-    registeredVoterProposalServices = initData.registeredVoterProposalServices;
+    registeredVoterProposalServices = initData.eligibleVoterProposalServices;
     unregisteredVoterProposalServices =
-      initData.unregisteredVoterProposalServices;
+      initData.ineligibleVoterProposalServices;
     addVoterVoteItem = initData.addVoterVoteItem;
   });
   it("should create a proposal on-chain with correct title and description when there is only one simple vote item and fetch it", async () => {

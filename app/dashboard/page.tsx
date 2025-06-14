@@ -146,13 +146,15 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
-    const checkUserVotingRights = async (proposalService: ProposalService) => {
-      const canAccept =
-        await proposalService.canCurrentUserAcceptVotingRights();
+    const checkUserVotingRights = async (
+      proposalService: ProposalService,
+      user: User
+    ) => {
+      const canAccept = await proposalService.canUserAcceptVotingRights(user);
       setShowMembershipDialog(canAccept);
     };
     if (user && proposalService) {
-      checkUserVotingRights(proposalService);
+      checkUserVotingRights(proposalService, user);
     }
   }, [user, proposalService]);
 

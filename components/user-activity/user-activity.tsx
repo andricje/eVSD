@@ -17,12 +17,12 @@ export function UserActivity() {
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
   useEffect(() => {
     async function getUserActivity() {
-      if (proposalService) {
-        setActivity(await proposalService.getAllUserActivity());
+      if (proposalService && user) {
+        setActivity(await proposalService.getAllUserActivity(user));
       }
     }
     getUserActivity();
-  }, [proposalService]);
+  }, [proposalService, user]);
 
   if (!proposalService) {
     return (

@@ -3,7 +3,7 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen, act } from "@testing-library/react";
 import { useProposals } from "../hooks/use-proposals";
 import { ProposalsContextValue } from "@/context/proposals-context";
-import { InMemoryProposalService } from "@/lib/proposal-services/in-memory-proposal-service";
+import { InMemoryProposalService } from "@/lib/proposal-services/in-memory/in-memory-proposal-service";
 import { User } from "@/types/proposal";
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import userEvent from "@testing-library/user-event";

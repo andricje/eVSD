@@ -1,8 +1,9 @@
 "use client";
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { ethers, Provider, Signer } from "ethers";
-import { MetaMaskInpageProvider } from "@metamask/providers";
 
+import { ProposalServiceType } from "@/types/evsd-config";
+import { MetaMaskInpageProvider } from "@metamask/providers";
+import { ethers, Provider, Signer } from "ethers";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import { User } from "@/types/proposal";
 import { convertAddressToName } from "@/lib/utils";
 
@@ -139,7 +140,7 @@ export function WalletProvider({
   type,
 }: {
   children: ReactNode;
-  type: "blockchain" | "mock";
+  type: ProposalServiceType;
 }) {
   const walletFactory =
     type === "blockchain" ? blockchainWalletFactory : mockWalletFactory;

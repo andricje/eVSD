@@ -14,6 +14,8 @@ import {
 } from "../types/proposal";
 import { addressNameMap } from "../constants/address-name-map";
 import { STRINGS } from "../constants/strings";
+import { ethers } from "ethers";
+import { EvsdToken } from "@/typechain-types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -257,6 +259,19 @@ export async function areProposalsEqual(
     proposal.description === uiProposal.description &&
     (await areFilesEqual(proposal.file, uiProposal.file))
   );
+}
+
+export async function getTransferTokenCalldata(
+  token: EvsdToken,
+  newVoterAddress: string
+) {
+  const decimals = await token.decimals();
+  const oneToken = ethers.parseUnits("1", decimals);
+  const transferCalldata = token.interface.encodeFunctionData("transfer", [
+    newVoterAddress,
+    oneToken,
+  ]);
+  return transferCalldata;
 }
 
 export function clipAddress(address: string): string {
