@@ -31,7 +31,7 @@ export default function Home() {
                   транспарентан и децентрализован систем
                 </p>
               </div>
-              <div className="space-x-4">
+              <div className="space-x-4 space-y-2">
                 {user ? (
                   <>
                     <Button asChild>

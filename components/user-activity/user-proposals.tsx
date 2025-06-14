@@ -49,7 +49,12 @@ function ProposalDescription({ proposal }: { proposal: Proposal }) {
       <div className="p-4">
         <div className="flex justify-between items-start mb-3">
           <h4 className="font-medium text-base">{proposal.title}</h4>
-          <StatusBadge status={proposal.status} expiresAt={proposal.closesAt} />
+          <div className="hidden sm:flex">
+            <StatusBadge
+              status={proposal.status}
+              expiresAt={proposal.closesAt}
+            />
+          </div>
         </div>
         <p className="text-sm text-gray-600 mb-4 line-clamp-2">
           {proposal.description}
