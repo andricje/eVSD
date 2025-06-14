@@ -5,7 +5,11 @@ import { User, VotableItem, VoteEvent, VoteOption } from "@/types/proposal";
 import { STRINGS } from "@/constants/strings";
 import { VoteItemInfo } from "@/components/VoteItemInfo/vote-item-info";
 import { v4 as uuidv4 } from "uuid";
-import { getTranslatedVoteOptionWithCount, QUORUM } from "@/lib/utils";
+import {
+  getTranslatedVoteOptionWithCount,
+  isVotingComplete,
+  QUORUM,
+} from "@/lib/utils";
 
 global.ResizeObserver = require("resize-observer-polyfill");
 
@@ -63,27 +67,44 @@ describe("NewProposalDialog", () => {
       screen.getByText(getTranslatedVoteOptionWithCount("abstain", 5))
     ).toBeInTheDocument();
   });
-  // it("Shows quorum reached when there are enough votes", async () => {
-  //   const quorumhalf = Math.floor(QUORUM / 2);
-  //   const voteItem = getVoteItem(quorumhalf, quorumhalf, 5);
-  //   render(<VoteItemInfo voteItem={voteItem} />);
-  //   expect(screen.getByText(STRINGS.voting.quorumReached)).toBeInTheDocument();
-  // });
-  it("Shows passed when there are QUORUM + 5 votes for and there are no other votes", async () => {
+
+  it("Shows passed when there are QUORUM + 5 votes for and there are no other votes and voting is complete", async () => {
     const voteItem = getVoteItem(QUORUM + 5, 0, 0);
-    render(<VoteItemInfo voteItem={voteItem} />);
+    // Simulate proposal with votingComplete = true
+    const proposal = { status: "closed", closesAt: new Date(-1) } as any;
+    render(<VoteItemInfo voteItem={voteItem} proposal={proposal} />);
     expect(screen.getByText(STRINGS.voting.results.passed)).toBeInTheDocument();
   });
-  it("Shows failed when there are QUORUM + 5 votes against and there are no other votes", async () => {
+
+  it("Shows failed when there are QUORUM + 5 votes against and there are no other votes and voting is complete", async () => {
     const voteItem = getVoteItem(0, QUORUM + 5, 0);
-    render(<VoteItemInfo voteItem={voteItem} />);
+    const proposal = { status: "closed", closesAt: new Date(-1) } as any;
+    render(<VoteItemInfo voteItem={voteItem} proposal={proposal} />);
     expect(screen.getByText(STRINGS.voting.results.failed)).toBeInTheDocument();
   });
-  // it("Shows quorum not reached when QUORUM - 1 people vote", async () => {
-  //   const voteItem = getVoteItem(QUORUM - 1, 0, 0);
-  //   render(<VoteItemInfo voteItem={voteItem} />);
-  //   expect(
-  //     screen.getByText(STRINGS.voting.results.noQuorum)
-  //   ).toBeInTheDocument();
-  // });
+
+  it("Shows quorum not reached when QUORUM - 1 people vote and voting is complete", async () => {
+    const voteItem = getVoteItem(QUORUM - 1, 0, 0);
+    const proposal = { status: "closed", closesAt: new Date(-1) } as any;
+    render(<VoteItemInfo voteItem={voteItem} proposal={proposal} />);
+    // The badge includes the vote count, e.g. "No quorum 4/5"
+    expect(
+      screen.getByText(
+        (content, node) =>
+          typeof content === "string" &&
+          content.startsWith(STRINGS.voting.results.noQuorum)
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("Shows active badge when voting is not complete", async () => {
+    const voteItem = getVoteItem(1, 1, 1);
+    // No proposal prop, so votingComplete is falsy
+    const proposal = {
+      status: "open",
+      closesAt: new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
+    } as any;
+    render(<VoteItemInfo voteItem={voteItem} proposal={proposal} />);
+    expect(screen.getByText(STRINGS.proposal.statusActive)).toBeInTheDocument();
+  });
 });

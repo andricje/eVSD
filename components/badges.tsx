@@ -1,7 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { STRINGS } from "@/constants/strings";
-import { getRemainingTime, getTranslatedVoteOption, QUORUM } from "@/lib/utils";
-import { ProposalState, VoteOption, VoteResult } from "@/types/proposal";
+import {
+  getRemainingTime,
+  getTranslatedVoteOption,
+  isVotingComplete,
+  QUORUM,
+} from "@/lib/utils";
+import {
+  Proposal,
+  ProposalState,
+  VoteOption,
+  VoteResult,
+} from "@/types/proposal";
 import { CheckCircle2, MinusCircle, Timer, XCircle } from "lucide-react";
 
 export const VoteBadge = ({ vote }: { vote: VoteOption }) => {
@@ -37,15 +47,19 @@ export const StatusBadge = ({
     case "open":
       return (
         <>
-          <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
-          {expiresAt ? (
-            <Badge className="bg-amber-500">
-              <Timer className="h-3 w-3 mr-1" />
-              {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+          <div className="flex items-center gap-2">
+            <Badge className="bg-blue-500">
+              {STRINGS.proposal.statusActive}
             </Badge>
-          ) : (
-            <></>
-          )}
+            {expiresAt ? (
+              <Badge className="bg-amber-500">
+                <Timer className="h-3 w-3 mr-1" />
+                {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+              </Badge>
+            ) : (
+              <></>
+            )}
+          </div>
         </>
       );
     case "closed":
@@ -62,10 +76,22 @@ export const StatusBadge = ({
 export const VoteResultBadge = ({
   status,
   totalVotes,
+  proposal,
 }: {
   status: VoteResult;
   totalVotes?: number;
+  proposal?: Proposal;
 }) => {
+  if (proposal && proposal.status === "cancelled") {
+    return (
+      <Badge className="bg-red-500">{STRINGS.proposal.statusCancelled}</Badge>
+    );
+  } else if (proposal && !isVotingComplete(proposal)) {
+    return (
+      <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
+    );
+  }
+
   switch (status) {
     case "passed":
       return (

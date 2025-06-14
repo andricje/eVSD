@@ -63,44 +63,18 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
         </Link>
       </Button>
       <div className="hidden sm:flex border-l border-border h-8 mx-2" />
-      <Button
-        size="sm"
-        className="flex-1 border border-border/40 py-3 text-sm h-full bg-destructive text-destructive-foreground hover:bg-destructive sm:bg-background sm:text-foreground sm:hover:bg-background sm:hover:text-destructive"
-        onClick={() => {
-          disconnect();
-          router.push("/");
-        }}
-      >
-        <X className="size-4 mr-1.5" /> Одјави се
-      </Button>
-    </div>
-  );
-};
-
-// Compact WalletInfo Component
-const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
-  // Simulacija podataka o fakultetu - ovo bi trebalo dobiti iz konteksta korisnika
-  const userFaculty = "Електротехнички факултет";
-
-  return (
-    <div className="flex items-center justify-between bg-background py-4 px-2 rounded-lg">
-      <div className="flex items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-5 w-5 text-primary" />
-            <p className="text-base font-semibold text-foreground uppercase">
-              {userFaculty}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="px-2 py-0.5 text-sm">
-              <span className="text-muted-foreground">
-                <WalletAddress address={address} />
-              </span>
-            </Badge>
-          </div>
-        </div>
-      </div>
+      {user && (
+        <Button
+          size="sm"
+          className="flex-1 border border-border/40 py-3 text-sm h-full bg-destructive text-destructive-foreground hover:bg-destructive sm:bg-background sm:text-foreground sm:hover:bg-background sm:hover:text-destructive"
+          onClick={() => {
+            disconnect();
+            router.push("/");
+          }}
+        >
+          <X className="size-4 mr-1.5" /> Одјави се
+        </Button>
+      )}
     </div>
   );
 };
@@ -206,11 +180,7 @@ export default function Dashboard() {
           {/* Wallet info and actions */}
           <div className="bg-background rounded-xl shadow-sm border border-border/40 p-4">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              {user ? (
-                <CompactWalletInfo address={user.address} />
-              ) : (
-                <OriginalWalletInfo />
-              )}
+              {user && <OriginalWalletInfo showName={true} />}
               <div className="flex w-full md:w-auto gap-3">
                 <ActionButtons isAdmin={false} />
               </div>
