@@ -34,7 +34,8 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
       className={`bg-background border ${isUrgent ? "border-destructive/30" : "border-border/40"} rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden`}
     >
       <CardHeader className="pb-2.5 pt-4 px-5">
-        <div className="flex justify-between items-start">
+        {/* Desktop view BEGIN */}
+        <div className="hidden sm:flex justify-between items-start">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-semibold text-foreground">
               {proposal.title}
@@ -54,12 +55,35 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
             </span>
           </div>
         </div>
+        {/* Desktop view END */}
+
+        {/* Mobile view BEGIN */}
+        <div className="flex sm:hidden flex-col gap-3">
+          <div className="flex justify-between">
+            <div className="flex items-center gap-1.5">
+              <StatusBadge
+                status={proposal.status}
+                expiresAt={proposal.closesAt}
+              />
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
+              <Clock className="h-4 w-4 text-amber-600" />
+              <span className="font-medium">
+                {hoursLeft}ч {minutesLeft}м
+              </span>
+            </div>
+          </div>
+          <CardTitle className="text-base font-semibold text-foreground">
+            {proposal.title}
+          </CardTitle>
+        </div>
+        {/* Mobile view END */}
         <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
           {proposal.description}
         </p>
       </CardHeader>
       <CardContent className="pt-2 pb-4 space-y-3 px-5">
-        <div className="flex justify-between items-center text-sm border-t border-border/20 pt-2.5">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm border-t border-border/20 pt-2.5">
           <div className="flex items-center gap-2">
             <User className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Аутор:</span>
@@ -67,7 +91,9 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs">{formatDate(proposal.dateAdded)}</span>
+            <span className="text-xs pt-0.5">
+              {formatDate(proposal.dateAdded)}
+            </span>
           </div>
         </div>
 
