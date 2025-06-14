@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, Search } from "lucide-react";
+import { Calendar, Search, User as UserIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,20 +16,40 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandItem,
+} from "@/components/ui/command";
 import { Header } from "@/components/header";
-import { formatDate, isVotingComplete } from "@/lib/utils";
+import {
+  clipAddress,
+  formatDate,
+  isVotingComplete,
+  usersFromAddressNameMapRecord,
+} from "@/lib/utils";
 import { useProposals } from "@/hooks/use-proposals";
 import { StatusBadge } from "@/components/badges";
 import { ProposalInfo } from "@/components/ProposalInfo/proposal-info";
 import { useWallet } from "@/context/wallet-context";
 import { useRouter } from "next/navigation";
-import { Proposal } from "@/types/proposal";
+import { Proposal, User } from "@/types/proposal";
+import { addressNameMap } from "@/constants/address-name-map";
 
 function FilterResults({
   filteredProposals,
 }: {
   filteredProposals: Proposal[];
 }) {
+  console.log(filteredProposals);
   return (
     <>
       {filteredProposals.length > 0 ? (
@@ -88,6 +108,61 @@ function FilterResults({
   );
 }
 
+// ComboBox za pretragu korisnika
+function AuthorsCombobox({
+  onSelect,
+}: {
+  onSelect?: React.Dispatch<React.SetStateAction<User | null>>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<User | null>(null);
+
+  const handleSelect = (user: User) => {
+    setSelected(user);
+    setOpen(false);
+    onSelect?.(user);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-full sm:w-[180px]"
+        >
+          <div className="flex w-full items-center gap-2 -ml-2">
+            <UserIcon className="h-4 w-4" />
+            {selected ? (
+              <span className="flex items-center gap-2">{selected.name}</span>
+            ) : (
+              "Изаберите аутора"
+            )}
+          </div>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0">
+        <Command>
+          <CommandInput placeholder="Претражите кориснике..." />
+          <CommandList>
+            <CommandEmpty>Нема резултата.</CommandEmpty>
+            {usersFromAddressNameMapRecord(addressNameMap).map((user) => (
+              <CommandItem
+                key={user.address}
+                value={user.name}
+                onSelect={() => handleSelect(user)}
+              >
+                <span className="font-semibold">{user.name}</span>
+                {clipAddress(user.address)}
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export default function RezultatiPage() {
   const { proposals } = useProposals();
   const { user } = useWallet();
@@ -97,6 +172,7 @@ export default function RezultatiPage() {
   }
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
+  const [filterAuthor, setFilterAuthor] = useState<User | null>(null);
 
   // Sortiranje predloga hronološki - najnoviji na vrhu
   const sortedProposals = [...proposals].sort((a, b) => {
@@ -128,7 +204,13 @@ export default function RezultatiPage() {
       matchesDate = proposal.closesAt > oneYearAgo;
     }
 
-    return matchesSearch && matchesDate;
+    let matchesAuthor = true;
+
+    if (filterAuthor) {
+      matchesAuthor = proposal.author.address === filterAuthor.address;
+    }
+
+    return matchesSearch && matchesDate && matchesAuthor;
   });
 
   return (
@@ -140,7 +222,7 @@ export default function RezultatiPage() {
             <h1 className="text-3xl w-full font-bold flex-shrink-0 md:max-w-[50%]">
               Објављени резултати гласања
             </h1>
-            <div className="flex items-center gap-2 min-w-[300px]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-[300px]">
               <div className="relative min-w-[200px]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -165,6 +247,7 @@ export default function RezultatiPage() {
                   <SelectItem value="year">Последња година</SelectItem>
                 </SelectContent>
               </Select>
+              <AuthorsCombobox onSelect={setFilterAuthor} />
             </div>
           </div>
 

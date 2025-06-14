@@ -280,3 +280,12 @@ export function clipAddress(address: string): string {
   }
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
+
+export function usersFromAddressNameMapRecord(
+  record: Record<string, string>
+): User[] {
+  return Object.entries(record).map(([address, name]) => ({
+    address,
+    name,
+  }));
+}
