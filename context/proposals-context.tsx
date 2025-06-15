@@ -12,6 +12,7 @@ import { ProposalServiceType } from "@/types/evsd-config";
 export interface ProposalsContextValue {
   proposals: Proposal[];
   proposalService: ProposalService | null;
+  loading: boolean;
 }
 
 export const ProposalsContext = createContext<
@@ -47,6 +48,8 @@ const AbstractProposalsProvider = ({
   proposalService: ProposalService | null;
 }) => {
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+
   useEffect(() => {
     proposalService?.onProposalsChanged((proposals) => {
       setProposals(proposals);
@@ -54,8 +57,10 @@ const AbstractProposalsProvider = ({
 
     const fetchInitialProposals = async () => {
       if (proposalService) {
+        setLoading(true);
         const initialProposals = await proposalService.getProposals();
         setProposals(initialProposals);
+        setLoading(false);
       }
     };
 
@@ -67,6 +72,7 @@ const AbstractProposalsProvider = ({
       value={{
         proposals,
         proposalService,
+        loading,
       }}
     >
       {children}

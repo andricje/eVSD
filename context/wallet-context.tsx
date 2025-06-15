@@ -21,6 +21,7 @@ interface WalletContextType {
   disconnect: () => void;
   connectionStatus: "connected" | "connecting" | "disconnected";
   walletError: string | null;
+  loading: boolean;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -43,11 +44,13 @@ function AbstractWalletProvider({
     "connected" | "connecting" | "disconnected"
   >("disconnected");
   const [walletError, setWalletError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const connect = async () => {
     setWalletError(null);
     setConnectionStatus("connecting");
     try {
+      setLoading(true);
       const result = await walletFactory();
 
       setProvider(result.provider);
@@ -58,6 +61,8 @@ function AbstractWalletProvider({
       setWalletError(error instanceof Error ? error.message : "Unknown error");
       console.error("Greška pri povezivanju sa novčanikom:", error);
       setConnectionStatus("disconnected");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -80,6 +85,7 @@ function AbstractWalletProvider({
         disconnect,
         connectionStatus,
         walletError,
+        loading,
       }}
     >
       {children}
