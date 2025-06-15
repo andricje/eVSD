@@ -1,5 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Calendar, Search, User as UserIcon } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -7,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar, Search, User as UserIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -29,6 +30,8 @@ import {
   CommandEmpty,
   CommandItem,
 } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
+
 import { Header } from "@/components/header";
 import {
   clipAddress,
@@ -40,10 +43,9 @@ import { useProposals } from "@/hooks/use-proposals";
 import { StatusBadge } from "@/components/badges";
 import { ProposalInfo } from "@/components/ProposalInfo/proposal-info";
 import { useWallet } from "@/context/wallet-context";
-import { useRouter } from "next/navigation";
 import { Proposal, User } from "@/types/proposal";
 import { addressNameMap } from "@/constants/address-name-map";
-import { Badge } from "@/components/ui/badge";
+import { CardsSkeleton } from "@/components/loadingSkeletons/loadingSkeletons";
 
 function FilterResults({
   filteredProposals,
@@ -195,8 +197,8 @@ function UsersCombobox({
 }
 
 export default function RezultatiPage() {
-  const { proposals } = useProposals();
-  const { user } = useWallet();
+  const { proposals, loading: proposalsLoading } = useProposals();
+  const { user, loading: walletLoading } = useWallet();
   const router = useRouter();
   if (!user) {
     router.push("/login");
@@ -341,12 +343,16 @@ export default function RezultatiPage() {
             </div>
           </div>
 
-          <div className="grid gap-6">
-            <FilterResults
-              filteredProposals={filteredProposals}
-              usersToFollow={usersToFollow}
-            />
-          </div>
+          {proposalsLoading || walletLoading ? (
+            <CardsSkeleton />
+          ) : (
+            <div className="grid gap-6">
+              <FilterResults
+                filteredProposals={filteredProposals}
+                usersToFollow={usersToFollow}
+              />
+            </div>
+          )}
         </div>
       </main>
       <footer className="border-t py-6 w-full">

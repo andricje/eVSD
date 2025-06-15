@@ -9,17 +9,29 @@ import { useWallet } from "@/context/wallet-context";
 import { Proposal, UserActivityEvent } from "@/types/proposal";
 import { Timeline } from "./timeline";
 import { UserProposals } from "./user-proposals";
+import {
+  ActivitySkeleton,
+  CardsSkeleton,
+  MyProposalsSkeleton,
+} from "../loadingSkeletons/loadingSkeletons";
 
 export function UserActivity() {
-  const { proposals, proposalService } = useProposals();
+  const {
+    proposals,
+    proposalService,
+    loading: proposalsLoading,
+  } = useProposals();
   const { user } = useWallet();
 
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function getUserActivity() {
       if (proposalService && user) {
+        setActivitiesLoading(true);
         setActivity(await proposalService.getAllUserActivity(user));
+        setActivitiesLoading(false);
       }
     }
     getUserActivity();
@@ -65,12 +77,20 @@ export function UserActivity() {
 
       {/* Moji predlozi */}
       <TabsContent value="predlozi">
-        <UserProposals proposals={userProposals} user={user} />
+        {proposalsLoading || activitiesLoading ? (
+          <MyProposalsSkeleton />
+        ) : (
+          <UserProposals proposals={userProposals} user={user} />
+        )}
       </TabsContent>
 
       {/* Sve aktivnosti */}
       <TabsContent value="aktivnosti">
-        <Timeline userActivity={activity} />
+        {proposalsLoading || activitiesLoading ? (
+          <ActivitySkeleton />
+        ) : (
+          <Timeline userActivity={activity} />
+        )}
       </TabsContent>
     </Tabs>
   );

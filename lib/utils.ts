@@ -143,7 +143,7 @@ export const hasVotingTimeExpired = (proposal: Proposal) => {
 };
 // Funkcija koja proverava da li je glasanje završeno
 export const isVotingComplete = (proposal: Proposal) => {
-  return proposal.status === "closed";
+  return proposal.status != "open";
 };
 
 export function isQuorumReached(voteItem: VotableItem) {
@@ -288,4 +288,24 @@ export function usersFromAddressNameMapRecord(
     address,
     name,
   }));
+}
+
+export function getQuorumVotesText(): string {
+  let quorumText = "глас";
+
+  if (QUORUM % 10 === 1) {
+    if (QUORUM % 100 === 11) {
+      quorumText += "ова";
+    }
+  } else if (QUORUM % 10 >= 2 && QUORUM % 10 <= 4) {
+    if (QUORUM % 100 === 12 || QUORUM % 100 === 13 || QUORUM % 100 === 14) {
+      quorumText += "ова";
+    } else {
+      quorumText += "а";
+    }
+  } else {
+    quorumText += "ова";
+  }
+
+  return quorumText;
 }
