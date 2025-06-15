@@ -11,7 +11,6 @@ import { Timeline } from "./timeline";
 import { UserProposals } from "./user-proposals";
 import {
   ActivitySkeleton,
-  CardsSkeleton,
   MyProposalsSkeleton,
 } from "../loadingSkeletons/loadingSkeletons";
 
@@ -77,7 +76,7 @@ export function UserActivity() {
 
       {/* Moji predlozi */}
       <TabsContent value="predlozi">
-        {proposalsLoading || activitiesLoading ? (
+        {proposalsLoading ? (
           <MyProposalsSkeleton />
         ) : (
           <UserProposals proposals={userProposals} user={user} />
@@ -86,7 +85,7 @@ export function UserActivity() {
 
       {/* Sve aktivnosti */}
       <TabsContent value="aktivnosti">
-        {proposalsLoading || activitiesLoading ? (
+        {activitiesLoading ? (
           <ActivitySkeleton />
         ) : (
           <Timeline userActivity={activity} />

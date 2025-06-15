@@ -13,6 +13,7 @@ export interface ProposalsContextValue {
   proposals: Proposal[];
   proposalService: ProposalService | null;
   loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
 
 export const ProposalsContext = createContext<
@@ -73,6 +74,7 @@ const AbstractProposalsProvider = ({
         proposals,
         proposalService,
         loading,
+        setLoading,
       }}
     >
       {children}

@@ -238,9 +238,13 @@ const SubItemVoting: React.FC<{
   return (
     <Card className="border-border/40 mb-4">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-lg">{subItem.title}</CardTitle>
-          {yourVote !== "didntVote" && <YourVoteBadge vote={yourVote} />}
+          {yourVote !== "didntVote" && (
+            <div>
+              <YourVoteBadge vote={yourVote} />
+            </div>
+          )}
         </div>
         <CardDescription className="whitespace-pre-wrap">
           {subItem.description}

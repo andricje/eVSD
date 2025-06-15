@@ -24,14 +24,17 @@ export function NewVoterDialog({
   customClassName,
   customText,
 }: NewVoterDialogProps) {
-  const { proposalService } = useProposals();
+  const {
+    proposalService,
+    loading: proposalLoading,
+    setLoading: setProposalLoading,
+  } = useProposals();
   const [newVoterAddress, setNewVoterAddress] = useState<string>("");
   const [facultyName, setFacultyName] = useState<string>("");
   const [proposalSubmitted, setProposalSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [infoDots, setInfoDots] = useState<string>("");
-  const [loading, setLoading] = useState(false);
 
   const handleProposalSubmit = async () => {
     if (newVoterAddress.trim() === "") {
@@ -46,7 +49,7 @@ export function NewVoterDialog({
 
     setError(null);
     setInfoMessage(null);
-    setLoading(true);
+    setProposalLoading(true);
 
     try {
       const voteItem: UIAddVoterVotableItem = { newVoterAddress };
@@ -116,7 +119,7 @@ export function NewVoterDialog({
 
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      setProposalLoading(false);
     }
   };
 
@@ -213,9 +216,9 @@ export function NewVoterDialog({
               <Button
                 type="submit"
                 onClick={handleProposalSubmit}
-                disabled={loading}
+                disabled={proposalLoading}
               >
-                {loading ? "Слање..." : "Додај предлог"}
+                {proposalLoading ? "Слање..." : "Додај предлог"}
               </Button>
             </DialogFooter>
           </>

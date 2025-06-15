@@ -278,11 +278,11 @@ export default function RezultatiPage() {
               <div className="flex flex-col 2xl:flex-row gap-2">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                   <div className="relative w-full sm:w-[260px]">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-2.5 top-3.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="search"
                       placeholder="Претрага предлога..."
-                      className="pl-8 w-full sm:w-[260px]"
+                      className="pl-8 w-full sm:w-[260px] text-sm sm:text-base"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />

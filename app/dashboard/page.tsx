@@ -41,10 +41,6 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
   const { disconnect, user } = useWallet();
   const router = useRouter();
 
-  if (!user) {
-    router.push("/login");
-  }
-
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
       <NewProposalDialog
@@ -140,16 +136,21 @@ function getProposalsToVote(proposals: Proposal[], user: User) {
 
 // Dashboard component
 export default function Dashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("voting");
-  const [dashboardLoading, setDashboardLoading] = useState<boolean>(false);
 
   const { user, loading: walletLoading } = useWallet();
   const {
     proposals,
     proposalService,
     loading: proposalsLoading,
+    setLoading: setProposalsLoading,
   } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
+
+  if (!user) {
+    router.push("/login");
+  }
 
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);
@@ -160,9 +161,9 @@ export default function Dashboard() {
       proposalService: ProposalService,
       user: User
     ) => {
-      setDashboardLoading(true);
+      setProposalsLoading(true);
       const canAccept = await proposalService.canUserAcceptVotingRights(user);
-      setDashboardLoading(false);
+      setProposalsLoading(false);
       setShowMembershipDialog(canAccept);
     };
     if (user && proposalService) {
@@ -172,9 +173,9 @@ export default function Dashboard() {
 
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = async () => {
-    setDashboardLoading(true);
+    setProposalsLoading(true);
     await proposalService?.acceptVotingRights();
-    setDashboardLoading(false);
+    setProposalsLoading(false);
     setShowMembershipDialog(false);
   };
 
@@ -194,7 +195,7 @@ export default function Dashboard() {
           {/* Wallet info and actions */}
           <div className="bg-background rounded-xl shadow-sm border border-border/40 p-4">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              {walletLoading || dashboardLoading ? (
+              {walletLoading ? (
                 <WalletInfoSkeleton />
               ) : (
                 user && <OriginalWalletInfo showName={true} />
@@ -237,7 +238,7 @@ export default function Dashboard() {
                 </Badge>
               </div>
 
-              {proposalsLoading || dashboardLoading ? (
+              {proposalsLoading ? (
                 <CardsSkeleton />
               ) : (
                 <>

@@ -66,12 +66,6 @@ export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
                 expiresAt={proposal.closesAt}
               />
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <span className="font-medium">
-                {hoursLeft}ч {minutesLeft}м
-              </span>
-            </div>
           </div>
           <CardTitle className="text-base font-semibold text-foreground">
             {proposal.title}
