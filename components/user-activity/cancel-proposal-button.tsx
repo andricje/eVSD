@@ -18,7 +18,11 @@ import {
 
 export function CancelProposalButton({ proposal }: { proposal: Proposal }) {
   const { toast } = useToast();
-  const { proposalService } = useProposals();
+  const {
+    proposalService,
+    loading: proposalLoading,
+    setLoading: setProposalLoading,
+  } = useProposals();
   const handleCancelProposal = async () => {
     if (!proposalService) {
       toast({
@@ -31,8 +35,9 @@ export function CancelProposalButton({ proposal }: { proposal: Proposal }) {
     }
 
     try {
+      setProposalLoading(true);
       const success = await proposalService.cancelProposal(proposal);
-
+      setProposalLoading(false);
       if (success) {
         toast({
           title: "Uspešno otkazan predlog",
@@ -77,6 +82,7 @@ export function CancelProposalButton({ proposal }: { proposal: Proposal }) {
           <AlertDialogCancel>Odustani</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleCancelProposal}
+            disabled={proposalLoading}
             className="bg-rose-600 hover:bg-rose-700 text-white"
           >
             Otkaži predlog

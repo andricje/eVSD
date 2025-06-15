@@ -20,11 +20,13 @@ export function Header({ showNav = true }: HeaderProps) {
   return (
     <header className="border-b w-full">
       <div className="w-full max-w-full flex h-16 items-center px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Wallet className="h-6 w-6" />
-          <span>еВСД</span>
+        <div className="flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center gap-2">
+            <Wallet className="h-6 w-6" />
+            <span>еВСД</span>
+          </Link>
           <WalletInfo />
-        </Link>
+        </div>
         {showNav && (
           <div className="ml-auto flex gap-4 sm:gap-6">
             {user ? (

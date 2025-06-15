@@ -22,7 +22,7 @@ import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import { isVotingComplete, QUORUM } from "@/lib/utils";
+import { getQuorumVotesText, isVotingComplete, QUORUM } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
@@ -31,15 +31,15 @@ import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { WalletAddress } from "@/components/wallet-address";
 import { Header } from "@/components/header";
+import {
+  CardsSkeleton,
+  WalletInfoSkeleton,
+} from "@/components/loadingSkeletons/loadingSkeletons";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
   const { disconnect, user } = useWallet();
   const router = useRouter();
-
-  if (!user) {
-    router.push("/login");
-  }
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
@@ -136,10 +136,21 @@ function getProposalsToVote(proposals: Proposal[], user: User) {
 
 // Dashboard component
 export default function Dashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("voting");
-  const { user } = useWallet();
-  const { proposals, proposalService } = useProposals();
+
+  const { user, loading: walletLoading } = useWallet();
+  const {
+    proposals,
+    proposalService,
+    loading: proposalsLoading,
+    setLoading: setProposalsLoading,
+  } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
+
+  if (!user) {
+    router.push("/login");
+  }
 
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);
@@ -150,7 +161,9 @@ export default function Dashboard() {
       proposalService: ProposalService,
       user: User
     ) => {
+      setProposalsLoading(true);
       const canAccept = await proposalService.canUserAcceptVotingRights(user);
+      setProposalsLoading(false);
       setShowMembershipDialog(canAccept);
     };
     if (user && proposalService) {
@@ -160,7 +173,9 @@ export default function Dashboard() {
 
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = async () => {
+    setProposalsLoading(true);
     await proposalService?.acceptVotingRights();
+    setProposalsLoading(false);
     setShowMembershipDialog(false);
   };
 
@@ -180,7 +195,11 @@ export default function Dashboard() {
           {/* Wallet info and actions */}
           <div className="bg-background rounded-xl shadow-sm border border-border/40 p-4">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              {user && <OriginalWalletInfo showName={true} />}
+              {walletLoading ? (
+                <WalletInfoSkeleton />
+              ) : (
+                user && <OriginalWalletInfo showName={true} />
+              )}
               <div className="flex w-full md:w-auto gap-3">
                 <ActionButtons isAdmin={false} />
               </div>
@@ -215,42 +234,48 @@ export default function Dashboard() {
                 </h2>
                 <Badge variant="outline" className="text-sm px-3 py-1">
                   <Users className="h-4 w-4 mr-1.5" />
-                  Кворум: {QUORUM} гласова
+                  Кворум: {QUORUM} {getQuorumVotesText()}
                 </Badge>
               </div>
 
-              {proposalToVote.length > 0 ? (
-                <div className="space-y-4 mt-5">
-                  {proposalToVote.map((proposal) => (
-                    <ProposalCard
-                      key={proposal.id}
-                      proposal={proposal}
-                      isUrgent={false}
-                    />
-                  ))}
-                </div>
+              {proposalsLoading ? (
+                <CardsSkeleton />
               ) : (
-                <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed mt-5">
-                  <Vote className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-xl text-foreground font-semibold">
-                    Нема активних предлога за гласање
-                  </p>
-                  <p className="text-muted-foreground mt-3 max-w-md mx-auto text-base">
-                    Тренутно нема активних предлога за гласање. Можете додати
-                    нови предлог.
-                  </p>
-                  <div className="mt-6">
-                    <NewProposalDialog
-                      customClassName="bg-primary text-primary-foreground hover:bg-primary/90 text-base py-2.5 px-5 font-medium"
-                      customText={
-                        <>
-                          <FileText className="h-4.5 w-4.5 mr-2.5" />
-                          Креирај нови предлог
-                        </>
-                      }
-                    />
-                  </div>
-                </div>
+                <>
+                  {proposalToVote.length > 0 ? (
+                    <div className="space-y-4 mt-5">
+                      {proposalToVote.map((proposal) => (
+                        <ProposalCard
+                          key={proposal.id}
+                          proposal={proposal}
+                          isUrgent={false}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed mt-5">
+                      <Vote className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                      <p className="text-xl text-foreground font-semibold">
+                        Нема активних предлога за гласање
+                      </p>
+                      <p className="text-muted-foreground mt-3 max-w-md mx-auto text-base">
+                        Тренутно нема активних предлога за гласање. Можете
+                        додати нови предлог.
+                      </p>
+                      <div className="mt-6">
+                        <NewProposalDialog
+                          customClassName="bg-primary text-primary-foreground hover:bg-primary/90 text-base py-2.5 px-5 font-medium"
+                          customText={
+                            <>
+                              <FileText className="h-4.5 w-4.5 mr-2.5" />
+                              Креирај нови предлог
+                            </>
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
