@@ -2,76 +2,40 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
-import {
-  UIAddVoterVotableItem,
-  UIProposal,
-  UIVotableItem,
-} from "../../types/proposal";
+import { UIAddVoterVotableItem, UIProposal, User } from "../../types/proposal";
 import { deployAndCreateMocks, fastForwardTime } from "../utils";
-import { voteItems } from "./voting.test";
-import { v4 as uuidv4 } from "uuid";
-function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal {
-  const items: UIVotableItem[] = [];
-  for (let i = 0; i < numVoteItems; i++) {
-    items.push({
-      title: `Vote item ${i}`,
-      description: `Test description ${uuidv4()}`,
-      UIOnlyId: `${i}`,
-    });
-  }
-
-  return {
-    title: `Test proposal ${uuidv4()}`,
-    description: "Test proposal description",
-    voteItems: items,
-  };
-}
+import { BlockchainProposalService } from "@/lib/proposal-services/blockchain/blockchain-proposal-service";
 
 describe("BlockchainProposalService integration", function () {
   describe("canCurrentUserAcceptVotingRights", function () {
     let registeredVoterProposalServices: BlockchainProposalService[];
-    let unregisteredVoterProposalServices: BlockchainProposalService[];
+    let ineligibleVoterProposalServices: BlockchainProposalService[];
+    let ineligibleVoter: User;
     let addVoterVoteItem: UIAddVoterVotableItem;
 
     beforeEach(async () => {
       const initData = await deployAndCreateMocks();
-      registeredVoterProposalServices =
-        initData.registeredVoterProposalServices;
-      unregisteredVoterProposalServices =
-        initData.unregisteredVoterProposalServices;
+      registeredVoterProposalServices = initData.eligibleVoterProposalServices;
+      ineligibleVoterProposalServices =
+        initData.ineligibleVoterProposalServices;
       addVoterVoteItem = initData.addVoterVoteItem;
+      ineligibleVoter = {
+        address: initData.ineligibleVoterAddress,
+        name: "Ineligible voter",
+      };
     });
     it("should return false if there is no proposal to add the user", async () => {
-      const generatedProposal: UIProposal = {
-        title: "Test proposal",
-        description: "Test proposal description",
-        voteItems: [voteItems[0]],
-      };
-
-      const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
-          generatedProposal
-        );
-
       const canAccept =
-        await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
+        await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
+          ineligibleVoter
+        );
       expect(canAccept).to.equal(false);
     });
     it("should return false if there is a proposal to add the user but it has not passed yet", async () => {
-      const generatedProposal: UIProposal = {
-        title: "Test proposal",
-        description: "Test proposal description",
-        voteItems: [addVoterVoteItem],
-      };
-
-      const proposalId =
-        await registeredVoterProposalServices[0].uploadProposal(
-          generatedProposal
-        );
-
       const canAccept =
-        await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
+        await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
+          ineligibleVoter
+        );
       expect(canAccept).to.equal(false);
     });
     it("should return false if there is a proposal to add the user but it has failed", async () => {
@@ -96,7 +60,9 @@ describe("BlockchainProposalService integration", function () {
       await fastForwardTime(7, 0, 0);
 
       const canAccept =
-        await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
+        await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
+          ineligibleVoter
+        );
       expect(canAccept).to.equal(false);
     });
     it("should return true if there is a proposal to add the user and it has passed", async () => {
@@ -121,7 +87,9 @@ describe("BlockchainProposalService integration", function () {
       await fastForwardTime(7, 0, 0);
 
       const canAccept =
-        await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
+        await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
+          ineligibleVoter
+        );
       expect(canAccept).to.equal(true);
     });
     it("should return true if there is a proposal to add the user and it has passed even if there are other malformed proposals", async () => {
@@ -155,7 +123,9 @@ describe("BlockchainProposalService integration", function () {
       await fastForwardTime(7, 0, 0);
 
       const canAccept =
-        await unregisteredVoterProposalServices[0].canCurrentUserAcceptVotingRights();
+        await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
+          ineligibleVoter
+        );
       expect(canAccept).to.equal(true);
     });
   });

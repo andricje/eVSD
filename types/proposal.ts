@@ -3,6 +3,11 @@ export interface User {
   name: string;
 }
 
+export type UserVotingStatus =
+  | "NotEligible"
+  | "CanAcceptVotingRights"
+  | "Eligible";
+
 export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
   UIOnlyId: string;
 };
@@ -30,6 +35,29 @@ export interface VotableItem {
   description: string;
   userVotes: Map<string, VoteEvent>;
 }
+
+export interface UserActivityEventVote {
+  voteEvent: VoteEvent;
+  proposal: Proposal;
+  voteItem: VotableItem;
+  date: Date;
+}
+
+export interface UserActivityEventProposal {
+  type: "Create" | "Delete";
+  proposal: Proposal;
+  date: Date;
+}
+
+export function IsUserActivityVote(
+  userActivityEvent: UserActivityEvent
+): userActivityEvent is UserActivityEventVote {
+  return (userActivityEvent as UserActivityEventVote).voteEvent !== undefined;
+}
+
+export type UserActivityEvent =
+  | UserActivityEventVote
+  | UserActivityEventProposal;
 
 export function countVoteForOption(
   votableItem: VotableItem,

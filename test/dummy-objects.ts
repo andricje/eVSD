@@ -4,6 +4,8 @@ import {
   VotableItem,
   Proposal,
   VoteOption,
+  UIVotableItem,
+  UIProposal,
 } from "../types/proposal";
 import { createHash } from "crypto";
 
@@ -12,11 +14,11 @@ function generateEthAddress(seed: string) {
   return "0x" + hash.slice(-40);
 }
 
-export function getDummyVoters(voterCount: number) {
+export function getDummyVoters(voterCount: number, seed: string = "") {
   const voters: User[] = [];
   for (let i = 0; i < voterCount; i++) {
     const user: User = {
-      address: generateEthAddress(`${i}`),
+      address: generateEthAddress(`${i}${seed}`),
       name: `Test fakultet ${i}`,
     };
     voters.push(user);
@@ -66,4 +68,36 @@ export function getTestProposal(status: "open" | "closed" | "cancelled") {
     ],
   };
   return proposal;
+}
+
+export function getVotes(
+  votesFor: number,
+  votesAgainst: number,
+  votesAbstain: number
+) {
+  const votes: VoteOption[] = [];
+  for (let i = 0; i < votesFor; i++) {
+    votes.push("for");
+  }
+  for (let i = 0; i < votesAgainst; i++) {
+    votes.push("against");
+  }
+  for (let i = 0; i < votesAbstain; i++) {
+    votes.push("abstain");
+  }
+  return votes;
+}
+
+export function getDummyUIProposal(id: string) {
+  const uiVotableItem: UIVotableItem = {
+    title: `Test votable item ${id}`,
+    description: "Test votable item description",
+    UIOnlyId: "1",
+  };
+  const uiProposal: UIProposal = {
+    title: `Test proposal ${id}`,
+    description: "Test proposal description",
+    voteItems: [uiVotableItem],
+  };
+  return uiProposal;
 }

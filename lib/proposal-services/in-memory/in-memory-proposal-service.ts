@@ -1,18 +1,21 @@
+import { getNewVoterProposalDescription } from "@/lib/utils";
 import {
-  IsUIAddVoterVotableItem,
   Proposal,
-  UIAddVoterVotableItem,
+  UserVotingStatus,
+  UserActivityEventVote,
+  UserActivityEventProposal,
   UIProposal,
-  UIVotableItem,
-  User,
   VotableItem,
   VoteOption,
-} from "../../types/proposal";
-import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import { getNewVoterProposalDescription } from "../utils";
-import { ProposalService } from "./proposal-service";
-import { UserActivityEventProposal } from "@/types/activity";
-import { UserActivityEventVote } from "@/types/activity";
+  UIVotableItem,
+  UIAddVoterVotableItem,
+  IsUIAddVoterVotableItem,
+  User,
+} from "@/types/proposal";
+import {
+  ProposalService,
+  onProposalsChangedUnsubscribe,
+} from "../proposal-service";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;
@@ -23,11 +26,20 @@ export class InMemoryProposalService implements ProposalService {
   constructor(user: User) {
     this.user = user;
   }
+  getUserVotingStatus(): Promise<UserVotingStatus> {
+    throw new Error("Method not implemented.");
+  }
+  canUserAcceptVotingRights(): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  getCurrentUserVotingStatus(): Promise<UserVotingStatus> {
+    throw new Error("Method not implemented.");
+  }
   async canCurrentUserAcceptVotingRights(): Promise<boolean> {
     return false;
   }
   async acceptVotingRights(): Promise<void> {
-    return;
+    throw new Error("Method not implemented.");
   }
   getAllUserActivity(): Promise<
     (UserActivityEventVote | UserActivityEventProposal)[]

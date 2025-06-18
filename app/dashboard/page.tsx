@@ -33,6 +33,8 @@ import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { STRINGS } from "@/constants/strings";
 import { UserProposals } from "@/components/user-activity/user-proposals";
 import { Timeline } from "@/components/user-activity/timeline";
+import { WalletAddress } from "@/components/wallet-address";
+import { Header } from "@/components/header";
 
 // Action Buttons
 const ActionButtons: React.FC = () => {
@@ -46,7 +48,7 @@ const ActionButtons: React.FC = () => {
   }, [router, user]);
 
   return (
-    <div className="flex gap-3 w-full">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
       <NewProposalDialog
         customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
         customText={
@@ -62,51 +64,23 @@ const ActionButtons: React.FC = () => {
         asChild
       >
         <Link href="/rezultati">
-          <PieChart className="h-4 w-4 mr-2" />
+          <PieChart className="size-4 mr-2" />
           Резултати
         </Link>
       </Button>
-      <div className="border-l border-border h-8 mx-2" />
-      <Button
-        variant="outline"
-        size="sm"
-        className="flex-1 border border-border/40 hover:bg-destructive/5 hover:text-destructive py-3 text-sm h-full"
-        onClick={() => {
-          disconnect();
-          router.push("/");
-        }}
-      >
-        <X className="h-4 w-4 mr-1.5" /> Одјави се
-      </Button>
-    </div>
-  );
-};
-
-// Compact WalletInfo Component
-const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
-  // Simulacija podataka o fakultetu - ovo bi trebalo dobiti iz konteksta korisnika
-  const userFaculty = "Електротехнички факултет";
-
-  return (
-    <div className="flex items-center justify-between bg-background py-4 px-2 rounded-lg">
-      <div className="flex items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-5 w-5 text-primary" />
-            <p className="text-base font-semibold text-foreground uppercase">
-              {userFaculty}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary" className="px-2 py-0.5 text-sm">
-              <span className="text-muted-foreground">
-                {address.substring(0, 6)}...
-                {address.substring(address.length - 4)}
-              </span>
-            </Badge>
-          </div>
-        </div>
-      </div>
+      <div className="hidden sm:flex border-l border-border h-8 mx-2" />
+      {user && (
+        <Button
+          size="sm"
+          className="flex-1 border border-border/40 py-3 text-sm h-full bg-destructive text-destructive-foreground hover:bg-destructive sm:bg-background sm:text-foreground sm:hover:bg-background sm:hover:text-destructive"
+          onClick={() => {
+            disconnect();
+            router.push("/");
+          }}
+        >
+          <X className="size-4 mr-1.5" /> Одјави се
+        </Button>
+      )}
     </div>
   );
 };
@@ -115,11 +89,11 @@ const CompactWalletInfo: React.FC<{ address: string }> = ({ address }) => {
 const ActiveMembers: React.FC = () => {
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-base font-semibold text-foreground flex items-center">
-          <Users className="h-4 w-4 mr-2" />
+      <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-2">
+        <h2 className="text-lg font-semibold text-foreground">
           Активни чланови еВСД
         </h2>
+
         <NewVoterDialog />
       </div>
       <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
@@ -136,7 +110,11 @@ const ActiveMembers: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{address}</p>
+                  <WalletAddress
+                    address={address}
+                    className="text-sm font-medium ml-1"
+                    iconSize={3}
+                  />
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs px-1.5 py-0">
                       {name}
@@ -172,25 +150,27 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Proveravamo da li je korisnik novi član koji treba da prihvati članstvo
-    const checkUserVotingRights = async (proposalService: ProposalService) => {
-      const canAccept =
-        await proposalService.canCurrentUserAcceptVotingRights();
+    const checkUserVotingRights = async (
+      proposalService: ProposalService,
+      user: User
+    ) => {
+      const canAccept = await proposalService.canUserAcceptVotingRights(user);
       setShowMembershipDialog(canAccept);
     };
     if (user && proposalService) {
-      checkUserVotingRights(proposalService);
+      checkUserVotingRights(proposalService, user);
     }
   }, [user, proposalService]);
 
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
   useEffect(() => {
     async function getUserActivity() {
-      if (proposalService) {
-        setActivity(await proposalService.getAllUserActivity());
+      if (user && proposalService) {
+        setActivity(await proposalService.getAllUserActivity(user));
       }
     }
     getUserActivity();
-  }, [proposalService]);
+  }, [proposalService, user]);
 
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = async () => {
@@ -200,6 +180,8 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col min-h-screen bg-muted/30">
+      <Header showNav={false} />
+
       {/* Dodajemo komponentu za prihvatanje članstva */}
       <MembershipAcceptanceDialog
         isOpen={showMembershipDialog}
@@ -212,11 +194,7 @@ export default function Dashboard() {
           {/* Wallet info and actions */}
           <div className="bg-background rounded-xl shadow-sm border border-border/40 p-4">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              {user ? (
-                <CompactWalletInfo address={user.address} />
-              ) : (
-                <OriginalWalletInfo />
-              )}
+              {user && <OriginalWalletInfo showName={true} />}
               <div className="flex w-full md:w-auto gap-3">
                 <ActionButtons />
               </div>
@@ -225,30 +203,34 @@ export default function Dashboard() {
 
           {/* Main tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-            <TabsList className="grid grid-cols-3 w-full bg-muted/50 p-1">
+            <TabsList className="grid grid-cols-4 w-full bg-muted/50 p-1">
               <TabsTrigger value="voting" className="text-sm py-2 font-medium">
-                <Vote className="h-4 w-4 mr-2" />
+                <Vote className="h-4 w-4 mr-2 hidden sm:block" />
                 Гласање
               </TabsTrigger>
               <TabsTrigger
                 value="user-proposals"
                 className="text-sm py-2 font-medium"
               >
-                <Timer className="h-4 w-4 mr-2" />
+                <Timer className="h-4 w-3 mr-2" />
                 {STRINGS.userActivity.userProposals.title}
               </TabsTrigger>
               <TabsTrigger
                 value="activity"
                 className="text-sm py-2 font-medium"
               >
-                <Activity className="h-4 w-4 mr-2" />
+                <Activity className="h-4 w-3 mr-2" />
                 {STRINGS.userActivity.timeLine.title}
+              </TabsTrigger>
+              <TabsTrigger value="members" className="text-sm py-2 font-medium">
+                <Users className="h-4 w-3 mr-2 hidden sm:block" />
+                Чланови
               </TabsTrigger>
             </TabsList>
 
             {/* Voting tab */}
             <TabsContent value="voting" className="mt-5">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <h2 className="text-lg font-semibold text-foreground">
                   Предлози за гласање
                 </h2>
@@ -291,10 +273,6 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
-
-              <div className="mt-7">
-                <ActiveMembers />
-              </div>
             </TabsContent>
 
             {/* User proposals tab */}
@@ -305,6 +283,10 @@ export default function Dashboard() {
             {/* Activity tab */}
             <TabsContent value="activity" className="mt-5">
               <Timeline userActivity={activity} />
+            </TabsContent>
+
+            <TabsContent value="members" className="mt-5">
+              <ActiveMembers />
             </TabsContent>
           </Tabs>
         </div>

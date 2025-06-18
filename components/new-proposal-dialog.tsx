@@ -237,6 +237,10 @@ export function NewProposalDialog({
         const errorString = error.toString();
         const errorWithCode = error as any;
 
+        console.log(error);
+        console.log(errorWithCode);
+        console.log(errorWithCode.code);
+
         if (errorString.includes("GovernorInsufficientProposerVotes")) {
           errorMessage = STRINGS.newProposal.error.insufficientEVSDTokens;
         } else if (
@@ -257,6 +261,10 @@ export function NewProposalDialog({
           errorMessage = STRINGS.newProposal.error.generic(errorString);
         } else if (errorWithCode.code === "INSUFFICIENT_FUNDS") {
           errorMessage = STRINGS.newProposal.error.insufficientETH;
+        } else if (errorString.includes("network changed")) {
+          errorMessage = STRINGS.newProposal.error.networkChanged;
+        } else if (errorWithCode.code === "NETWORK_ERROR") {
+          errorMessage = STRINGS.newProposal.error.networkError;
         } else {
           errorMessage = STRINGS.newProposal.error.generic(errorString);
         }
@@ -292,7 +300,7 @@ export function NewProposalDialog({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] w-[90%] sm:w-full overflow-y-auto rounded-lg">
         <DialogHeader>
           <DialogTitle>{STRINGS.newProposal.dialog.title}</DialogTitle>
           <DialogDescription>
@@ -355,6 +363,7 @@ export function NewProposalDialog({
                       title: e.target.value,
                     })
                   }
+                  className="text-sm"
                   placeholder={STRINGS.newProposal.form.title.placeholder}
                   disabled={loading || proposalSubmitted}
                 />
@@ -373,6 +382,7 @@ export function NewProposalDialog({
                       description: e.target.value,
                     })
                   }
+                  className="text-sm"
                   placeholder={STRINGS.newProposal.form.description.placeholder}
                   rows={6}
                   disabled={loading || proposalSubmitted}
@@ -391,7 +401,7 @@ export function NewProposalDialog({
               </div>
 
               <div className="space-y-4 mt-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
                   <Label className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     <span>
@@ -446,13 +456,13 @@ export function NewProposalDialog({
                           value={item.UIOnlyId}
                           className="border-b-0"
                         >
-                          <div className="flex items-center justify-between p-3 bg-slate-100 border-b">
-                            <AccordionTrigger>
-                              <div className="flex items-center gap-2">
-                                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                          <div className="max-w-full w-full flex items-center justify-between p-3 bg-slate-100 border-b">
+                            <AccordionTrigger className="w-32 sm:w-96">
+                              <div className="flex items-center gap-2 w-full min-w-0 overflow-hidden">
+                                <div className="flex-shrink-0 flex items-center justify-center h-5 w-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
                                   {index + 1}
-                                </span>
-                                <h4 className="font-medium truncate">
+                                </div>
+                                <h4 className="font-medium text-ellipsis overflow-hidden whitespace-nowrap min-w-0 flex-1 text-left line-clamp-1">
                                   {item.title ||
                                     `${STRINGS.newProposal.form.subItem.default} ${index + 1}`}
                                 </h4>
@@ -517,6 +527,7 @@ export function NewProposalDialog({
                                     STRINGS.newProposal.form.subItem.title
                                       .placeholder
                                   }
+                                  className="text-xs max-w-full"
                                   value={item.title}
                                   onChange={(e) =>
                                     updateSubItem(item, "title", e.target.value)
@@ -549,6 +560,7 @@ export function NewProposalDialog({
                                       e.target.value
                                     )
                                   }
+                                  className="text-xs max-w-full"
                                   rows={3}
                                   disabled={loading || proposalSubmitted}
                                 />
@@ -562,7 +574,7 @@ export function NewProposalDialog({
                 </ScrollArea>
               </div>
 
-              <div className="grid gap-2">
+              {/* <div className="grid gap-2">
                 <Label htmlFor="document">
                   {STRINGS.newProposal.form.attachment.label}
                 </Label>
@@ -588,7 +600,7 @@ export function NewProposalDialog({
                     </span>
                   )}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <DialogFooter>

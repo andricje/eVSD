@@ -1,43 +1,43 @@
 "use client";
+import { UserIcon } from "lucide-react";
 
-import { useProposals } from "@/hooks/use-proposals";
+import { useWallet } from "@/context/wallet-context";
 import { convertAddressToName } from "@/lib/utils";
-import { Copy, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { Badge } from "./ui/badge";
+import { WalletAddress } from "./wallet-address";
 
-export function WalletInfo() {
-  const { signerAddress } = useProposals();
-  const [copied, setCopied] = useState(false);
+interface WalletInfoProps {
+  showName?: boolean;
+}
 
-  if (!signerAddress) {
+export function WalletInfo({ showName = false }: WalletInfoProps) {
+  const { user } = useWallet();
+
+  if (!user) {
     return null;
   }
 
-  const copyAddress = () => {
-    navigator.clipboard.writeText(signerAddress);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  // Skraćeni prikaz adrese
-  const shortenAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
   return (
-    <div className="flex items-center gap-2">
-      <div className="font-medium text-lg">
-        {convertAddressToName(signerAddress)}
-      </div>
-      <div className="flex items-center text-sm text-muted-foreground">
-        {shortenAddress(signerAddress)}
-        <button onClick={copyAddress} className="ml-1 p-1 hover:text-blue-500">
-          {copied ? (
-            <CheckCircle2 className="h-3 w-3" />
-          ) : (
-            <Copy className="h-3 w-3" />
+    <div className="flex items-center justify-between bg-background py-4 px-2 rounded-lg">
+      <div className="flex items-center gap-4">
+        <div>
+          {/* Umesto imena korisnika trebalo bi prikazati fakultet, koji će se povući iz konteksta, kada bude dostupno */}
+          {showName && (
+            <div className="flex items-center gap-2">
+              <UserIcon className="h-5 w-5 text-primary" />
+              <p className="text-base font-semibold text-foreground">
+                {convertAddressToName(user.address)}
+              </p>
+            </div>
           )}
-        </button>
+          <div className="flex items-center gap-2 mt-1">
+            <Badge variant="secondary" className="px-2 py-0.5 text-sm">
+              <span className="text-muted-foreground">
+                <WalletAddress address={user.address} />
+              </span>
+            </Badge>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import hardhat from "hardhat";
-import { AddressLike, BaseContract, ethers, Signer } from "ethers";
+import { AddressLike, ethers, Signer } from "ethers";
 import { EvsdGovernor, EvsdToken } from "../typechain-types";
-import fs from "fs";
 
 export const ONE_TOKEN = hardhat.ethers.parseUnits("1", 18);
 
@@ -20,7 +19,6 @@ export async function deployToken(deployer: Signer) {
   );
   const evsdToken = await EvsdTokenFactory.deploy(deployer);
   await evsdToken.waitForDeployment();
-  await evsdToken.getAddress();
   return evsdToken;
 }
 
@@ -35,13 +33,6 @@ export async function deployGovernor(
   const evsdGovernor = await EvsdGovernorFactory.deploy(deployedTokenAddress);
   await evsdGovernor.waitForDeployment();
   return evsdGovernor;
-}
-
-export async function getArtifacts(contract: BaseContract) {
-  return {
-    address: await contract.getAddress(),
-    abi: contract.interface.format(),
-  };
 }
 
 export async function distributeVotingRights(
@@ -68,20 +59,9 @@ async function main() {
     deployer as unknown as ethers.Signer
   );
 
-  // Move the artifacts to the frontend directory
-  const tokenArtifacts = await getArtifacts(evsdToken);
-  const governorArtifacts = await getArtifacts(evsdGovernor);
-  fs.writeFileSync(
-    "contracts/evsd-token.json",
-    JSON.stringify(tokenArtifacts, null, 2)
-  );
-  fs.writeFileSync(
-    "contracts/evsd-governor.json",
-    JSON.stringify(governorArtifacts, null, 2)
-  );
   console.log("Token and Governor contracts deployed successfully!");
-  console.log("Token Address:", tokenArtifacts.address);
-  console.log("Governor Address:", governorArtifacts.address);
+  console.log("Token Address:", await evsdToken.getAddress());
+  console.log("Governor Address:", await evsdGovernor.getAddress());
 
   if (voters.length > 0) {
     // Distribute voting rights to the voters

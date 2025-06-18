@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect, ReactElement } from "react";
 import { useProposals } from "@/hooks/use-proposals";
 import { UIAddVoterVotableItem, UIProposal } from "@/types/proposal";
-import { getNewVoterProposalDescription } from "@/lib/utils";
 
 interface NewVoterDialogProps {
   customClassName?: string;
@@ -145,9 +144,11 @@ export function NewVoterDialog({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] w-[90%] sm:w-full overflow-y-auto rounded-lg">
         <DialogHeader>
-          <DialogTitle>Предлог за додавање новог члана Е-ВСД</DialogTitle>
+          <DialogTitle className="mt-4 sm:mt-0">
+            Предлог за додавање новог члана Е-ВСД
+          </DialogTitle>
           <DialogDescription>
             Попуните формулар да бисте предложили додавање новог члана.
           </DialogDescription>

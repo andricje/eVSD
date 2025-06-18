@@ -25,7 +25,9 @@ export function DonationsSection() {
   const [sortBy, setSortBy] = useState<string>("latest");
 
   const sortedDonations = [...testDonations].sort((a, b) => {
-    if (sortBy === "amount") return b.amount - a.amount;
+    if (sortBy === "amount") {
+      return b.amount - a.amount;
+    }
     return 0;
   });
 

@@ -1,40 +1,46 @@
 import { STRINGS } from "@/constants/strings";
 import { Proposal, User } from "@/types/proposal";
-import { Timer } from "lucide-react";
+import { Timer, Eye } from "lucide-react";
 import { CancelProposalButton } from "./cancel-proposal-button";
 import { StatusBadge } from "../badges";
 import { formatDate } from "@/lib/utils";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+const ViewProposalButton = ({ proposal }: { proposal: Proposal }) => (
+  <Button
+    variant="outline"
+    size="sm"
+    className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800"
+    asChild
+  >
+    <Link href={`/votes/${proposal.id}`}>
+      <Eye className="h-3.5 w-3.5 mr-1" />
+      Pogledaj
+    </Link>
+  </Button>
+);
 
 function ProposalDescriptionBody({ proposal }: { proposal: Proposal }) {
-  switch (proposal.status) {
-    case "open":
-      return (
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-          <div>
-            {STRINGS.userActivity.userProposals.addedAt}:{" "}
-            {formatDate(proposal.dateAdded)}
-          </div>
-          <div className="flex gap-2">
-            <CancelProposalButton proposal={proposal} />
-          </div>
-        </div>
-      );
-    case "closed":
-      return (
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-          <div>
-            {STRINGS.userActivity.userProposals.closedAt}:{" "}
-            {formatDate(proposal.dateAdded)}
-          </div>
-        </div>
-      );
-    case "cancelled":
-      return (
-        <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
-          <div>{STRINGS.proposal.statusClosed}</div>
-        </div>
-      );
-  }
+  const getBodyFromProposalStatus = (status: string) => {
+    switch (status) {
+      case "open":
+        return `${STRINGS.userActivity.userProposals.addedAt} ${formatDate(proposal.dateAdded)}`;
+      case "closed":
+        return `${STRINGS.userActivity.userProposals.closedAt} ${formatDate(proposal.dateAdded)}`;
+      case "cancelled":
+        return `${STRINGS.proposal.statusClosed}`;
+    }
+  };
+  return (
+    <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t">
+      <div>{getBodyFromProposalStatus(proposal.status)}</div>
+      <div className="flex gap-2">
+        <ViewProposalButton proposal={proposal} />
+        <CancelProposalButton proposal={proposal} />
+      </div>
+    </div>
+  );
 }
 
 function ProposalDescription({ proposal }: { proposal: Proposal }) {
@@ -43,7 +49,12 @@ function ProposalDescription({ proposal }: { proposal: Proposal }) {
       <div className="p-4">
         <div className="flex justify-between items-start mb-3">
           <h4 className="font-medium text-base">{proposal.title}</h4>
-          <StatusBadge status={proposal.status} expiresAt={proposal.closesAt} />
+          <div className="hidden sm:flex">
+            <StatusBadge
+              status={proposal.status}
+              expiresAt={proposal.closesAt}
+            />
+          </div>
         </div>
         <p className="text-sm text-gray-600 mb-4 line-clamp-2">
           {proposal.description}

@@ -30,7 +30,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { CountryCombobox } from "./country-combobox";
-import { Donation, Donor, testDonations, testDonors } from "@/types/donors";
+import { testDonations, testDonors } from "@/types/donors";
 
 const predefinedAmounts = {
   RSD: [600, 1200, 2400, 6000, 12000, 24000],
@@ -83,7 +83,9 @@ export function NewDonationDialog() {
   // ТОДО: Логика за чување фајлова (може се повезати са постојећом логиком за Нови предлог)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     const reader = new FileReader();
     reader.onloadend = () => {

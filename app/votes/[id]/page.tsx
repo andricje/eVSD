@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +20,6 @@ import {
   AlertTriangle,
   Layers,
   User as UserIcon,
-  Timer,
   Calendar,
   Clock,
 } from "lucide-react";
@@ -28,18 +27,16 @@ import {
 import { useProposals } from "@/hooks/use-proposals";
 import {
   countVoteForOption,
-  Proposal,
   VotableItem,
   VoteOption,
   User,
 } from "@/types/proposal";
-import {
-  formatDate,
-  getRemainingTime,
-  hasVotingTimeExpired,
-} from "@/lib/utils";
+import { formatDate, hasVotingTimeExpired } from "@/lib/utils";
 import { addressNameMap } from "@/constants/address-name-map";
 import { useWallet } from "@/context/wallet-context";
+import { WalletAddress } from "@/components/wallet-address";
+import { StatusBadge } from "@/components/badges";
+import { STRINGS } from "@/constants/strings";
 
 // VoteConfirm komponenta
 const VoteConfirm: React.FC<{
@@ -54,23 +51,23 @@ const VoteConfirm: React.FC<{
     return null;
   }
 
-  let voteText = "Uzdržan";
+  let voteText = STRINGS.voting.voteOptions.abstain.toUpperCase();
   if (vote === "for") {
-    voteText = "ZA";
+    voteText = STRINGS.voting.voteOptions.for.toUpperCase();
   }
   if (vote === "against") {
-    voteText = "PROTIV";
+    voteText = STRINGS.voting.voteOptions.against.toUpperCase();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <Card className="w-full max-w-md mx-4">
         <CardHeader>
-          <CardTitle>Potvrda glasanja</CardTitle>
+          <CardTitle>Потврда гласања</CardTitle>
           <CardDescription>
             {subItemTitle
-              ? `Potvrđujete glas za podtačku: ${subItemTitle}`
-              : "Potvrđujete vaš glas na ovom predlogu"}
+              ? `Потврђујете глас за тачку за гласање: ${subItemTitle}`
+              : "Потврђујете Ваш глас на овом предлогу"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,18 +81,18 @@ const VoteConfirm: React.FC<{
             {vote === "abstain" && (
               <UserCheck className="h-16 w-16 mx-auto text-amber-500 mb-4" />
             )}
-            <p className="text-lg font-medium">Glasaćete {voteText}</p>
+            <p className="text-lg font-medium">Гласаћете {voteText}</p>
             <p className="text-muted-foreground mt-2">
-              Nakon potvrde vaš glas je trajno zabeležen i ne može se promeniti.
+              Након потврде Ваш глас је трајно забележен и не може се променити.
             </p>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Otkaži
+            Откажи
           </Button>
           <Button onClick={onConfirm} disabled={isLoading}>
-            {isLoading ? "Slanje..." : "Potvrdi glas"}
+            {isLoading ? "Слање..." : "Потврди глас"}
           </Button>
         </CardFooter>
       </Card>
@@ -109,20 +106,21 @@ const VoteButton: React.FC<{
   disabled?: boolean;
   active?: boolean;
   onClick: () => void;
-}> = ({ type, disabled = false, active = false, onClick }) => {
+  className?: string;
+}> = ({ type, disabled = false, active = false, onClick, className }) => {
   let icon = <UserCheck className="h-5 w-5" />;
-  let text = "Uzdržan";
+  let text = STRINGS.voting.voteOptions.abstain;
   let colorClass = "border-amber-200 text-amber-700";
   let activeClass = "bg-amber-100";
 
   if (type === "for") {
     icon = <ThumbsUp className="h-5 w-5" />;
-    text = "Za";
+    text = STRINGS.voting.voteOptions.for;
     colorClass = "border-green-200 text-green-700";
     activeClass = "bg-green-100";
   } else if (type === "against") {
     icon = <ThumbsDown className="h-5 w-5" />;
-    text = "Protiv";
+    text = STRINGS.voting.voteOptions.against;
     colorClass = "border-red-200 text-red-700";
     activeClass = "bg-red-100";
   }
@@ -133,12 +131,12 @@ const VoteButton: React.FC<{
       size="lg"
       disabled={disabled}
       onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 border py-6 
+      className={`${className} flex-1 flex items-center justify-center gap-2 border py-6 
         ${active ? activeClass : "bg-transparent"} 
         ${disabled ? "opacity-50" : colorClass}`}
     >
       {icon}
-      <span className="font-medium">{text}</span>
+      <span className="font-medium capitalize">{text}</span>
     </Button>
   );
 };
@@ -170,23 +168,26 @@ const VoteResultBar: React.FC<{
           style={{ width: `${abstainPercent}%` }}
         />
       </div>
-      <div className="flex justify-between text-xs">
+      <div className="flex flex-col sm:flex-row sm:justify-between text-xs">
         <div className="flex items-center">
           <span className="h-2 w-2 rounded-full bg-green-500 mr-1"></span>
-          <span>
-            Za: {votesFor} ({forPercent.toFixed(1)}%)
+          <span className="capitalize">
+            {STRINGS.voting.voteOptions.for}: {votesFor} (
+            {forPercent.toFixed(1)}%)
           </span>
         </div>
         <div className="flex items-center">
           <span className="h-2 w-2 rounded-full bg-red-500 mr-1"></span>
-          <span>
-            Protiv: {votesAgainst} ({againstPercent.toFixed(1)}%)
+          <span className="capitalize">
+            {STRINGS.voting.voteOptions.against}: {votesAgainst} (
+            {againstPercent.toFixed(1)}%)
           </span>
         </div>
         <div className="flex items-center">
           <span className="h-2 w-2 rounded-full bg-amber-500 mr-1"></span>
-          <span>
-            Uzdržani: {votesAbstain} ({abstainPercent.toFixed(1)}%)
+          <span className="capitalize">
+            {STRINGS.voting.voteOptions.abstain}: {votesAbstain} (
+            {abstainPercent.toFixed(1)}%)
           </span>
         </div>
       </div>
@@ -199,19 +200,22 @@ const YourVoteBadge = ({ vote }: { vote: string }) => {
   if (vote === "for") {
     return (
       <Badge className="bg-green-500/10 text-green-700 border-green-200">
-        <ThumbsUp className="h-3 w-3 mr-1" /> Glasali ste ZA
+        <ThumbsUp className="h-3 w-3 mr-1" /> Гласали сте{" "}
+        {STRINGS.voting.voteOptions.for.toUpperCase()}
       </Badge>
     );
   } else if (vote === "against") {
     return (
       <Badge className="bg-red-500/10 text-red-700 border-red-200">
-        <ThumbsDown className="h-3 w-3 mr-1" /> Glasali ste PROTIV
+        <ThumbsDown className="h-3 w-3 mr-1" /> Гласали сте{" "}
+        {STRINGS.voting.voteOptions.against.toUpperCase()}
       </Badge>
     );
   } else if (vote === "abstain") {
     return (
       <Badge className="bg-amber-500/10 text-amber-700 border-amber-200">
-        <UserCheck className="h-3 w-3 mr-1" /> Glasali ste UZDRŽANO
+        <UserCheck className="h-3 w-3 mr-1" /> Гласали сте{" "}
+        {STRINGS.voting.voteOptions.abstain.toUpperCase()}
       </Badge>
     );
   }
@@ -223,8 +227,10 @@ const SubItemVoting: React.FC<{
   subItem: VotableItem;
   currentUser: User | null;
   onVote: (id: string, vote: VoteOption, title: string) => void;
-}> = ({ subItem, currentUser: currentUser, onVote }) => {
-  const isVotingEnabled = currentUser && currentUser.address in addressNameMap;
+  isProposalOpen: boolean;
+}> = ({ subItem, currentUser: currentUser, onVote, isProposalOpen }) => {
+  const isVotingEnabled =
+    isProposalOpen && currentUser && currentUser.address in addressNameMap;
   const yourVote =
     (currentUser && subItem.userVotes.get(currentUser.address)?.vote) ??
     "didntVote";
@@ -248,7 +254,7 @@ const SubItemVoting: React.FC<{
         />
       </CardContent>
       {isVotingEnabled && yourVote === "didntVote" && (
-        <CardFooter className="flex gap-2 pt-0">
+        <CardFooter className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <VoteButton
             type="for"
             onClick={() => onVote(subItem.id.toString(), "for", subItem.title)}
@@ -261,6 +267,7 @@ const SubItemVoting: React.FC<{
           />
           <VoteButton
             type="abstain"
+            className="col-span-2 sm:col-span-1"
             onClick={() =>
               onVote(subItem.id.toString(), "abstain", subItem.title)
             }
@@ -278,7 +285,7 @@ const AuthorBadge = ({ isAuthor }: { isAuthor: boolean }) => {
 
   return (
     <Badge className="bg-blue-500/10 text-blue-700 border-blue-200">
-      <UserIcon className="h-3 w-3 mr-1" /> Vaš predlog
+      <UserIcon className="h-3 w-3 mr-1" /> Ваш предлог
     </Badge>
   );
 };
@@ -290,11 +297,9 @@ export default function ProposalDetails() {
   const { user } = useWallet();
   const { proposals, proposalService } = useProposals();
 
-  useEffect(() => {
-    if (!user) {
-      router.push("/login");
-    }
-  }, [user]);
+  if (!user) {
+    router.push("/login");
+  }
 
   const [error, setError] = useState("");
 
@@ -334,8 +339,8 @@ export default function ProposalDetails() {
     setIsVoting(true);
 
     try {
-      let votePrompt = `Glasate ${selectedVote === "for" ? "ZA" : selectedVote === "against" ? "PROTIV" : "UZDRŽANO"} `;
-      votePrompt += selectedSubItemId ? "podtačku predloga" : "predlog";
+      let votePrompt = `Гласате ${selectedVote === "for" ? STRINGS.voting.voteOptions.for.toUpperCase() : selectedVote === "against" ? STRINGS.voting.voteOptions.against.toUpperCase() : STRINGS.voting.voteOptions.abstain.toUpperCase()} `;
+      votePrompt += selectedSubItemId ? "тачку за гласање" : "предлог";
       console.log(votePrompt);
 
       const voteItem = proposal.voteItems.find(
@@ -345,11 +350,11 @@ export default function ProposalDetails() {
       if (voteItem) {
         await proposalService.voteForItem(voteItem, selectedVote as VoteOption);
       } else {
-        setError("Neuspešno glasanje. Pokušajte ponovo.");
+        setError("Неуспешно гласање. Покушајте поново.");
       }
     } catch (err) {
-      console.error("Greška prilikom glasanja:", err);
-      setError("Došlo je do greške prilikom glasanja. Pokušajte ponovo.");
+      console.error("Грешка приликом гласања:", err);
+      setError("Дошло је до грешке приликом гласања. Покушајте поново.");
     } finally {
       setIsVoting(false);
       setIsVoteDialogOpen(false);
@@ -363,13 +368,13 @@ export default function ProposalDetails() {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen px-4">
         <AlertTriangle className="h-16 w-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold mb-2">Greška</h1>
+        <h1 className="text-2xl font-bold mb-2">Грешка</h1>
         <p className="text-muted-foreground text-center mb-6">
-          {error || "Nije moguće učitati detalje predloga."}
+          {error || "Није могуће учитати детаље предлога."}
         </p>
         <Button onClick={() => router.push("/dashboard")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Nazad na listu predloga
+          Назад на листу предлога
         </Button>
       </div>
     );
@@ -389,31 +394,37 @@ export default function ProposalDetails() {
               className="pl-0"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
-              Nazad
+              Назад
             </Button>
           </div>
           <Card className="mb-8 border-border/40 shadow-sm">
             <CardHeader>
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-2">
                 <div>
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2 flex-wrap">
                     <h1 className="text-2xl font-bold">{proposal.title}</h1>
-                    <StatusBadge proposal={proposal} />
-                    {isAuthor && <AuthorBadge isAuthor={isAuthor} />}
+                    <div>
+                      <StatusBadge
+                        status={proposal.status}
+                        expiresAt={proposal.closesAt}
+                      />
+                    </div>
+                    <div>{isAuthor && <AuthorBadge isAuthor={isAuthor} />}</div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <UserIcon className="h-4 w-4" />
-                      <span>{proposal.author.address}</span>
+                      <WalletAddress address={proposal.author.address} />
                     </div>
+
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      <span>Dodato: {formatDate(proposal.dateAdded)}</span>
+                      <span>Додато: {formatDate(proposal.dateAdded)}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
-                      <span>Zatvaranje: {formatDate(proposal.closesAt)}</span>
+                      <span>Затварање: {formatDate(proposal.closesAt)}</span>
                     </div>
                   </div>
                 </div>
@@ -429,7 +440,7 @@ export default function ProposalDetails() {
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <Layers className="h-5 w-5" />
-              Podtačke predloga
+              Тачке за гласање
             </h2>
 
             {/* Prikazujemo sve podtačke jednu ispod druge */}
@@ -440,6 +451,12 @@ export default function ProposalDetails() {
                   subItem={subItem}
                   currentUser={user}
                   onVote={handleSubItemVoteSelect}
+                  isProposalOpen={
+                    proposal.status === "open" &&
+                    !hasVotingTimeExpired(proposal)
+                      ? true
+                      : false
+                  }
                 />
               ))}
             </div>
@@ -459,36 +476,3 @@ export default function ProposalDetails() {
     </div>
   );
 }
-
-// StatusBadge komponenta
-const StatusBadge = ({ proposal }: { proposal: Proposal }) => {
-  if (proposal.status === "closed") {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-gray-500/10 text-gray-700 border-gray-200"
-      >
-        Glasanje zatvoreno
-      </Badge>
-    );
-  } else if (hasVotingTimeExpired(proposal)) {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-gray-500/10 text-gray-700 border-gray-200"
-      >
-        Glasanje isteklo
-      </Badge>
-    );
-  } else {
-    return (
-      <Badge
-        variant="outline"
-        className="bg-amber-500/10 text-amber-700 border-amber-200"
-      >
-        <Timer className="h-3 w-3 mr-1" />
-        {getRemainingTime(proposal.closesAt)}
-      </Badge>
-    );
-  }
-};

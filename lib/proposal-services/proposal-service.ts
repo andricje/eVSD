@@ -1,24 +1,38 @@
 import {
   Proposal,
   UIProposal,
+  User,
+  UserActivityEventProposal,
+  UserActivityEventVote,
+  UserVotingStatus,
   VotableItem,
   VoteOption,
 } from "@/types/proposal";
-import { onProposalsChangedUnsubscribe } from "./blockchain-proposal-service";
-import { UserActivityEventProposal } from "@/types/activity";
-import { UserActivityEventVote } from "@/types/activity";
+export type onProposalsChangedUnsubscribe = () => void;
 
-export interface ProposalService {
+export interface ProposalReader {
   getProposals: () => Promise<Proposal[]>;
-  uploadProposal: (proposal: UIProposal) => Promise<bigint>;
-  voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
-  cancelProposal(proposal: Proposal): Promise<boolean>;
   onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
   ): onProposalsChangedUnsubscribe;
-  getAllUserActivity(): Promise<
-    (UserActivityEventVote | UserActivityEventProposal)[]
-  >;
-  canCurrentUserAcceptVotingRights(): Promise<boolean>;
+  getUserVotingStatus(user: User): Promise<UserVotingStatus>;
+}
+
+export interface UserActivityTracker {
+  getAllUserActivity: (
+    user: User
+  ) => Promise<(UserActivityEventVote | UserActivityEventProposal)[]>;
+  canUserAcceptVotingRights(user: User): Promise<boolean>;
+}
+
+export interface ProposalWriter {
+  uploadProposal: (proposal: UIProposal) => Promise<bigint>;
+  voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
+  cancelProposal(proposal: Proposal): Promise<boolean>;
   acceptVotingRights(): Promise<void>;
 }
+
+export interface ProposalService
+  extends ProposalReader,
+    ProposalWriter,
+    UserActivityTracker {}

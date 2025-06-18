@@ -1,44 +1,45 @@
 import {
   countTotalVotes,
-  QUORUM,
-  isQuorumReached,
   convertAddressToName,
-  getTranslatedVoteOption,
   getTranslatedVoteOptionWithCount,
   getVoteResult,
+  isVotingComplete,
 } from "@/lib/utils";
-import { countVoteForOption, VotableItem } from "@/types/proposal";
+import { countVoteForOption, Proposal, VotableItem } from "@/types/proposal";
 import { Badge } from "../ui/badge";
 import { VoteBadge, VoteResultBadge } from "../badges";
 import { STRINGS } from "@/constants/strings";
 
 interface VoteItemInfoProps {
   voteItem: VotableItem;
+  proposal?: Proposal;
 }
-export function VoteItemInfo({ voteItem }: VoteItemInfoProps) {
+
+export function VoteItemInfo({ voteItem, proposal }: VoteItemInfoProps) {
   const votesFor = countVoteForOption(voteItem, "for");
   const votesAgainst = countVoteForOption(voteItem, "against");
   const votesAbstain = countVoteForOption(voteItem, "abstain");
   return (
     <>
-      <div className="flex items-center gap-4">
-        <div className="flex items-center">
-          <Badge className="bg-green-500">
-            {getTranslatedVoteOptionWithCount("for", votesFor)}
-          </Badge>
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 justify-between lg:gap-12">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <Badge className="bg-green-500 flex-shrink-0 self-start h-fit">
+              {getTranslatedVoteOptionWithCount("for", votesFor)}
+            </Badge>
+          </div>
+          <div className="flex items-center">
+            <Badge className="bg-red-500 flex-shrink-0 self-start h-fit">
+              {getTranslatedVoteOptionWithCount("against", votesAgainst)}
+            </Badge>
+          </div>
+          <div className="flex items-center">
+            <Badge variant="outline" className="flex-shrink-0 self-start h-fit">
+              {getTranslatedVoteOptionWithCount("abstain", votesAbstain)}
+            </Badge>
+          </div>
         </div>
-        <div className="flex items-center">
-          <Badge className="bg-red-500">
-            {getTranslatedVoteOptionWithCount("against", votesAgainst)}
-          </Badge>
-        </div>
-        <div className="flex items-center">
-          <Badge variant="outline">
-            {getTranslatedVoteOptionWithCount("abstain", votesAbstain)}
-          </Badge>
-        </div>
-      </div>
-      <div>
+        {/* <div>
         <p className="text-sm font-medium mb-1">{STRINGS.voting.quorum}</p>
         <div className="flex items-center">
           <span>
@@ -50,12 +51,19 @@ export function VoteItemInfo({ voteItem }: VoteItemInfoProps) {
             </Badge>
           )}
         </div>
-      </div>
-      <div>
-        <p className="text-sm font-medium mb-1">{STRINGS.voting.result}</p>
-        <VoteResultBadge
-          status={getVoteResult(votesFor, votesAgainst, votesAbstain)}
-        />
+      </div> */}
+        <div className="flex items-center sm:justify-end gap-2">
+          <div className="flex sm:hidden">
+            <p className="text-sm">{STRINGS.voting.result}: </p>
+          </div>
+          <div className="sm:min-w-[200px] flex sm:justify-end">
+            <VoteResultBadge
+              status={getVoteResult(votesFor, votesAgainst, votesAbstain)}
+              totalVotes={countTotalVotes(voteItem)}
+              proposal={proposal}
+            />
+          </div>
+        </div>
       </div>
     </>
   );

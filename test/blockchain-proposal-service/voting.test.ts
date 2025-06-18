@@ -2,7 +2,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { BlockchainProposalService } from "../../lib/proposal-services/blockchain-proposal-service";
+import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
 import {
   UIAddVoterVotableItem,
   UIProposal,
@@ -71,12 +71,12 @@ describe("BlockchainProposalService integration", function () {
   let token: EvsdToken;
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
-    registeredVoterProposalServices = initData.registeredVoterProposalServices;
+    registeredVoterProposalServices = initData.eligibleVoterProposalServices;
     unregisteredVoterProposalServices =
-      initData.unregisteredVoterProposalServices;
+      initData.ineligibleVoterProposalServices;
     addVoterVoteItem = initData.addVoterVoteItem;
     votingPeriod = initData.votingPeriod;
-    unregisteredVoterAddress = initData.unregisteredVoterAddress;
+    unregisteredVoterAddress = initData.ineligibleVoterAddress;
     token = initData.evsdToken;
   });
 
