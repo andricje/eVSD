@@ -12,13 +12,14 @@ import {
   Users,
   Vote,
   X,
-  History,
   User as UserIcon,
+  Timer,
+  Activity,
 } from "lucide-react";
 
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import { WalletInfo as OriginalWalletInfo } from "@/components/wallet-info";
-import { UserActivity } from "@/components/user-activity/user-activity";
+import { UserActivityEvent } from "@/types/activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
@@ -29,17 +30,22 @@ import { MembershipAcceptanceDialog } from "../../components/membership-acceptan
 import { useRouter } from "next/navigation";
 import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { STRINGS } from "@/constants/strings";
+import { UserProposals } from "@/components/user-activity/user-proposals";
+import { Timeline } from "@/components/user-activity/timeline";
 import { WalletAddress } from "@/components/wallet-address";
 import { Header } from "@/components/header";
 
 // Action Buttons
-const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
+const ActionButtons: React.FC = () => {
   const { disconnect, user } = useWallet();
   const router = useRouter();
 
-  if (!user) {
-    router.push("/login");
-  }
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, [router, user]);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
@@ -78,8 +84,6 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
     </div>
   );
 };
-
-// SystemAnnouncements Component
 
 // ActiveMembers Component
 const ActiveMembers: React.FC = () => {
@@ -158,6 +162,16 @@ export default function Dashboard() {
     }
   }, [user, proposalService]);
 
+  const [activity, setActivity] = useState<UserActivityEvent[]>([]);
+  useEffect(() => {
+    async function getUserActivity() {
+      if (user && proposalService) {
+        setActivity(await proposalService.getAllUserActivity(user));
+      }
+    }
+    getUserActivity();
+  }, [proposalService, user]);
+
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = async () => {
     await proposalService?.acceptVotingRights();
@@ -182,27 +196,34 @@ export default function Dashboard() {
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
               {user && <OriginalWalletInfo showName={true} />}
               <div className="flex w-full md:w-auto gap-3">
-                <ActionButtons isAdmin={false} />
+                <ActionButtons />
               </div>
             </div>
           </div>
 
           {/* Main tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-2">
-            <TabsList className="grid grid-cols-3 w-full bg-muted/50 p-1">
+            <TabsList className="grid grid-cols-4 w-full bg-muted/50 p-1">
               <TabsTrigger value="voting" className="text-sm py-2 font-medium">
                 <Vote className="h-4 w-4 mr-2 hidden sm:block" />
                 Гласање
               </TabsTrigger>
               <TabsTrigger
+                value="user-proposals"
+                className="text-sm py-2 font-medium"
+              >
+                <Timer className="h-4 w-3 mr-2" />
+                {STRINGS.userActivity.userProposals.title}
+              </TabsTrigger>
+              <TabsTrigger
                 value="activity"
                 className="text-sm py-2 font-medium"
               >
-                <History className="h-4 w-4 mr-2 hidden sm:block" />
-                Активност
+                <Activity className="h-4 w-3 mr-2" />
+                {STRINGS.userActivity.timeLine.title}
               </TabsTrigger>
               <TabsTrigger value="members" className="text-sm py-2 font-medium">
-                <Users className="h-4 w-4 mr-2 hidden sm:block" />
+                <Users className="h-4 w-3 mr-2 hidden sm:block" />
                 Чланови
               </TabsTrigger>
             </TabsList>
@@ -252,25 +273,20 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+            </TabsContent>
 
-              {/* <div className="mt-7 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <SystemAnnouncements />
-                <ActiveMembers />
-              </div> */}
+            {/* User proposals tab */}
+            <TabsContent value="user-proposals" className="mt-5">
+              <UserProposals proposals={proposals} user={user} />
             </TabsContent>
 
             {/* Activity tab */}
             <TabsContent value="activity" className="mt-5">
-              <h2 className="text-lg font-semibold text-foreground mb-5">
-                Моје активности
-              </h2>
-              <UserActivity />
+              <Timeline userActivity={activity} />
             </TabsContent>
 
             <TabsContent value="members" className="mt-5">
-              <div>
-                <ActiveMembers />
-              </div>
+              <ActiveMembers />
             </TabsContent>
           </Tabs>
         </div>
