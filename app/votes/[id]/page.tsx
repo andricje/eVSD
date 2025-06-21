@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ import { useWallet } from "@/context/wallet-context";
 import { WalletAddress } from "@/components/wallet-address";
 import { StatusBadge } from "@/components/badges";
 import { STRINGS } from "@/constants/strings";
+import { ProposalService } from "@/lib/proposal-services/proposal-service";
 
 // VoteConfirm komponenta
 const VoteConfirm: React.FC<{
@@ -227,10 +228,22 @@ const SubItemVoting: React.FC<{
   subItem: VotableItem;
   currentUser: User | null;
   onVote: (id: string, vote: VoteOption, title: string) => void;
-  isProposalOpen: boolean;
-}> = ({ subItem, currentUser: currentUser, onVote, isProposalOpen }) => {
-  const isVotingEnabled =
-    isProposalOpen && currentUser && currentUser.address in addressNameMap;
+}> = ({ subItem, currentUser: currentUser, onVote }) => {
+  const { proposalService } = useProposals();
+  const [isVotingEnabled, setIsVotingEnabled] = useState(false);
+  useEffect(() => {
+    if (currentUser && proposalService) {
+      checkAndUpdateVotingEnabled(currentUser, proposalService);
+    }
+    async function checkAndUpdateVotingEnabled(
+      user: User,
+      proposalService: ProposalService
+    ) {
+      setIsVotingEnabled(
+        (await proposalService.getUserVotingStatus(user)) === "Eligible"
+      );
+    }
+  }, [currentUser, proposalService]);
   const yourVote =
     (currentUser && subItem.userVotes.get(currentUser.address)?.vote) ??
     "didntVote";

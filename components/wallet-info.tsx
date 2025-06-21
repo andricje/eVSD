@@ -2,7 +2,6 @@
 import { UserIcon } from "lucide-react";
 
 import { useWallet } from "@/context/wallet-context";
-import { convertAddressToName } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { WalletAddress } from "./wallet-address";
 
@@ -26,7 +25,7 @@ export function WalletInfo({ showName = false }: WalletInfoProps) {
             <div className="flex items-center gap-2">
               <UserIcon className="h-5 w-5 text-primary" />
               <p className="text-base font-semibold text-foreground">
-                {convertAddressToName(user.address)}
+                {user.name}
               </p>
             </div>
           )}

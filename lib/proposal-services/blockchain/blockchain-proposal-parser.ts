@@ -144,9 +144,14 @@ export class BlockchainProposalParser {
       args,
       voteEventsForId
     );
+    const { description } = getNewVoterProposalDescription(
+      deserializedData.newVoterAddress
+    );
     return {
       ...votableItem,
       newVoterAddress: deserializedData.newVoterAddress,
+      title: description,
+      description: "",
     };
   }
   public serializeProposal(proposal: UIProposal | Proposal) {
@@ -175,7 +180,8 @@ export class BlockchainProposalParser {
           parentProposalId: parentId.toString(),
           newVoterAddress: item.newVoterAddress,
           index: 0,
-          ...getNewVoterProposalDescription(item.newVoterAddress),
+          title: "" /* Left blank on purpose */,
+          description: "" /* Left blank on purpose */,
         }
       : {
           type: "voteItem",
