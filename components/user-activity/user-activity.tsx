@@ -1,28 +1,49 @@
 "use client";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserActivityEvent } from "@/types/proposal";
+import { useEffect, useMemo, useState } from "react";
 import { Timer, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import { STRINGS } from "@/constants/strings";
 import { useProposals } from "@/hooks/use-proposals";
 import { useWallet } from "@/context/wallet-context";
+import { Proposal, UserActivityEvent } from "@/types/proposal";
 import { Timeline } from "./timeline";
-import { useEffect, useState } from "react";
 import { UserProposals } from "./user-proposals";
-import { STRINGS } from "@/constants/strings";
+import {
+  ActivitySkeleton,
+  MyProposalsSkeleton,
+} from "../loadingSkeletons/loadingSkeletons";
 
 export function UserActivity() {
-  const { proposals, proposalService } = useProposals();
+  const {
+    proposals,
+    proposalService,
+    loading: proposalsLoading,
+  } = useProposals();
   const { user } = useWallet();
 
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState<boolean>(true);
+
   useEffect(() => {
     async function getUserActivity() {
       if (proposalService && user) {
+        setActivitiesLoading(true);
         setActivity(await proposalService.getAllUserActivity(user));
+        setActivitiesLoading(false);
       }
     }
     getUserActivity();
   }, [proposalService, user]);
+
+  // Filtriranje predloga trenutno ulogovanog korisnika
+  const userProposals: Proposal[] = useMemo(
+    () =>
+      proposals && user
+        ? proposals.filter((p) => p.author.address === user.address)
+        : [],
+    [proposals, user]
+  );
 
   if (!proposalService) {
     return (
@@ -55,12 +76,20 @@ export function UserActivity() {
 
       {/* Moji predlozi */}
       <TabsContent value="predlozi">
-        <UserProposals proposals={proposals} user={user} />
+        {proposalsLoading ? (
+          <MyProposalsSkeleton />
+        ) : (
+          <UserProposals proposals={userProposals} user={user} />
+        )}
       </TabsContent>
 
       {/* Sve aktivnosti */}
       <TabsContent value="aktivnosti">
-        <Timeline userActivity={activity} />
+        {activitiesLoading ? (
+          <ActivitySkeleton />
+        ) : (
+          <Timeline userActivity={activity} />
+        )}
       </TabsContent>
     </Tabs>
   );
