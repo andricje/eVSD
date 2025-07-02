@@ -29,6 +29,7 @@ import { InMemoryProposalFileService } from "../../file-upload";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
 import { EvsdGovernor, EvsdToken } from "../../../typechain-types";
 import { ProposalCreatedEvent } from "../../../typechain-types/contracts/EvsdGovernor";
+import { UserService } from "@/lib/user-services/user-service";
 
 export class BlockchainProposalReader implements ProposalReader {
   private readonly governor: EvsdGovernor;
@@ -39,15 +40,21 @@ export class BlockchainProposalReader implements ProposalReader {
   constructor(
     governor: EvsdGovernor,
     token: EvsdToken,
-    provider: ethers.Provider
+    provider: ethers.Provider,
+    userService: UserService
   ) {
     this.governor = governor;
     this.token = token;
     this.parser = new BlockchainProposalParser(
       this.governor,
-      new InMemoryProposalFileService()
+      new InMemoryProposalFileService(),
+      userService
     );
-    this.eventProvider = new BlockchainEventProvider(governor, provider);
+    this.eventProvider = new BlockchainEventProvider(
+      governor,
+      provider,
+      userService
+    );
   }
   async getUserVotingStatus(user: User): Promise<UserVotingStatus> {
     const currentVotingPower = await this.token.getVotes(user.address);

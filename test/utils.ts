@@ -22,7 +22,8 @@ import {
   InMemoryProposalFileService,
   ProposalFileService,
 } from "../lib/file-upload";
-import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { ProposalService } from "../lib/proposal-services/proposal-service";
+import { BlockchainUserService } from "../lib/user-services/blockchain-user-service";
 export const rng = seedrandom("42");
 export interface TestInitData {
   eligibleVoterProposalServices: BlockchainProposalService[];
@@ -35,6 +36,7 @@ export interface TestInitData {
   eligibleVoters: User[];
   ineligibleVoterAddress: string;
   fileService: ProposalFileService;
+  userService: BlockchainUserService;
 }
 
 export async function deployContracts(deployer: ethers.Signer) {
@@ -110,6 +112,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
 
   // Create mock services
   const fileService = new InMemoryProposalFileService();
+  const userService = new BlockchainUserService(governor);
   const registeredVoterProposalServices = voters.map(
     (voter) =>
       new BlockchainProposalService(
@@ -117,6 +120,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
         token,
         voter as unknown as ethers.Signer,
         fileService,
+        userService,
         hardhat.ethers.provider
       )
   );
@@ -127,10 +131,14 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
       token,
       unregisteredVoter as unknown as ethers.Signer,
       fileService,
+      userService,
       hardhat.ethers.provider
     ),
   ];
-  const addVoterVoteItem = { newVoterAddress: unregisteredVoter.address };
+  const addVoterVoteItem: UIAddVoterVotableItem = {
+    newVoterAddress: unregisteredVoter.address,
+    newVoterName: "New voter",
+  };
   const votingPeriod = Number(await governor.votingPeriod());
   const initData: TestInitData = {
     eligibleVoterProposalServices: registeredVoterProposalServices,
@@ -145,6 +153,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
       return { name: voter.address, address: voter.address };
     }),
     fileService,
+    userService,
   };
   return initData;
 }

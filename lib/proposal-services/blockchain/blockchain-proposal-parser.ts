@@ -9,15 +9,16 @@ import {
   VoteEvent,
 } from "../../../types/proposal";
 import {
-  convertAddressToName,
   convertGovernorState,
   getNewVoterProposalDescription,
 } from "../../utils";
 import { ProposalFileService } from "../../file-upload";
 import { EvsdGovernor } from "../../../typechain-types";
 import { ProposalParseError } from "../../../types/proposal-service-errors";
+import { UserService } from "../../../lib/user-services/user-service";
+import { STRINGS } from "../../../constants/strings";
 
-interface ChainData {
+export interface ChainData {
   title: string;
   description: string;
   type: "proposal" | "voteItem" | "addVoterVoteItem";
@@ -37,6 +38,7 @@ export interface AddVoterVotableItemChainData extends ChainData {
   parentProposalId: string;
   index: number;
   newVoterAddress: string;
+  newVoterName: string;
 }
 
 export interface ProposalCreatedEventArgs {
@@ -58,10 +60,16 @@ export const isAddVoterVotableItemChainData = (
 export class BlockchainProposalParser {
   private readonly governor: EvsdGovernor;
   private readonly fileService: ProposalFileService;
+  private readonly userService: UserService;
 
-  constructor(governor: EvsdGovernor, fileService: ProposalFileService) {
+  constructor(
+    governor: EvsdGovernor,
+    fileService: ProposalFileService,
+    userService: UserService
+  ) {
     this.governor = governor;
     this.fileService = fileService;
+    this.userService = userService;
   }
 
   public deserializeChainData(data: string): ChainData {
@@ -81,15 +89,23 @@ export class BlockchainProposalParser {
       const proposalState = convertGovernorState(stateIndex);
       const deadline = await this.governor.proposalDeadline(proposalId);
       const closesAt = new Date(Number(deadline) * 1000);
+      let author = await this.userService.getUserForAddress(
+        args.proposerAddress
+      );
+      if (!author) {
+        console.error("Failed to find the author name for the given address");
+        author = {
+          name: STRINGS.user.unknownUser,
+          address: args.proposerAddress,
+        };
+      }
+
       // Create a proposal with an empty itemsToVote array - it will be filled after all of the VotableItems arrive
       return {
         id: proposalId,
         title: proposalData.title,
         description: proposalData.description,
-        author: {
-          address: args.proposerAddress,
-          name: convertAddressToName(args.proposerAddress),
-        },
+        author,
         file:
           proposalData.fileHash !== ""
             ? await this.fileService.fetch(proposalData.fileHash)
@@ -145,7 +161,8 @@ export class BlockchainProposalParser {
       voteEventsForId
     );
     const { description } = getNewVoterProposalDescription(
-      deserializedData.newVoterAddress
+      deserializedData.newVoterAddress,
+      deserializedData.newVoterName
     );
     return {
       ...votableItem,
@@ -179,6 +196,7 @@ export class BlockchainProposalParser {
           type: "addVoterVoteItem",
           parentProposalId: parentId.toString(),
           newVoterAddress: item.newVoterAddress,
+          newVoterName: item.newVoterName,
           index: 0,
           title: "" /* Left blank on purpose */,
           description: "" /* Left blank on purpose */,

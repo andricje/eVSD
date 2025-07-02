@@ -194,10 +194,13 @@ export function countUserRemainingItemsToVote(proposal: Proposal, user: User) {
 
 // Returns the hardcoded description for proposals that actually move tokens on chain and add new voters
 // Always ignore the description on chain as it may be deceptive instead always use this one and read the address from the proposal calldata!
-export function getNewVoterProposalDescription(newVoterAddress: string) {
+export function getNewVoterProposalDescription(
+  newVoterAddress: string,
+  newVoterName: string
+) {
   return {
-    title: `Додавање ${convertAddressToName(newVoterAddress)} као новог члана Е-ВСД`,
-    description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress} (${convertAddressToName(newVoterAddress)})`,
+    title: `Додавање ${newVoterName} као новог члана Е-ВСД`,
+    description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress}. Члан ће бити додат под именом: ${newVoterName}`,
   };
 }
 

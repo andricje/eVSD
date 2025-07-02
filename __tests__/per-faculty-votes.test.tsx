@@ -2,14 +2,6 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("../lib/utils", () => {
-  const actualUtils = jest.requireActual("../lib/utils");
-  return {
-    ...actualUtils,
-    convertAddressToName: jest.fn(),
-  };
-});
-
 import { PerFacultyVotes } from "@/components/VoteItemInfo/vote-item-info";
 import { getDummyVoters, getVoteItem } from "../test/dummy-objects";
 import { getTranslatedVoteOption, convertAddressToName } from "@/lib/utils";

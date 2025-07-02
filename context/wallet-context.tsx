@@ -5,7 +5,7 @@ import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { User } from "@/types/proposal";
-import { convertAddressToName } from "@/lib/utils";
+import { useUserService } from "./user-context";
 
 declare global {
   interface Window {
@@ -34,7 +34,6 @@ function AbstractWalletProvider({
   walletFactory: () => Promise<{
     provider: Provider | null;
     signer: Signer | null;
-    user: User | null;
   }>;
 }) {
   const [provider, setProvider] = useState<Provider | null>(null);
@@ -45,6 +44,7 @@ function AbstractWalletProvider({
   >("disconnected");
   const [walletError, setWalletError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const { currentUser } = useUserService();
 
   const connect = async () => {
     setWalletError(null);
@@ -55,7 +55,7 @@ function AbstractWalletProvider({
 
       setProvider(result.provider);
       setSigner(result.signer);
-      setUser(result.user);
+      setUser(currentUser);
       setConnectionStatus("connected");
     } catch (error) {
       setWalletError(error instanceof Error ? error.message : "Unknown error");
@@ -109,35 +109,18 @@ async function getProviderAndSigner() {
 async function blockchainWalletFactory(): Promise<{
   provider: Provider | null;
   signer: Signer | null;
-  user: User | null;
 }> {
   const { provider, signer } = await getProviderAndSigner();
-  const address = await signer.getAddress();
-
-  const user = {
-    address,
-    name: convertAddressToName(address),
-  };
-
-  return { provider, signer, user };
+  return { provider, signer };
 }
 
 async function mockWalletFactory(): Promise<{
   provider: Provider | null;
   signer: Signer | null;
-  user: User | null;
 }> {
-  const address = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-
-  const user = {
-    address,
-    name: convertAddressToName(address),
-  };
-
   return {
     provider: null,
     signer: null,
-    user,
   };
 }
 

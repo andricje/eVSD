@@ -25,7 +25,11 @@ describe("BlockchainProposalParser", () => {
     const initData = await deployAndCreateMocks();
     proposalService = initData.eligibleVoterProposalServices[0];
     governor = initData.evsdGovernor;
-    parser = new BlockchainProposalParser(governor, initData.fileService);
+    parser = new BlockchainProposalParser(
+      governor,
+      initData.fileService,
+      initData.userService
+    );
   });
   it("Correctly parses old voteItem", () => {
     const serialized = `{"type":"voteItem","title":"Tačka","description":"opis","parentProposalId":"25315704052034162828107394350950734504221201779046180126766683394550105475975","index":0}`;

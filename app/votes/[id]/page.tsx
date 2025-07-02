@@ -32,7 +32,6 @@ import {
   User,
 } from "@/types/proposal";
 import { formatDate, hasVotingTimeExpired } from "@/lib/utils";
-import { addressNameMap } from "@/constants/address-name-map";
 import { useWallet } from "@/context/wallet-context";
 import { WalletAddress } from "@/components/wallet-address";
 import { StatusBadge } from "@/components/badges";

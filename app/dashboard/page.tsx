@@ -27,7 +27,6 @@ import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
 import { useRouter } from "next/navigation";
-import { addressNameMap } from "@/constants/address-name-map";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { WalletAddress } from "@/components/wallet-address";
 import { Header } from "@/components/header";
@@ -35,6 +34,7 @@ import {
   CardsSkeleton,
   WalletInfoSkeleton,
 } from "@/components/loadingSkeletons/loadingSkeletons";
+import { useUserService } from "@/context/user-context";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
@@ -83,6 +83,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
 
 // ActiveMembers Component
 const ActiveMembers: React.FC = () => {
+  const { allUsers } = useUserService();
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-2">
@@ -94,9 +95,9 @@ const ActiveMembers: React.FC = () => {
       </div>
       <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
         <div className="space-y-3">
-          {Object.entries(addressNameMap).map(([address, name]) => (
+          {allUsers?.map((user) => (
             <div
-              key={address}
+              key={user.address}
               className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
             >
               <div className="flex items-center gap-2">
@@ -107,13 +108,13 @@ const ActiveMembers: React.FC = () => {
                 </div>
                 <div>
                   <WalletAddress
-                    address={address}
+                    address={user.address}
                     className="text-sm font-medium ml-1"
                     iconSize={3}
                   />
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs px-1.5 py-0">
-                      {name}
+                      {user.name}
                     </Badge>
                   </div>
                 </div>

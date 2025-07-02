@@ -24,6 +24,7 @@ import {
 import { BlockchainProposalParser } from "./blockchain-proposal-parser";
 import { BlockchainProposalReader } from "./blockchain-proposal-reader";
 import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { UserService } from "@/lib/user-services/user-service";
 
 export class BlockchainProposalWriter implements ProposalWriter {
   private readonly governor: EvsdGovernor;
@@ -37,11 +38,16 @@ export class BlockchainProposalWriter implements ProposalWriter {
     token: EvsdToken,
     signer: ethers.Signer,
     fileService: ProposalFileService,
+    userService: UserService,
     blockchainReader: BlockchainProposalReader
   ) {
     this.governor = governor;
     this.token = token;
-    this.parser = new BlockchainProposalParser(this.governor, fileService);
+    this.parser = new BlockchainProposalParser(
+      this.governor,
+      fileService,
+      userService
+    );
     this.signer = signer;
     this.blockchainReader = blockchainReader;
   }
