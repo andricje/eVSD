@@ -12,7 +12,6 @@ import {
   VoteOption,
   VoteResult,
 } from "../types/proposal";
-import { addressNameMap } from "../constants/address-name-map";
 import { STRINGS } from "../constants/strings";
 import { ethers } from "ethers";
 import { EvsdToken } from "@/typechain-types";
@@ -62,12 +61,6 @@ export function convertGovernorToVoteOption(vote: bigint): VoteOption {
     return governorVoteMap[voteNumber];
   }
   throw new Error("Invalid vote option");
-}
-
-export function convertAddressToName(address: string): string {
-  return address in addressNameMap
-    ? (addressNameMap[address] as string)
-    : "Nepoznato";
 }
 
 export function convertVoteOptionToString(vote: VoteOption): string {

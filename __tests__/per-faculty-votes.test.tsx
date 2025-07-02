@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 
 import { PerFacultyVotes } from "@/components/VoteItemInfo/vote-item-info";
 import { getDummyVoters, getVoteItem } from "../test/dummy-objects";
-import { getTranslatedVoteOption, convertAddressToName } from "@/lib/utils";
+import { getTranslatedVoteOption } from "@/lib/utils";
 import { User } from "@/types/proposal";
 
 global.ResizeObserver = require("resize-observer-polyfill");
@@ -24,17 +24,6 @@ describe("NewProposalDialog", () => {
   let dummyVoters: User[];
   beforeAll(() => {
     dummyVoters = getDummyVoters(10);
-    const mockAddrMap = dummyVoters.reduce(
-      (acc, item) => {
-        acc[item.address] = item.name;
-        return acc;
-      },
-      {} as Record<string, string>
-    );
-
-    (convertAddressToName as jest.Mock).mockImplementation((addr: string) => {
-      return mockAddrMap[addr];
-    });
   });
   it("Shows all faculties that did cast a vote", async () => {
     const voteItem = getVoteItem(["for", "against", "abstain"], dummyVoters);
