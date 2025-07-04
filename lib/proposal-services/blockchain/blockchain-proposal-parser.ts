@@ -167,6 +167,7 @@ export class BlockchainProposalParser {
     return {
       ...votableItem,
       newVoterAddress: deserializedData.newVoterAddress,
+      newVoterName: deserializedData.newVoterName,
       title: description,
       description: "",
     };

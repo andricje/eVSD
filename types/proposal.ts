@@ -71,6 +71,7 @@ export function countVoteForOption(
 }
 
 export interface AddVoterVotableItem extends VotableItem {
+  newVoterName: string;
   newVoterAddress: string;
 }
 export function IsAddVoterVotableItem(

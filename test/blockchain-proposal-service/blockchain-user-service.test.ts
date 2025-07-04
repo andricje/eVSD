@@ -5,7 +5,7 @@ const { expect } = chai;
 import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
 import { deployAndCreateMocks, fastForwardTime } from "../utils";
 import { BlockchainUserService } from "@/lib/user-services/blockchain-user-service";
-import { UIAddVoterVotableItem, UIProposal } from "@/types/proposal";
+import { UIAddVoterVotableItem, UIProposal, User } from "@/types/proposal";
 
 describe("BlockchainUserService", () => {
   let proposalService: BlockchainProposalService;
@@ -13,6 +13,7 @@ describe("BlockchainUserService", () => {
   let addVoterProposal: UIProposal;
   let eligibleVoterProposalServices: BlockchainProposalService[];
   let newVoterVoteItem: UIAddVoterVotableItem;
+  let newVoterService: BlockchainProposalService;
 
   beforeEach(async () => {
     const initData = await deployAndCreateMocks();
@@ -25,6 +26,7 @@ describe("BlockchainUserService", () => {
     };
     eligibleVoterProposalServices = initData.eligibleVoterProposalServices;
     newVoterVoteItem = initData.addVoterVoteItem;
+    newVoterService = initData.ineligibleVoterProposalServices[0];
   });
   it("After a vote passes to add a new voter the service should show the correct name for the voter", async () => {
     const proposalId = await proposalService.uploadProposal(addVoterProposal);
@@ -35,9 +37,21 @@ describe("BlockchainUserService", () => {
     );
     await Promise.all(castVotePromises);
     await fastForwardTime(7, 0, 0);
+
     const newVoterAddress = newVoterVoteItem.newVoterAddress;
     const newVoterName = newVoterVoteItem.newVoterName;
-    const newVoter = await userService.getUserForAddress(newVoterAddress);
+    const newVoterUser: User = {
+      address: newVoterAddress,
+      name: newVoterName,
+    };
+    await expect(
+      newVoterService.canUserAcceptVotingRights(newVoterUser)
+    ).to.become(true);
+    await newVoterService.acceptVotingRights();
+
+    // For some reason the ProposalExecuted event is not fired after the call to .acceptVotingRights so we force reload here
+    // TODO: Investigate why this event is not fired and remove the forceReload option
+    const newVoter = await userService.getUserForAddress(newVoterAddress, true);
 
     expect(newVoter?.address).to.eq(newVoterAddress);
     expect(newVoter?.name).to.eq(newVoterName);

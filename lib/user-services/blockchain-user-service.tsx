@@ -2,6 +2,7 @@ import { User } from "@/types/proposal";
 import { UserService } from "./user-service";
 import { EvsdGovernor } from "@/typechain-types";
 import { AddVoterVotableItemChainData } from "../proposal-services/blockchain/blockchain-proposal-parser";
+import { STRINGS } from "../../constants/strings";
 
 type GovernorProposalState =
   | "Pending"
@@ -15,10 +16,17 @@ type GovernorProposalState =
 
 export class BlockchainUserService implements UserService {
   private readonly governor: EvsdGovernor;
-  private readonly addressUserMap: Promise<Map<string, User>>;
+  private addressUserMap: Promise<Map<string, User>>;
+  private readonly proposalExecutedListenerReady: Promise<EvsdGovernor>;
   constructor(governor: EvsdGovernor) {
     this.governor = governor;
     this.addressUserMap = this.getAddressUserMap();
+    this.proposalExecutedListenerReady = this.governor.on(
+      this.governor.filters.ProposalExecuted,
+      () => {
+        this.addressUserMap = this.getAddressUserMap();
+      }
+    );
   }
   private readonly proposalStates: GovernorProposalState[] = [
     "Pending", // Proposal is created but not yet started
@@ -31,6 +39,7 @@ export class BlockchainUserService implements UserService {
     "Executed", // Proposal has been executed
   ];
   async getAddressUserMap() {
+    await this.proposalExecutedListenerReady;
     const addressUserMap = new Map<string, User>();
     const proposalCreatedFilter = this.governor.filters.ProposalCreated();
     const events = await this.governor.queryFilter(
@@ -55,7 +64,7 @@ export class BlockchainUserService implements UserService {
       );
       const state = this.proposalStates[stateIndex];
       // Filter only the votes that passed
-      if (state !== "Succeeded") {
+      if (state !== "Succeeded" && state !== "Executed") {
         continue;
       }
 
@@ -67,10 +76,26 @@ export class BlockchainUserService implements UserService {
     }
     return addressUserMap;
   }
+  onProposalExecuted() {
+    this.addressUserMap = this.getAddressUserMap();
+  }
   async getAllUsers(): Promise<User[]> {
     return [...(await this.addressUserMap).values()];
   }
-  async getUserForAddress(address: string): Promise<User | undefined> {
-    return (await this.addressUserMap).get(address);
+  async getUserForAddress(
+    address: string,
+    forceReload: boolean = false
+  ): Promise<User> {
+    if (forceReload) {
+      this.addressUserMap = this.getAddressUserMap();
+    }
+    const addressNameMap = await this.addressUserMap;
+    const user = addressNameMap.get(address);
+    return (
+      user ?? {
+        address,
+        name: STRINGS.user.unknownUser,
+      }
+    );
   }
 }
