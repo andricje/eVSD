@@ -32,7 +32,7 @@ function AbstractUserServiceProvider({
   userFactory: userServiceFactory,
 }: {
   children: ReactNode;
-  userFactory: (provider: Provider) => Promise<UserService>;
+  userFactory: (signer: Signer | null) => Promise<UserService>;
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useState<User[] | null>(null);
@@ -51,7 +51,7 @@ function AbstractUserServiceProvider({
     ) => {
       setUserError(null);
       try {
-        const userService = await userServiceFactory(provider);
+        const userService = await userServiceFactory(signer);
         setUserService(userService);
         setAddressUserMap(await userService.getAddressUserMap());
         const currentAddress = await signer?.getAddress();
@@ -92,11 +92,13 @@ function AbstractUserServiceProvider({
   );
 }
 
-async function blockchainUserServiceFactory(): Promise<UserService> {
+async function blockchainUserServiceFactory(
+  signer: Signer | null
+): Promise<UserService> {
   const { ethereum } = window;
   if (ethereum) {
     const governor = getEvsdGovernor();
-    return new BlockchainUserService(governor);
+    return new BlockchainUserService(governor, signer);
   } else {
     throw new Error(
       "MetaMask is not found. Please ensure the MetaMask extension is installed."

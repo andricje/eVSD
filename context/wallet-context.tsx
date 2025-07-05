@@ -4,7 +4,6 @@ import { ProposalServiceType } from "@/types/evsd-config";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { User } from "@/types/proposal";
 
 declare global {
   interface Window {

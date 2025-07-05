@@ -4,13 +4,14 @@ import { UserIcon } from "lucide-react";
 import { useWallet } from "@/context/wallet-context";
 import { Badge } from "./ui/badge";
 import { WalletAddress } from "./wallet-address";
+import { useUserService } from "@/hooks/use-userservice";
 
 interface WalletInfoProps {
   showName?: boolean;
 }
 
 export function WalletInfo({ showName = false }: WalletInfoProps) {
-  const { user } = useWallet();
+  const { currentUser: user } = useUserService();
 
   if (!user) {
     return null;

@@ -32,11 +32,11 @@ import {
   User,
 } from "@/types/proposal";
 import { formatDate, hasVotingTimeExpired } from "@/lib/utils";
-import { useWallet } from "@/context/wallet-context";
 import { WalletAddress } from "@/components/wallet-address";
 import { StatusBadge } from "@/components/badges";
 import { STRINGS } from "@/constants/strings";
 import { ProposalService } from "@/lib/proposal-services/proposal-service";
+import { useUserService } from "@/hooks/use-userservice";
 
 // VoteConfirm komponenta
 const VoteConfirm: React.FC<{
@@ -310,7 +310,7 @@ const AuthorBadge = ({ isAuthor }: { isAuthor: boolean }) => {
 export default function ProposalDetails() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useWallet();
+  const { currentUser: user } = useUserService();
   const { proposals, proposalService } = useProposals();
 
   if (!user) {
@@ -467,12 +467,6 @@ export default function ProposalDetails() {
                   subItem={subItem}
                   currentUser={user}
                   onVote={handleSubItemVoteSelect}
-                  isProposalOpen={
-                    proposal.status === "open" &&
-                    !hasVotingTimeExpired(proposal)
-                      ? true
-                      : false
-                  }
                 />
               ))}
             </div>

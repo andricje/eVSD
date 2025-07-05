@@ -40,7 +40,7 @@ function useBlockchainProposalService(): ProposalService | null {
         getEvsdToken(),
         signer,
         new InMemoryProposalFileService(),
-        new BlockchainUserService(governor),
+        new BlockchainUserService(governor, signer),
         provider
       );
     }

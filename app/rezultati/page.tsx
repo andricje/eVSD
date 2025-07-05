@@ -189,9 +189,10 @@ function UsersCombobox({
 
 export default function RezultatiPage() {
   const { proposals, loading: proposalsLoading } = useProposals();
-  const { user, loading: walletLoading } = useWallet();
+  const { loading: walletLoading } = useWallet();
+  const { currentUser } = useUserService();
   const router = useRouter();
-  if (!user) {
+  if (!currentUser) {
     router.push("/login");
   }
   const [searchTerm, setSearchTerm] = useState("");

@@ -38,7 +38,8 @@ import { useUserService } from "@/hooks/use-userservice";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
-  const { disconnect, user } = useWallet();
+  const { disconnect } = useWallet();
+  const { currentUser } = useUserService();
   const router = useRouter();
 
   return (
@@ -63,7 +64,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
         </Link>
       </Button>
       <div className="hidden sm:flex border-l border-border h-8 mx-2" />
-      {user && (
+      {currentUser && (
         <Button
           size="sm"
           className="flex-1 border border-border/40 py-3 text-sm h-full bg-destructive text-destructive-foreground hover:bg-destructive sm:bg-background sm:text-foreground sm:hover:bg-background sm:hover:text-destructive"
@@ -140,7 +141,8 @@ export default function Dashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("voting");
 
-  const { user, loading: walletLoading } = useWallet();
+  const { loading: walletLoading } = useWallet();
+  const { currentUser: user } = useUserService();
   const {
     proposals,
     proposalService,

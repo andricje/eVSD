@@ -112,7 +112,10 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
 
   // Create mock services
   const fileService = new InMemoryProposalFileService();
-  const userService = new BlockchainUserService(governor);
+  const userService = new BlockchainUserService(
+    governor,
+    owner as any as ethers.Signer
+  );
   const registeredVoterProposalServices = voters.map(
     (voter) =>
       new BlockchainProposalService(
