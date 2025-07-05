@@ -151,9 +151,11 @@ export default function Dashboard() {
   } = useProposals();
   const proposalToVote = user ? getProposalsToVote(proposals, user) : [];
 
-  if (!user) {
-    router.push("/login");
-  }
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, []);
 
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);

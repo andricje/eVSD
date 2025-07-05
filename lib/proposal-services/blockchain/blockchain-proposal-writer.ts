@@ -163,11 +163,8 @@ export class BlockchainProposalWriter implements ProposalWriter {
         if (err.message.includes("GovernorInsufficientProposerVotes")) {
           throw new IneligibleProposerError("ne znam koji XD");
         }
-      } else {
-        throw new Error(
-          `Proposal creation failed with an unknown error: ${err}`
-        );
       }
+      throw new Error(`Proposal creation failed with an unknown error: ${err}`);
     }
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
