@@ -313,9 +313,11 @@ export default function ProposalDetails() {
   const { currentUser: user } = useUserService();
   const { proposals, proposalService } = useProposals();
 
-  if (!user) {
-    router.push("/login");
-  }
+  useEffect(() => {
+    if (!user) {
+      router.push("/login");
+    }
+  }, []);
 
   const [error, setError] = useState("");
 
