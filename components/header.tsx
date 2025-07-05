@@ -7,13 +7,15 @@ import { LogIn, LogOut, Menu, Wallet, X } from "lucide-react";
 import { WalletInfo } from "./wallet-info";
 import { useWallet } from "@/context/wallet-context";
 import { Button } from "./ui/button";
+import { useUserService } from "@/hooks/use-userservice";
 
 interface HeaderProps {
   showNav?: boolean;
 }
 
 export function Header({ showNav = true }: HeaderProps) {
-  const { user, disconnect } = useWallet();
+  const { disconnect } = useWallet();
+  const { currentUser: user } = useUserService();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

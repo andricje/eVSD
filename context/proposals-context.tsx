@@ -8,6 +8,8 @@ import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { Proposal } from "@/types/proposal";
 import { getEvsdGovernor, getEvsdToken } from "@/lib/contract-provider";
 import { ProposalServiceType } from "@/types/evsd-config";
+import { BlockchainUserService } from "@/lib/user-services/blockchain-user-service";
+import { useUserService } from "@/hooks/use-userservice";
 
 export interface ProposalsContextValue {
   proposals: Proposal[];
@@ -21,19 +23,24 @@ export const ProposalsContext = createContext<
 >(undefined);
 
 function useMockProposalService(): ProposalService | null {
-  const { user } = useWallet();
-  return useMemo(() => user && new InMemoryProposalService(user), [user]);
+  const { currentUser } = useUserService();
+  return useMemo(
+    () => currentUser && new InMemoryProposalService(currentUser),
+    [currentUser]
+  );
 }
 
 function useBlockchainProposalService(): ProposalService | null {
   const { provider, signer } = useWallet();
   return useMemo(() => {
     if (signer && provider) {
+      const governor = getEvsdGovernor();
       return new BlockchainProposalService(
-        getEvsdGovernor(),
+        governor,
         getEvsdToken(),
         signer,
         new InMemoryProposalFileService(),
+        new BlockchainUserService(governor, signer),
         provider
       );
     }

@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { STRINGS } from "@/constants/strings";
 import { useProposals } from "@/hooks/use-proposals";
-import { useWallet } from "@/context/wallet-context";
 import { Proposal, UserActivityEvent } from "@/types/proposal";
 import { Timeline } from "./timeline";
 import { UserProposals } from "./user-proposals";
@@ -13,6 +12,7 @@ import {
   ActivitySkeleton,
   MyProposalsSkeleton,
 } from "../loadingSkeletons/loadingSkeletons";
+import { useUserService } from "@/hooks/use-userservice";
 
 export function UserActivity() {
   const {
@@ -20,7 +20,7 @@ export function UserActivity() {
     proposalService,
     loading: proposalsLoading,
   } = useProposals();
-  const { user } = useWallet();
+  const { currentUser: user } = useUserService();
 
   const [activity, setActivity] = useState<UserActivityEvent[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState<boolean>(true);

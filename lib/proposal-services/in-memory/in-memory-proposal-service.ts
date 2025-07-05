@@ -120,7 +120,10 @@ export class InMemoryProposalService implements ProposalService {
         id: this.randomId(),
         userVotes: new Map(),
         ...item,
-        ...getNewVoterProposalDescription(item.newVoterAddress),
+        ...getNewVoterProposalDescription(
+          item.newVoterAddress,
+          item.newVoterName
+        ),
       };
     }
     return {

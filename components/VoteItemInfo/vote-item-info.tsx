@@ -1,9 +1,7 @@
 import {
   countTotalVotes,
-  convertAddressToName,
   getTranslatedVoteOptionWithCount,
   getVoteResult,
-  isVotingComplete,
 } from "@/lib/utils";
 import { countVoteForOption, Proposal, VotableItem } from "@/types/proposal";
 import { Badge } from "../ui/badge";
@@ -80,7 +78,7 @@ export function PerFacultyVotes({ voteItem }: { voteItem: VotableItem }) {
             key={address}
             className="flex justify-between py-1 border-b text-sm"
           >
-            <span>{convertAddressToName(address)}</span>
+            <span>{voteEvent.voter.name}</span>
             <VoteBadge vote={voteEvent.vote} />
           </div>
         ))}

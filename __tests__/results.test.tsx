@@ -8,9 +8,15 @@ import {
 } from "@testing-library/react";
 import RezultatiPage from "../app/rezultati/page";
 import { useProposals } from "../hooks/use-proposals";
-import { useWallet } from "../context/wallet-context";
+import { useWallet, WalletProvider } from "../context/wallet-context";
 import { useRouter } from "next/navigation";
-import { Proposal } from "../types/proposal";
+import { Proposal, User } from "../types/proposal";
+import {
+  UserServiceContextType,
+  UserServiceProvider,
+} from "@/context/user-context";
+import { useUserService } from "@/hooks/use-userservice";
+import { InMemoryUserService } from "@/lib/user-services/in-memory-user-service";
 
 beforeAll(() => {
   global.ResizeObserver = class {
@@ -33,6 +39,10 @@ jest.mock("../hooks/use-proposals", () => ({
 
 jest.mock("../context/wallet-context", () => ({
   useWallet: jest.fn(),
+}));
+
+jest.mock("../hooks/use-userservice", () => ({
+  useUserService: jest.fn(),
 }));
 
 const mockPush = jest.fn();
@@ -107,6 +117,16 @@ const mockUser = {
   name: "Test User",
   address: "0x999",
 };
+const mockUsers: User[] = [
+  {
+    name: "RAF test nalog",
+    address: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
+  },
+  {
+    name: "FON test nalog",
+    address: "0x696a45A7150c1d294Ce6E4168A7373b6c38aBC40",
+  },
+];
 
 beforeEach(() => {
   (useProposals as jest.Mock).mockReturnValue({
@@ -118,6 +138,20 @@ beforeEach(() => {
     user: mockUser,
     loading: false,
   });
+
+  const mockAddrUserMap = new Map(
+    mockUsers.map((user) => [user.address, user] as const)
+  );
+  const mockUserServiceReturn: UserServiceContextType = {
+    currentUser: mockUser,
+    allUsers: mockUsers,
+    getUserForAddress: function (address: string): User | undefined {
+      return mockAddrUserMap.get(address);
+    },
+    userService: null,
+    userError: null,
+  };
+  (useUserService as jest.Mock).mockReturnValue(mockUserServiceReturn);
 });
 
 test("filters proposals by search term (title)", async () => {

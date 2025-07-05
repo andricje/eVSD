@@ -6,6 +6,7 @@ import { WalletProvider } from "@/context/wallet-context";
 import { Toaster } from "@/components/ui/toaster";
 import { ProposalsProvider } from "@/context/proposals-context";
 import { config } from "@/evsd.config";
+import { UserServiceProvider } from "@/context/user-context";
 // import { AnnouncementsProvider } from "@/context/announcements-context";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -31,7 +32,9 @@ export default function RootLayout({
     <html lang="sr">
       <body className={inter.className}>
         <WalletProvider type={type}>
-          <ProposalsProvider type={type}>{children}</ProposalsProvider>
+          <UserServiceProvider type={type}>
+            <ProposalsProvider type={type}>{children}</ProposalsProvider>
+          </UserServiceProvider>
         </WalletProvider>
         <Toaster />
       </body>

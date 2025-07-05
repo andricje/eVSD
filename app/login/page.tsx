@@ -16,10 +16,12 @@ import { useWallet } from "@/context/wallet-context";
 import { STRINGS } from "@/constants/strings";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { WalletAddress } from "@/components/wallet-address";
+import { useUserService } from "@/hooks/use-userservice";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, walletError } = useWallet();
+  const { walletError } = useWallet();
+  const { currentUser } = useUserService();
 
   return (
     <div className="w-full max-w-full flex items-center justify-center min-h-screen px-4 py-12">
@@ -49,16 +51,16 @@ export default function LoginPage() {
               </div>
             </div>
           )}
-          {user && (
+          {currentUser && (
             <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
               <h3 className="font-medium mb-2">Повезани новчаник</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Wallet className="h-4 w-4 text-blue-500" />
                   <div>
-                    {user.name}
+                    {currentUser.name}
                     <WalletAddress
-                      address={user.address}
+                      address={currentUser.address}
                       className="text-xs text-muted-foreground"
                       iconSize={3}
                     />
@@ -69,7 +71,7 @@ export default function LoginPage() {
           )}
         </CardContent>
         <CardFooter>
-          {!user ? (
+          {!currentUser ? (
             <div className="w-full flex flex-row gap-2">
               <Button
                 onClick={() => router.push("/")}

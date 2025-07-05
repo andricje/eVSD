@@ -19,6 +19,7 @@ import {
 import { BlockchainUserActivityTracker } from "./blockchain-user-activity-tracker";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
 import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { UserService } from "@/lib/user-services/user-service";
 
 export class BlockchainProposalService implements ProposalService {
   private readonly reader: BlockchainProposalReader;
@@ -30,21 +31,28 @@ export class BlockchainProposalService implements ProposalService {
     token: EvsdToken,
     signer: ethers.Signer,
     fileService: ProposalFileService,
+    userService: UserService,
     provider: ethers.Provider
   ) {
     governor = governor.connect(signer);
     token = token.connect(signer);
-    this.reader = new BlockchainProposalReader(governor, token, provider);
+    this.reader = new BlockchainProposalReader(
+      governor,
+      token,
+      provider,
+      userService
+    );
     this.writer = new BlockchainProposalWriter(
       governor,
       token,
       signer,
       fileService,
+      userService,
       this.reader
     );
     this.activityTracker = new BlockchainUserActivityTracker(
       this.reader,
-      new BlockchainEventProvider(governor, provider)
+      new BlockchainEventProvider(governor, provider, userService)
     );
   }
   getUserVotingStatus(user: User): Promise<UserVotingStatus> {

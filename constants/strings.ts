@@ -84,6 +84,9 @@ export const STRINGS = {
   proposalCard: {
     voteButton: "Гласај",
   },
+  user: {
+    unknownUser: "Непознато",
+  },
   userActivity: {
     timeLine: {
       title: "Све активности",

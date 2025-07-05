@@ -52,10 +52,15 @@ export function NewVoterDialog({
     setProposalLoading(true);
 
     try {
-      const voteItem: UIAddVoterVotableItem = { newVoterAddress };
+      const voteItem: UIAddVoterVotableItem = {
+        newVoterAddress,
+        newVoterName: facultyName,
+      };
       const proposal: UIProposal = {
-        title: `Додавање новог члана: ${facultyName}`,
-        description: `Предлог за додавање новог члана из факултета: ${facultyName}`,
+        title:
+          "" /* Leave this blank (always generated from the newVoterAddress when read from the chain) */,
+        description:
+          "" /* Leave this blank (always generated from the newVoterAddress when read from the chain) */,
         voteItems: [voteItem],
       };
 
