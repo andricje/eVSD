@@ -33,19 +33,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import { Header } from "@/components/header";
-import {
-  clipAddress,
-  formatDate,
-  isVotingComplete,
-  usersFromAddressNameMapRecord,
-} from "@/lib/utils";
+import { clipAddress, formatDate, isVotingComplete } from "@/lib/utils";
 import { useProposals } from "@/hooks/use-proposals";
 import { StatusBadge } from "@/components/badges";
 import { ProposalInfo } from "@/components/ProposalInfo/proposal-info";
 import { useWallet } from "@/context/wallet-context";
 import { Proposal, User } from "@/types/proposal";
-import { addressNameMap } from "@/constants/address-name-map";
 import { CardsSkeleton } from "@/components/loadingSkeletons/loadingSkeletons";
+import { useUserService } from "@/hooks/use-userservice";
 
 function FilterResults({
   filteredProposals,
@@ -122,6 +117,7 @@ function UsersCombobox({
   onAddUserToFollow?: (user: User) => void;
   isAuthorComboBox?: boolean;
 }) {
+  const { allUsers } = useUserService();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
 
@@ -136,11 +132,6 @@ function UsersCombobox({
     }
     setOpen(false);
   };
-
-  const users = useMemo(
-    () => usersFromAddressNameMapRecord(addressNameMap),
-    []
-  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -178,7 +169,7 @@ function UsersCombobox({
                 <span className="font-semibold">Сви</span>
               </CommandItem>
             )}
-            {users?.map((user) => (
+            {allUsers?.map((user) => (
               <CommandItem
                 key={user.address}
                 value={user.name}

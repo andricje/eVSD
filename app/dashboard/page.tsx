@@ -34,7 +34,7 @@ import {
   CardsSkeleton,
   WalletInfoSkeleton,
 } from "@/components/loadingSkeletons/loadingSkeletons";
-import { useUserService } from "@/context/user-context";
+import { useUserService } from "@/hooks/use-userservice";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {

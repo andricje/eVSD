@@ -5,7 +5,7 @@ import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { User } from "@/types/proposal";
-import { useUserService } from "./user-context";
+import { useUserService } from "@/hooks/use-userservice";
 
 declare global {
   interface Window {

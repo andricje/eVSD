@@ -15,7 +15,7 @@ import { BlockchainUserService } from "@/lib/user-services/blockchain-user-servi
 import { InMemoryUserService } from "@/lib/user-services/in-memory-user-service";
 import { getEvsdGovernor } from "@/lib/contract-provider";
 
-interface UserServiceContextType {
+export interface UserServiceContextType {
   currentUser: User | null;
   allUsers: User[] | null;
   getUserForAddress: (address: string) => User | undefined;
@@ -23,7 +23,7 @@ interface UserServiceContextType {
   userError: string | null;
 }
 
-const UserContext = createContext<UserServiceContextType | undefined>(
+export const UserContext = createContext<UserServiceContextType | undefined>(
   undefined
 );
 
@@ -124,12 +124,4 @@ export function UserServiceProvider({
       {children}
     </AbstractUserServiceProvider>
   );
-}
-
-export function useUserService() {
-  const context = useContext(UserContext);
-  if (context === undefined) {
-    throw new Error("useUserService must be used within a UserServiceProvider");
-  }
-  return context;
 }
