@@ -5,7 +5,6 @@ import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { User } from "@/types/proposal";
-import { useUserService } from "@/hooks/use-userservice";
 
 declare global {
   interface Window {
@@ -16,7 +15,6 @@ declare global {
 interface WalletContextType {
   provider: Provider | null;
   signer: Signer | null;
-  user: User | null;
   connect: () => Promise<void>;
   disconnect: () => void;
   connectionStatus: "connected" | "connecting" | "disconnected";
@@ -38,13 +36,11 @@ function AbstractWalletProvider({
 }) {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [signer, setSigner] = useState<Signer | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     "connected" | "connecting" | "disconnected"
   >("disconnected");
   const [walletError, setWalletError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const { currentUser } = useUserService();
 
   const connect = async () => {
     setWalletError(null);
@@ -55,7 +51,6 @@ function AbstractWalletProvider({
 
       setProvider(result.provider);
       setSigner(result.signer);
-      setUser(currentUser);
       setConnectionStatus("connected");
     } catch (error) {
       setWalletError(error instanceof Error ? error.message : "Unknown error");
@@ -70,7 +65,6 @@ function AbstractWalletProvider({
   const disconnect = () => {
     setProvider(null);
     setSigner(null);
-    setUser(null);
     setConnectionStatus("disconnected");
     setWalletError(null);
   };
@@ -80,7 +74,6 @@ function AbstractWalletProvider({
       value={{
         provider,
         signer,
-        user,
         connect,
         disconnect,
         connectionStatus,
