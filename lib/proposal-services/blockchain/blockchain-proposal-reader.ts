@@ -15,7 +15,7 @@ import {
 } from "../../../types/proposal";
 import {
   areProposalsEqual,
-  getTransferTokenCalldata,
+  getMintTokenCalldata,
   getVoteResultForItem,
 } from "../../utils";
 import {
@@ -58,9 +58,18 @@ export class BlockchainProposalReader implements ProposalReader {
   }
   async getUserVotingStatus(user: User): Promise<UserVotingStatus> {
     const currentVotingPower = await this.token.getVotes(user.address);
+    const tokenBalance = await this.token.balanceOf(user.address);
+    console.log(
+      `Voting power: ${currentVotingPower} Token balance: ${tokenBalance}`
+    );
+    // User already has some voting power so we assume there is nothing to accept or delegate
     if (currentVotingPower > 0n) {
       return "Eligible";
-    } else if (await this.getProposalToAddUser(user.address)) {
+    }
+    const proposalToAddUser = await this.getProposalToAddUser(user.address);
+    // Either there is a proposal to add the user (the user has 0 tokens and 0 voting power but will obtain tokens when the proposal is executed)
+    // or the user has some tokens but failed to delegate the tokens to themselves (or is one of the users that had tokens minted to them on contract deployment)
+    if (proposalToAddUser || (tokenBalance > 0n && currentVotingPower === 0n)) {
       return "CanAcceptVotingRights";
     }
     return "NotEligible";
@@ -288,7 +297,7 @@ export class BlockchainProposalReader implements ProposalReader {
     }
     const addr = args[0];
     // Use this address to construct the correct calldata and compare
-    const correctCalldata = await getTransferTokenCalldata(this.token, addr);
+    const correctCalldata = await getMintTokenCalldata(this.token, addr);
 
     return callDatas[0] === correctCalldata;
   }

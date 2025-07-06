@@ -257,13 +257,14 @@ export async function areProposalsEqual(
   );
 }
 
-export async function getTransferTokenCalldata(
+export async function getMintTokenCalldata(
   token: EvsdToken,
   newVoterAddress: string
 ) {
   const decimals = await token.decimals();
   const oneToken = ethers.parseUnits("1", decimals);
-  const transferCalldata = token.interface.encodeFunctionData("transfer", [
+
+  const transferCalldata = token.interface.encodeFunctionData("mint", [
     newVoterAddress,
     oneToken,
   ]);

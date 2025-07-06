@@ -10,10 +10,7 @@ import {
 } from "../../../types/proposal";
 import { ethers } from "ethers";
 import { ProposalFileService } from "../../file-upload";
-import {
-  convertVoteOptionToGovernor,
-  getTransferTokenCalldata,
-} from "../../utils";
+import { convertVoteOptionToGovernor, getMintTokenCalldata } from "../../utils";
 import { ProposalWriter } from "../proposal-service";
 import {
   DuplicateProposalError,
@@ -25,6 +22,7 @@ import { BlockchainProposalParser } from "./blockchain-proposal-parser";
 import { BlockchainProposalReader } from "./blockchain-proposal-reader";
 import { EvsdGovernor, EvsdToken } from "@/typechain-types";
 import { UserService } from "@/lib/user-services/user-service";
+import { ErrorDecoder } from "ethers-decode-error";
 
 export class BlockchainProposalWriter implements ProposalWriter {
   private readonly governor: EvsdGovernor;
@@ -32,7 +30,7 @@ export class BlockchainProposalWriter implements ProposalWriter {
   private readonly parser: BlockchainProposalParser;
   private readonly signer: ethers.Signer;
   private readonly blockchainReader: BlockchainProposalReader;
-
+  private readonly errorDecoder: ErrorDecoder;
   constructor(
     governor: EvsdGovernor,
     token: EvsdToken,
@@ -50,6 +48,10 @@ export class BlockchainProposalWriter implements ProposalWriter {
     );
     this.signer = signer;
     this.blockchainReader = blockchainReader;
+    this.errorDecoder = ErrorDecoder.create([
+      governor.interface,
+      token.interface,
+    ]);
   }
   async acceptVotingRights(): Promise<void> {
     const signerAddress = await this.signer.getAddress();
@@ -101,7 +103,7 @@ export class BlockchainProposalWriter implements ProposalWriter {
   ): Promise<bigint> {
     const tokenAddress = await this.token.getAddress();
     const newVoterAddress = item.newVoterAddress;
-    const transferCalldata = await getTransferTokenCalldata(
+    const mintCalldata = await getMintTokenCalldata(
       this.token,
       newVoterAddress
     );
@@ -111,26 +113,39 @@ export class BlockchainProposalWriter implements ProposalWriter {
       0
     );
 
-    const tx = await this.governor.propose(
-      [tokenAddress],
-      [0],
-      [transferCalldata],
-      descriptionSerialized
-    );
-    const receipt = (await tx.wait())!;
-    for (const log of receipt.logs) {
-      try {
-        const parsed = this.governor.interface.parseLog(log);
-        if (parsed?.name === "ProposalCreated") {
-          return parsed.args.proposalId;
+    try {
+      const tx = await this.governor.propose(
+        [tokenAddress],
+        [0],
+        [mintCalldata],
+        descriptionSerialized
+      );
+      const receipt = (await tx.wait())!;
+      for (const log of receipt.logs) {
+        try {
+          const parsed = this.governor.interface.parseLog(log);
+          if (parsed?.name === "ProposalCreated") {
+            return parsed.args.proposalId;
+          }
+        } catch (err) {
+          // This log might not match the contract interface, ignore it
+          console.log(err);
         }
-      } catch (err) {
-        // This log might not match the contract interface, ignore it
-        console.log(err);
+      }
+
+      throw new Error("Failed to find proposalId in the transaction receipt");
+    } catch (err) {
+      const decoded = await this.errorDecoder.decode(err);
+      if (decoded.reason) {
+        throw new Error(
+          `Proposal creation failed due to an internal error: ${decoded.reason}`
+        );
+      } else {
+        throw new Error(
+          `Proposal creation failed with an unknown error: ${err}`
+        );
       }
     }
-
-    throw new Error("Failed to find proposalId in the transaction receipt");
   }
   // Creates a proposal on-chain that invokes the do nothing method of the contract. Returns the proposal id
   private async createProposalDoNothing(description: string): Promise<bigint> {
@@ -164,7 +179,16 @@ export class BlockchainProposalWriter implements ProposalWriter {
           throw new IneligibleProposerError("ne znam koji XD");
         }
       }
-      throw new Error(`Proposal creation failed with an unknown error: ${err}`);
+      const decoded = await this.errorDecoder.decode(err);
+      if (decoded.reason) {
+        throw new Error(
+          `Proposal creation failed due to an internal error: ${decoded.reason}`
+        );
+      } else {
+        throw new Error(
+          `Proposal creation failed with an unknown error: ${err}`
+        );
+      }
     }
     throw new Error("Failed to find proposalId in the transaction receipt");
   }
@@ -217,7 +241,7 @@ export class BlockchainProposalWriter implements ProposalWriter {
       const descriptionHash = ethers.id(description);
 
       const tokenAddress = await this.token.getAddress();
-      const calldata = await getTransferTokenCalldata(
+      const calldata = await getMintTokenCalldata(
         this.token,
         item.newVoterAddress
       );

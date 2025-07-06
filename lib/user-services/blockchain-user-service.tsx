@@ -19,11 +19,16 @@ export class BlockchainUserService implements UserService {
   private readonly governor: EvsdGovernor;
   private addressUserMap: Promise<Map<string, User>>;
   private readonly proposalExecutedListenerReady: Promise<EvsdGovernor> | null;
+  private readonly initialUsers: User[];
   private readonly eventsEnabled: boolean;
-  constructor(governor: EvsdGovernor, signer: Signer | null) {
+  constructor(
+    initialUsers: User[],
+    governor: EvsdGovernor,
+    signer: Signer | null
+  ) {
     this.governor = signer ? governor.connect(signer) : governor;
     this.addressUserMap = this.getAddressUserMap();
-
+    this.initialUsers = initialUsers;
     if (signer) {
       this.eventsEnabled = true;
       this.proposalExecutedListenerReady = this.governor.on(
@@ -48,10 +53,13 @@ export class BlockchainUserService implements UserService {
     "Executed", // Proposal has been executed
   ];
   async getAddressUserMap() {
+    const addressUserMap = new Map<string, User>();
+    for (const user of this.initialUsers) {
+      addressUserMap.set(user.address, user);
+    }
     if (this.eventsEnabled) {
       await this.proposalExecutedListenerReady;
     }
-    const addressUserMap = new Map<string, User>();
     const proposalCreatedFilter = this.governor.filters.ProposalCreated();
     const events = await this.governor.queryFilter(
       proposalCreatedFilter,

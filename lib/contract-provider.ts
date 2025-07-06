@@ -6,7 +6,7 @@ import {
 } from "../typechain-types";
 import { config } from "../evsd.config";
 
-function getBlockchainConfig() {
+export function getBlockchainConfig() {
   if (config.proposalService.type !== "blockchain") {
     throw new Error("Blockchain not configured in config file");
   }

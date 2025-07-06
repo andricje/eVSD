@@ -82,12 +82,10 @@ export async function distributeVotingRights(
   const oneToken = ethers.parseUnits("1", decimals);
   // Send exactly one token to each voter
   for (const adr of voters) {
-    await evsdToken.transfer(adr, oneToken);
+    await evsdToken.mint(adr, oneToken);
   }
-
-  // Send all remaining tokens to the governor contract
-  const remainingTokens = await evsdToken.balanceOf(deployer);
-  await evsdToken.transfer(await governor.getAddress(), remainingTokens);
+  // Transfer token ownership to the governor contract
+  await evsdToken.transferOwnership(await governor.getAddress());
 }
 export async function deployAndCreateMocks(): Promise<TestInitData> {
   // Reset the network after each test
@@ -113,6 +111,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
   // Create mock services
   const fileService = new InMemoryProposalFileService();
   const userService = new BlockchainUserService(
+    [],
     governor,
     owner as any as ethers.Signer
   );

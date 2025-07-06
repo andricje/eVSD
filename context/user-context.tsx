@@ -13,7 +13,7 @@ import { Provider, Signer } from "ethers";
 import { UserService } from "@/lib/user-services/user-service";
 import { BlockchainUserService } from "@/lib/user-services/blockchain-user-service";
 import { InMemoryUserService } from "@/lib/user-services/in-memory-user-service";
-import { getEvsdGovernor } from "@/lib/contract-provider";
+import { getBlockchainConfig, getEvsdGovernor } from "@/lib/contract-provider";
 
 export interface UserServiceContextType {
   currentUser: User | null;
@@ -98,7 +98,12 @@ async function blockchainUserServiceFactory(
   const { ethereum } = window;
   if (ethereum) {
     const governor = getEvsdGovernor();
-    return new BlockchainUserService(governor, signer);
+    const blockchainConfig = getBlockchainConfig();
+    return new BlockchainUserService(
+      blockchainConfig.initialUserList,
+      governor,
+      signer
+    );
   } else {
     throw new Error(
       "MetaMask is not found. Please ensure the MetaMask extension is installed."

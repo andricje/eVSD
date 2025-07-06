@@ -32,15 +32,16 @@ function useMockProposalService(): ProposalService | null {
 
 function useBlockchainProposalService(): ProposalService | null {
   const { provider, signer } = useWallet();
+  const { userService } = useUserService();
   return useMemo(() => {
-    if (signer && provider) {
+    if (signer && provider && userService) {
       const governor = getEvsdGovernor();
       return new BlockchainProposalService(
         governor,
         getEvsdToken(),
         signer,
         new InMemoryProposalFileService(),
-        new BlockchainUserService(governor, signer),
+        userService,
         provider
       );
     }

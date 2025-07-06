@@ -43,12 +43,11 @@ export async function distributeVotingRights(
 ) {
   // Send exactly one token to each voter
   for (const adr of voters) {
-    await evsdToken.transfer(adr, ONE_TOKEN);
+    await evsdToken.mint(adr, ONE_TOKEN);
   }
 
-  // Send all remaining tokens to the governor contract
-  const remainingTokens = await evsdToken.balanceOf(deployer);
-  await evsdToken.transfer(await governor.getAddress(), remainingTokens);
+  // Transfer ownership to the governor contract
+  await evsdToken.transferOwnership(await governor.getAddress());
 }
 
 async function main() {

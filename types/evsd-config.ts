@@ -1,9 +1,12 @@
-interface NetworkConfig {
+import { User } from "./proposal";
+
+export interface NetworkConfig {
   tokenAddress: string;
   governorAddress: string;
+  initialUserList: User[];
 }
 
-interface BlockchainProposalServiceConfig {
+export interface BlockchainProposalServiceConfig {
   type: "blockchain";
   network: NetworkConfig;
 }
