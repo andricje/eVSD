@@ -117,7 +117,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     evsdGovernor: governor,
     evsdToken: token,
     eligibleSigners: voters.map((voter) => voter as unknown as ethers.Signer),
-    ineligibleVoterAddress: unregisteredVoter.address,
+    ineligibleVoterAddress: unregisteredVoters[0].address,
     eligibleVoters: voters.map((voter) => {
       return { name: voter.address, address: voter.address };
     }),

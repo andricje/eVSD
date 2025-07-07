@@ -15,6 +15,7 @@ import {
 import { assertProposalEqual, deployAndCreateMocks } from "../utils";
 import { voteItems } from "./voting.test";
 import { v4 as uuidv4 } from "uuid";
+import { getNewVoterProposalDescription } from "../../lib/utils";
 function getProposalLargeNumberOfVoteItems(numVoteItems: number): UIProposal {
   const items: UIVotableItem[] = [];
   for (let i = 0; i < numVoteItems; i++) {
@@ -99,15 +100,19 @@ describe("BlockchainProposalService integration", function () {
     await assertProposalSameForEveryone(generatedProposal2, proposalId2);
   });
   it("should create a proposal on-chain with correct title and description when there is a vote item to add a voter and fetch it", async () => {
+    const { title } = getNewVoterProposalDescription(
+      addVoterVoteItem.newVoterAddress,
+      addVoterVoteItem.newVoterName
+    );
     const generatedProposal: UIProposal = {
-      title: "Test proposal",
-      description: "Test proposal description",
+      title,
+      description: "",
       voteItems: [addVoterVoteItem],
     };
 
     const proposalId =
-      await registeredVoterProposalServices[0].uploadProposal(
-        generatedProposal
+      await registeredVoterProposalServices[0].uploadAddVoterProposal(
+        addVoterVoteItem
       );
     await assertProposalSameForEveryone(generatedProposal, proposalId);
   });
