@@ -22,7 +22,7 @@ contract EvsdGovernor is
         IVotes _token
     )
         Governor("EvsdGovernor")
-        GovernorSettings(0 seconds, 1 weeks, 1)
+        GovernorSettings(0 seconds, 5 minutes, 1)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(50)
     {}
