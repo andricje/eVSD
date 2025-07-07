@@ -22,10 +22,10 @@ describe("BlockchainUserService", () => {
     addVoterProposal = {
       title: "Test add voter proposal",
       description: "Test add voter description",
-      voteItems: [initData.addVoterVoteItem],
+      voteItems: [initData.addVoterVoteItem1],
     };
     eligibleVoterProposalServices = initData.eligibleVoterProposalServices;
-    newVoterVoteItem = initData.addVoterVoteItem;
+    newVoterVoteItem = initData.addVoterVoteItem1;
     newVoterService = initData.ineligibleVoterProposalServices[0];
   });
   it("After a vote passes to add a new voter the service should show the correct name for the voter", async () => {

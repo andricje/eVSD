@@ -16,6 +16,7 @@ import {
 import {
   areProposalsEqual,
   getMintTokenCalldata,
+  getNewVoterProposalDescription,
   getVoteResultForItem,
 } from "../../utils";
 import {
@@ -213,6 +214,20 @@ export class BlockchainProposalReader implements ProposalReader {
           }
         );
         proposal.voteItems = voteItemsCorrectOrder.map((x) => x.item);
+      }
+    }
+    // Override proposal title and description for proposals that add new voters
+    for (const proposal of proposals) {
+      if (
+        proposal.voteItems.length > 0 &&
+        IsAddVoterVotableItem(proposal.voteItems[0])
+      ) {
+        const { title } = getNewVoterProposalDescription(
+          proposal.voteItems[0].newVoterAddress,
+          proposal.voteItems[0].newVoterName
+        );
+        proposal.title = title;
+        proposal.description = "";
       }
     }
     return proposals;

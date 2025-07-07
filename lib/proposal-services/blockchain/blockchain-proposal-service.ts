@@ -8,6 +8,7 @@ import {
 import { ProposalFileService } from "../../file-upload";
 import {
   Proposal,
+  UIAddVoterVotableItem,
   UIProposal,
   User,
   UserActivityEventProposal,
@@ -54,6 +55,9 @@ export class BlockchainProposalService implements ProposalService {
       this.reader,
       new BlockchainEventProvider(governor, provider, userService)
     );
+  }
+  uploadAddVoterProposal(addVoterItem: UIAddVoterVotableItem) {
+    return this.writer.uploadAddVoterProposal(addVoterItem);
   }
   getUserVotingStatus(user: User): Promise<UserVotingStatus> {
     return this.reader.getUserVotingStatus(user);

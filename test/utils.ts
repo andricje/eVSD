@@ -29,7 +29,8 @@ export const rng = seedrandom("42");
 export interface TestInitData {
   eligibleVoterProposalServices: BlockchainProposalService[];
   ineligibleVoterProposalServices: BlockchainProposalService[];
-  addVoterVoteItem: UIAddVoterVotableItem;
+  addVoterVoteItem1: UIAddVoterVotableItem;
+  addVoterVoteItem2: UIAddVoterVotableItem;
   votingPeriod: number;
   evsdGovernor: EvsdGovernor;
   evsdToken: EvsdToken;
@@ -86,26 +87,32 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
         hardhat.ethers.provider
       )
   );
-  const unregisteredVoter = await getUnregisteredVoter();
-  const unregisteredVoterProposalServices = [
-    new BlockchainProposalService(
-      governor,
-      token,
-      unregisteredVoter as unknown as ethers.Signer,
-      fileService,
-      userService,
-      hardhat.ethers.provider
-    ),
-  ];
-  const addVoterVoteItem: UIAddVoterVotableItem = {
-    newVoterAddress: unregisteredVoter.address,
-    newVoterName: "New voter",
+  const unregisteredVoters = await getUnregisteredVoters();
+  const unregisteredVoterProposalServices = unregisteredVoters.map(
+    (unregisteredVoter) =>
+      new BlockchainProposalService(
+        governor,
+        token,
+        unregisteredVoter as unknown as ethers.Signer,
+        fileService,
+        userService,
+        hardhat.ethers.provider
+      )
+  );
+  const addVoterVoteItem1: UIAddVoterVotableItem = {
+    newVoterAddress: unregisteredVoters[0].address,
+    newVoterName: "New voter 1",
+  };
+  const addVoterVoteItem2: UIAddVoterVotableItem = {
+    newVoterAddress: unregisteredVoters[1].address,
+    newVoterName: "New voter 2",
   };
   const votingPeriod = Number(await governor.votingPeriod());
   const initData: TestInitData = {
     eligibleVoterProposalServices: registeredVoterProposalServices,
     ineligibleVoterProposalServices: unregisteredVoterProposalServices,
-    addVoterVoteItem,
+    addVoterVoteItem1: addVoterVoteItem1,
+    addVoterVoteItem2: addVoterVoteItem2,
     votingPeriod,
     evsdGovernor: governor,
     evsdToken: token,
@@ -120,13 +127,16 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
   return initData;
 }
 export async function getEligibleVoters() {
-  const [, , ...voters] = await hardhat.ethers.getSigners();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [, unregisteredVoter1, unregisteredVoter2, ...voters] =
+    await hardhat.ethers.getSigners();
 
   return voters;
 }
-async function getUnregisteredVoter() {
-  const [, unregisteredVoter] = await hardhat.ethers.getSigners();
-  return unregisteredVoter;
+async function getUnregisteredVoters() {
+  const [, unregisteredVoter1, unregisteredVoter2] =
+    await hardhat.ethers.getSigners();
+  return [unregisteredVoter1, unregisteredVoter2];
 }
 export function getRandomVotes(n: number): VoteOption[] {
   const result: VoteOption[] = [];

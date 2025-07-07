@@ -54,7 +54,7 @@ describe("BlockchainProposalService integration", function () {
     registeredVoterProposalServices = initData.eligibleVoterProposalServices;
     unregisteredVoterProposalServices =
       initData.ineligibleVoterProposalServices;
-    addVoterVoteItem = initData.addVoterVoteItem;
+    addVoterVoteItem = initData.addVoterVoteItem1;
   });
   it("should create a proposal on-chain with correct title and description when there is only one simple vote item and fetch it", async () => {
     const generatedProposal: UIProposal = {

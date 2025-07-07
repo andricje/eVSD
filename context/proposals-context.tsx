@@ -8,7 +8,6 @@ import { ProposalService } from "@/lib/proposal-services/proposal-service";
 import { Proposal } from "@/types/proposal";
 import { getEvsdGovernor, getEvsdToken } from "@/lib/contract-provider";
 import { ProposalServiceType } from "@/types/evsd-config";
-import { BlockchainUserService } from "@/lib/user-services/blockchain-user-service";
 import { useUserService } from "@/hooks/use-userservice";
 
 export interface ProposalsContextValue {

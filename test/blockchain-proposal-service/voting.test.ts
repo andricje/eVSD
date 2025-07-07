@@ -64,7 +64,8 @@ function getVotes(numFor: number, numAgainst: number, numAbstain: number) {
 describe("BlockchainProposalService integration", function () {
   let registeredVoterProposalServices: BlockchainProposalService[];
   let unregisteredVoterProposalServices: BlockchainProposalService[];
-  let addVoterVoteItem: UIAddVoterVotableItem;
+  let addVoterVoteItem1: UIAddVoterVotableItem;
+  let addVoterVoteItem2: UIAddVoterVotableItem;
   let votingPeriod: number;
   let unregisteredVoterAddress: string;
   let token: EvsdToken;
@@ -73,7 +74,8 @@ describe("BlockchainProposalService integration", function () {
     registeredVoterProposalServices = initData.eligibleVoterProposalServices;
     unregisteredVoterProposalServices =
       initData.ineligibleVoterProposalServices;
-    addVoterVoteItem = initData.addVoterVoteItem;
+    addVoterVoteItem1 = initData.addVoterVoteItem1;
+    addVoterVoteItem2 = initData.addVoterVoteItem2;
     votingPeriod = initData.votingPeriod;
     unregisteredVoterAddress = initData.ineligibleVoterAddress;
     token = initData.evsdToken;
@@ -94,15 +96,12 @@ describe("BlockchainProposalService integration", function () {
     const proposal = await proposer.getProposal(proposalId);
     return proposal;
   }
-  async function deployAndGetProposalAddVoter() {
-    const generatedProposal: UIProposal = {
-      title: "Test proposal add voter",
-      description: "Test proposal description",
-      voteItems: [addVoterVoteItem],
-    };
+  async function deployAndGetProposalAddVoter(
+    addVoterItem: UIAddVoterVotableItem
+  ) {
     const proposalId =
-      await registeredVoterProposalServices[0].uploadProposal(
-        generatedProposal
+      await registeredVoterProposalServices[0].uploadAddVoterProposal(
+        addVoterItem
       );
     const proposal =
       await registeredVoterProposalServices[0].getProposal(proposalId);
@@ -222,7 +221,7 @@ describe("BlockchainProposalService integration", function () {
     expect(getVoteResultForItem(updatedVoteItem)).to.equal("passed");
   });
   it("should allow a new voter to vote after the proposal to add the voter has passed", async () => {
-    const proposal = await deployAndGetProposalAddVoter();
+    const proposal = await deployAndGetProposalAddVoter(addVoterVoteItem1);
     const voteItem = proposal.voteItems[0];
     const numVoters = registeredVoterProposalServices.length;
     await castVotes(
@@ -254,6 +253,10 @@ describe("BlockchainProposalService integration", function () {
       newVoter,
       "for"
     );
+  });
+  it("should allow adding two proposals to add two different voters", async () => {
+    const proposal1 = await deployAndGetProposalAddVoter(addVoterVoteItem1);
+    const proposal2 = await deployAndGetProposalAddVoter(addVoterVoteItem2);
   });
   it("should allow a proposer to cancel the proposal 10 hours after creating and update the proposal state accordingly", async () => {
     // Take some proposer other than the first account

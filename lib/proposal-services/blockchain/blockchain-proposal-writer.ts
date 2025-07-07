@@ -218,6 +218,17 @@ export class BlockchainProposalWriter implements ProposalWriter {
     await Promise.all(uploadPromises);
     return proposalId;
   }
+  public async uploadAddVoterProposal(addVoterItem: UIAddVoterVotableItem) {
+    /* Set the title to newVoterAddress to make sure the parent proposal is always unique. 
+    This will be overwritten in the parser when reading from the chain and will be set to the auto generated title base on the newVoterAddress. */
+    const proposal: UIProposal = {
+      title: `${addVoterItem.newVoterAddress}`,
+      description:
+        "" /* Leave this blank (always generated from the newVoterAddress when read from the chain) */,
+      voteItems: [addVoterItem],
+    };
+    return await this.uploadProposal(proposal);
+  }
   public async voteForItem(item: VotableItem, vote: VoteOption) {
     const address = await this.signer.getAddress();
     const tokenBalance = await this.token.balanceOf(address);

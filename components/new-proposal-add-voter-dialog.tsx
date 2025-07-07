@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, useEffect, ReactElement } from "react";
 import { useProposals } from "@/hooks/use-proposals";
-import { UIAddVoterVotableItem, UIProposal } from "@/types/proposal";
+import { UIAddVoterVotableItem } from "@/types/proposal";
 
 interface NewVoterDialogProps {
   customClassName?: string;
@@ -56,15 +56,7 @@ export function NewVoterDialog({
         newVoterAddress,
         newVoterName: facultyName,
       };
-      const proposal: UIProposal = {
-        title:
-          "" /* Leave this blank (always generated from the newVoterAddress when read from the chain) */,
-        description:
-          "" /* Leave this blank (always generated from the newVoterAddress when read from the chain) */,
-        voteItems: [voteItem],
-      };
-
-      const result = await proposalService?.uploadProposal(proposal);
+      const result = await proposalService?.uploadAddVoterProposal(voteItem);
 
       console.log(
         "Предлог послат додавање адресе:",
