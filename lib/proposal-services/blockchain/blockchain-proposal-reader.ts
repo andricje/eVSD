@@ -59,9 +59,6 @@ export class BlockchainProposalReader implements ProposalReader {
   async getUserVotingStatus(user: User): Promise<UserVotingStatus> {
     const currentVotingPower = await this.token.getVotes(user.address);
     const tokenBalance = await this.token.balanceOf(user.address);
-    console.log(
-      `Voting power: ${currentVotingPower} Token balance: ${tokenBalance}`
-    );
     // User already has some voting power so we assume there is nothing to accept or delegate
     if (currentVotingPower > 0n) {
       return "Eligible";

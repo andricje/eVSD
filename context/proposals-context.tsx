@@ -46,7 +46,7 @@ function useBlockchainProposalService(): ProposalService | null {
       );
     }
     return null;
-  }, [provider, signer]);
+  }, [provider, signer, userService]);
 }
 
 const AbstractProposalsProvider = ({

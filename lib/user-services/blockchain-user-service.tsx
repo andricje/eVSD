@@ -27,8 +27,8 @@ export class BlockchainUserService implements UserService {
     signer: Signer | null
   ) {
     this.governor = signer ? governor.connect(signer) : governor;
-    this.addressUserMap = this.getAddressUserMap();
     this.initialUsers = initialUsers;
+    this.addressUserMap = this.getAddressUserMap();
     if (signer) {
       this.eventsEnabled = true;
       this.proposalExecutedListenerReady = this.governor.on(
