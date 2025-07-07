@@ -26,9 +26,28 @@ const sepolia: NetworkConfig = {
   ],
 };
 
+const arbitrumSepolia: NetworkConfig = {
+  tokenAddress: "0x4183A1Be2aAFA0BBb9b8591A2F4629B007ab7A54",
+  governorAddress: "0x4725F9698D218CF21a7E835597d47a6E4a46b1e0",
+  initialUserList: [
+    {
+      address: "0x5DE5187A457FA721Df7F2dd0e673B9d0a2500788",
+      name: "Veliki Humus",
+    },
+    {
+      address: "0x2b6578D9C592e3aF0743Bd4c34c22adaE4e440e9",
+      name: "Mali Humus",
+    },
+    {
+      address: "0xE60Ea9b8A1fb8190f54924b2A8A4235d2b69cf55",
+      name: "Srednji Humus",
+    },
+  ],
+};
+
 export const config: EvsdConfig = {
   proposalService: {
     type: "blockchain",
-    network: sepolia,
+    network: arbitrumSepolia,
   },
 };

@@ -21,6 +21,10 @@ const config: HardhatUserConfig = {
       url: "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: [],
     },
+    arbitrum_sepolia: {
+      url: "https://api.zan.top/arb-sepolia",
+      accounts: [],
+    },
   },
 };
 
