@@ -123,7 +123,7 @@ export class BlockchainProposalReader implements ProposalReader {
       proposals.push(proposal);
     } else if (isAddVoterVotableItemChainData(deserializedData)) {
       // TODO: Verify args[3] is values or even better unpack the event in a better way
-      this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
+      await this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
       const addVoterItem = await this.parser.parseAddVoterVotableItem(
         deserializedData,
         proposalCreatedArgs,
@@ -299,10 +299,7 @@ export class BlockchainProposalReader implements ProposalReader {
       return false;
     }
     // The call data should be the transfer method and have 2 args - the address and amount
-    const args = this.token.interface.decodeFunctionData(
-      "transfer",
-      callDatas[0]
-    );
+    const args = this.token.interface.decodeFunctionData("mint", callDatas[0]);
     const numberOfArgsCorrect = args.length === 2;
     if (!numberOfArgsCorrect) {
       return false;
