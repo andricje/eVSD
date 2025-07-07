@@ -22,7 +22,6 @@ import {
   rng,
 } from "../utils";
 import { EvsdToken } from "@/typechain-types";
-import { ethers } from "ethers";
 
 export const voteItems: UIVotableItem[] = [
   {
@@ -238,9 +237,7 @@ describe("BlockchainProposalService integration", function () {
 
     // Voter should now have token balance of one token
     const tokenBalance = await token.balanceOf(unregisteredVoterAddress);
-    const decimals = await token.decimals();
-    const oneToken = ethers.parseUnits("1", decimals);
-    expect(tokenBalance).to.equal(oneToken);
+    expect(tokenBalance).to.equal(1n);
 
     // Create a new proposal and try voting
     const newProposal = await deployAndGetProposalOneVoteItem();

@@ -6,8 +6,8 @@ const hardhat: NetworkConfig = {
   governorAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
   initialUserList: [
     {
-      address: "0xDf37F81dAAD2b0327A0A50003740e1C935C70913",
-      name: "Veliki Humus",
+      address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      name: "Alice",
     },
   ],
 };

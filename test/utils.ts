@@ -2,7 +2,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 const { expect } = chai;
-import { ethers, AddressLike } from "ethers";
+import { ethers } from "ethers";
 import hardhat, { network } from "hardhat";
 import { EvsdToken, EvsdGovernor } from "../typechain-types";
 import {
@@ -24,6 +24,7 @@ import {
 } from "../lib/file-upload";
 import { ProposalService } from "../lib/proposal-services/proposal-service";
 import { BlockchainUserService } from "../lib/user-services/blockchain-user-service";
+import { deployEvsd } from "../lib/deployment";
 export const rng = seedrandom("42");
 export interface TestInitData {
   eligibleVoterProposalServices: BlockchainProposalService[];
@@ -39,26 +40,6 @@ export interface TestInitData {
   userService: BlockchainUserService;
 }
 
-export async function deployContracts(deployer: ethers.Signer) {
-  const EvsdTokenFactory = await hardhat.ethers.getContractFactory(
-    "EvsdToken",
-    deployer
-  );
-  const evsdToken = await EvsdTokenFactory.deploy(deployer);
-  await evsdToken.waitForDeployment();
-
-  const EvsdGovernorFactory = await hardhat.ethers.getContractFactory(
-    "EvsdGovernor",
-    deployer
-  );
-  const tokenAddress = await evsdToken.getAddress();
-  const evsdGovernor = await EvsdGovernorFactory.deploy(tokenAddress);
-  await evsdGovernor.waitForDeployment();
-  return {
-    token: evsdToken as EvsdToken,
-    governor: evsdGovernor as EvsdGovernor,
-  };
-}
 export async function delegateVoteToSelf(
   evsdToken: EvsdToken,
   voter: ethers.Signer
@@ -72,38 +53,17 @@ export async function delegateVotesToAllSigners(token: EvsdToken) {
     await delegateVoteToSelf(token, signer as unknown as ethers.Signer);
   }
 }
-export async function distributeVotingRights(
-  deployer: ethers.Signer,
-  evsdToken: EvsdToken,
-  governor: EvsdGovernor,
-  voters: AddressLike[]
-) {
-  const decimals = await evsdToken.decimals();
-  const oneToken = ethers.parseUnits("1", decimals);
-  // Send exactly one token to each voter
-  for (const adr of voters) {
-    await evsdToken.mint(adr, oneToken);
-  }
-  // Transfer token ownership to the governor contract
-  await evsdToken.transferOwnership(await governor.getAddress());
-}
 export async function deployAndCreateMocks(): Promise<TestInitData> {
   // Reset the network after each test
   await network.provider.request({
     method: "hardhat_reset",
     params: [],
   });
-  // Deploy the contracts and distribute tokens
   const [owner] = await hardhat.ethers.getSigners();
+  // Deploy the contracts and distribute tokens
   const voters = await getEligibleVoters();
-  const { token, governor } = await deployContracts(
-    owner as unknown as ethers.Signer
-  );
-  await distributeVotingRights(
-    owner as unknown as ethers.Signer,
-    token,
-    governor,
-    voters
+  const { token, governor } = await deployEvsd(
+    voters.map((voter) => voter.address)
   );
 
   await delegateVotesToAllSigners(token);
@@ -113,7 +73,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
   const userService = new BlockchainUserService(
     [],
     governor,
-    owner as any as ethers.Signer
+    owner as unknown as ethers.Signer
   );
   const registeredVoterProposalServices = voters.map(
     (voter) =>

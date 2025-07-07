@@ -166,15 +166,13 @@ export default function Dashboard() {
       proposalService: ProposalService,
       user: User
     ) => {
-      setProposalsLoading(true);
       const canAccept = await proposalService.canUserAcceptVotingRights(user);
-      setProposalsLoading(false);
       setShowMembershipDialog(canAccept);
     };
     if (user && proposalService) {
       checkUserVotingRights(proposalService, user);
     }
-  }, [user, proposalService]);
+  }, [user, proposalService, setProposalsLoading]);
 
   // Funkcije za rukovanje prihvatanjem/odbijanjem članstva
   const handleAcceptMembership = async () => {

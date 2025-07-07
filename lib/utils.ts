@@ -13,7 +13,6 @@ import {
   VoteResult,
 } from "../types/proposal";
 import { STRINGS } from "../constants/strings";
-import { ethers } from "ethers";
 import { EvsdToken } from "@/typechain-types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -261,14 +260,11 @@ export async function getMintTokenCalldata(
   token: EvsdToken,
   newVoterAddress: string
 ) {
-  const decimals = await token.decimals();
-  const oneToken = ethers.parseUnits("1", decimals);
-
-  const transferCalldata = token.interface.encodeFunctionData("mint", [
+  const mintCalldata = token.interface.encodeFunctionData("mint", [
     newVoterAddress,
-    oneToken,
+    1,
   ]);
-  return transferCalldata;
+  return mintCalldata;
 }
 
 export function clipAddress(address: string): string {
