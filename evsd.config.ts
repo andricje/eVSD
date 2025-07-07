@@ -12,14 +12,23 @@ const hardhat: NetworkConfig = {
   ],
 };
 const sepolia: NetworkConfig = {
-  tokenAddress: "0x65E953e4D8B4c27BEe51E3fa2af8ff141C5611D2",
-  governorAddress: "0xbbd71385538f36b771885975A0EDB0F5530aC0Cc",
-  initialUserList: [],
+  tokenAddress: "0xF4E761f6359b592Edb8002278920AF21d14C9953",
+  governorAddress: "0x73836B9F15819daF12dF636a46f19cFc11Cd024e",
+  initialUserList: [
+    {
+      address: "0x5DE5187A457FA721Df7F2dd0e673B9d0a2500788",
+      name: "Veliki Humus",
+    },
+    {
+      address: "0x2b6578D9C592e3aF0743Bd4c34c22adaE4e440e9",
+      name: "Mali Humus",
+    },
+  ],
 };
 
 export const config: EvsdConfig = {
   proposalService: {
     type: "blockchain",
-    network: hardhat,
+    network: sepolia,
   },
 };

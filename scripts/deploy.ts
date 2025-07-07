@@ -22,4 +22,11 @@ async function main() {
   console.log(`EvsdToken address: ${token.target}`);
 }
 
-main().catch(console.error);
+main()
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error("Error during deployment:", error);
+    process.exit(1);
+  });
