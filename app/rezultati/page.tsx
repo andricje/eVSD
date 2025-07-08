@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Search, User as UserIcon } from "lucide-react";
 import {
@@ -192,9 +192,13 @@ export default function RezultatiPage() {
   const { loading: walletLoading } = useWallet();
   const { currentUser } = useUserService();
   const router = useRouter();
-  if (!currentUser) {
-    router.push("/login");
-  }
+
+  useEffect(() => {
+    if (!currentUser) {
+      router.push("/login");
+    }
+  }, [currentUser, router]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
   const [filterAuthor, setFilterAuthor] = useState<User | null>(null);

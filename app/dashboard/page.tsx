@@ -155,7 +155,7 @@ export default function Dashboard() {
     if (!user) {
       router.push("/login");
     }
-  }, []);
+  }, [user, router]);
 
   // Stanje za prikazivanje popup-a za prihvatanje članstva
   const [showMembershipDialog, setShowMembershipDialog] = useState(false);

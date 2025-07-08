@@ -317,7 +317,7 @@ export default function ProposalDetails() {
     if (!user) {
       router.push("/login");
     }
-  }, []);
+  }, [user, router]);
 
   const [error, setError] = useState("");
 
