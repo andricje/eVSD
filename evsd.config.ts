@@ -45,9 +45,28 @@ const arbitrumSepolia: NetworkConfig = {
   ],
 };
 
+const arbitrum: NetworkConfig = {
+  tokenAddress: "0xEF6936404af1F32859e974CBC08B936fAB39b1C0",
+  governorAddress: "0xCD35b35490FCC3294AF8eb255C8D2524fc2C7511",
+  initialUserList: [
+    {
+      address: "0x5DE5187A457FA721Df7F2dd0e673B9d0a2500788",
+      name: "Veliki Humus",
+    },
+    {
+      address: "0x2b6578D9C592e3aF0743Bd4c34c22adaE4e440e9",
+      name: "Mali Humus",
+    },
+    {
+      address: "0xE60Ea9b8A1fb8190f54924b2A8A4235d2b69cf55",
+      name: "Srednji Humus",
+    },
+  ],
+};
+
 export const config: EvsdConfig = {
   proposalService: {
     type: "blockchain",
-    network: arbitrumSepolia,
+    network: arbitrum,
   },
 };
