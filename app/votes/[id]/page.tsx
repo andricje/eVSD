@@ -31,7 +31,7 @@ import {
   VoteOption,
   User,
 } from "@/types/proposal";
-import { formatDate, hasVotingTimeExpired } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { WalletAddress } from "@/components/wallet-address";
 import { StatusBadge } from "@/components/badges";
 import { STRINGS } from "@/constants/strings";
@@ -226,8 +226,9 @@ const YourVoteBadge = ({ vote }: { vote: string }) => {
 const SubItemVoting: React.FC<{
   subItem: VotableItem;
   currentUser: User | null;
+  isUserVoteProcessing: boolean;
   onVote: (id: string, vote: VoteOption, title: string) => void;
-}> = ({ subItem, currentUser: currentUser, onVote }) => {
+}> = ({ subItem, currentUser: currentUser, isUserVoteProcessing, onVote }) => {
   const { proposalService } = useProposals();
   const [isVotingEnabled, setIsVotingEnabled] = useState(false);
   useEffect(() => {
@@ -272,16 +273,19 @@ const SubItemVoting: React.FC<{
       {isVotingEnabled && yourVote === "didntVote" && (
         <CardFooter className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <VoteButton
+            disabled={isUserVoteProcessing}
             type="for"
             onClick={() => onVote(subItem.id.toString(), "for", subItem.title)}
           />
           <VoteButton
+            disabled={isUserVoteProcessing}
             type="against"
             onClick={() =>
               onVote(subItem.id.toString(), "against", subItem.title)
             }
           />
           <VoteButton
+            disabled={isUserVoteProcessing}
             type="abstain"
             className="col-span-2 sm:col-span-1"
             onClick={() =>
@@ -329,8 +333,29 @@ export default function ProposalDetails() {
     null
   );
   const [selectedSubItemTitle, setSelectedVoteItemTitle] = useState<string>("");
+  const [subItemsWithProcessingVotes, setSubItemsWithProcessingVotes] =
+    useState<bigint[]>([]);
   const proposal = proposals.find((p) => p.id.toString() === params.id);
   const isAuthor = proposal && proposal.author === user;
+
+  // When proposals update that might mean a vote has been processed so delete that id from subItemsWithProcessingVotes
+  useEffect(() => {
+    if (!proposal || !user) {
+      return;
+    }
+    for (const voteItem of proposal.voteItems) {
+      // If item id is present in subItemsWithProcessingVotes but the current user's vote is recorded that means
+      // this vote has just processed so remove it from this list
+      if (
+        subItemsWithProcessingVotes.includes(voteItem.id) &&
+        voteItem.userVotes.get(user.address)
+      ) {
+        setSubItemsWithProcessingVotes((prev) =>
+          prev.filter((x) => x !== voteItem.id)
+        );
+      }
+    }
+  }, [proposal, subItemsWithProcessingVotes, user]);
 
   const handleSubItemVoteSelect = (
     voteItemId: string,
@@ -357,18 +382,17 @@ export default function ProposalDetails() {
     setIsVoting(true);
 
     try {
-      let votePrompt = `Гласате ${selectedVote === "for" ? STRINGS.voting.voteOptions.for.toUpperCase() : selectedVote === "against" ? STRINGS.voting.voteOptions.against.toUpperCase() : STRINGS.voting.voteOptions.abstain.toUpperCase()} `;
-      votePrompt += selectedSubItemId ? "тачку за гласање" : "предлог";
-      console.log(votePrompt);
-
       const voteItem = proposal.voteItems.find(
         (voteItem) => voteItem.id.toString() === selectedSubItemId
       );
 
       if (voteItem) {
         await proposalService.voteForItem(voteItem, selectedVote as VoteOption);
+        setSubItemsWithProcessingVotes((prev) => [...prev, voteItem.id]);
       } else {
-        setError("Неуспешно гласање. Покушајте поново.");
+        setError(
+          "Неуспешно гласање. Није пронађен предлог за који сте покушали да гласате."
+        );
       }
     } catch (err) {
       console.error("Грешка приликом гласања:", err);
@@ -466,6 +490,9 @@ export default function ProposalDetails() {
               {proposal.voteItems.map((subItem) => (
                 <SubItemVoting
                   key={subItem.id}
+                  isUserVoteProcessing={subItemsWithProcessingVotes.includes(
+                    subItem.id
+                  )}
                   subItem={subItem}
                   currentUser={user}
                   onVote={handleSubItemVoteSelect}
