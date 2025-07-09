@@ -4,9 +4,10 @@ import RezultatiPage from "../app/rezultati/page";
 import { useProposals } from "../hooks/use-proposals";
 import { useWallet } from "../context/wallet-context";
 import { useRouter } from "next/navigation";
-import { Proposal, User } from "../types/proposal";
+import { Proposal, User, VoteEvent } from "../types/proposal";
 import { UserServiceContextType } from "@/context/user-context";
 import { useUserService } from "@/hooks/use-userservice";
+import { useQuorum } from "@/hooks/use-quorum";
 
 beforeAll(() => {
   global.ResizeObserver = class {
@@ -35,10 +36,14 @@ jest.mock("../hooks/use-userservice", () => ({
   useUserService: jest.fn(),
 }));
 
+jest.mock("../hooks/use-quorum", () => ({
+  useQuorum: jest.fn(),
+}));
+
 const mockPush = jest.fn();
 (useRouter as jest.Mock).mockReturnValue({ push: mockPush });
 
-const createVoteMap = (...events: any[]): Map<string, any> => {
+const createVoteMap = (...events: VoteEvent[]): Map<string, VoteEvent> => {
   const map = new Map();
   for (const event of events) {
     map.set(event.voter.address, event);
@@ -142,6 +147,8 @@ beforeEach(() => {
     userError: null,
   };
   (useUserService as jest.Mock).mockReturnValue(mockUserServiceReturn);
+
+  (useQuorum as jest.Mock).mockReturnValue(5);
 });
 
 test("filters proposals by search term (title)", async () => {

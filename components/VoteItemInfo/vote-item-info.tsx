@@ -3,17 +3,26 @@ import {
   getTranslatedVoteOptionWithCount,
   getVoteResult,
 } from "@/lib/utils";
-import { countVoteForOption, Proposal, VotableItem } from "@/types/proposal";
+import {
+  countVoteForOption,
+  ProposalState,
+  VotableItem,
+} from "@/types/proposal";
 import { Badge } from "../ui/badge";
 import { VoteBadge, VoteResultBadge } from "../badges";
 import { STRINGS } from "@/constants/strings";
 
 interface VoteItemInfoProps {
   voteItem: VotableItem;
-  proposal?: Proposal;
+  proposalState: ProposalState;
+  quorum: number;
 }
 
-export function VoteItemInfo({ voteItem, proposal }: VoteItemInfoProps) {
+export function VoteItemInfo({
+  voteItem,
+  proposalState,
+  quorum,
+}: VoteItemInfoProps) {
   const votesFor = countVoteForOption(voteItem, "for");
   const votesAgainst = countVoteForOption(voteItem, "against");
   const votesAbstain = countVoteForOption(voteItem, "abstain");
@@ -56,9 +65,9 @@ export function VoteItemInfo({ voteItem, proposal }: VoteItemInfoProps) {
           </div>
           <div className="sm:min-w-[200px] flex sm:justify-end">
             <VoteResultBadge
-              status={getVoteResult(votesFor, votesAgainst, votesAbstain)}
-              totalVotes={countTotalVotes(voteItem)}
-              proposal={proposal}
+              voteItem={voteItem}
+              proposalState={proposalState}
+              quorum={quorum}
             />
           </div>
         </div>

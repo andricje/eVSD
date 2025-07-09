@@ -22,7 +22,7 @@ import { UserActivity } from "@/components/user-activity/user-activity";
 import { useWallet } from "@/context/wallet-context";
 import { useProposals } from "@/hooks/use-proposals";
 import { Proposal, User } from "@/types/proposal";
-import { getQuorumVotesText, isVotingComplete, QUORUM } from "@/lib/utils";
+import { getQuorumVotesText, isVotingComplete } from "@/lib/utils";
 import { ProposalCard } from "@/components/ProposalCard/proposal-card";
 import { NewVoterDialog } from "@/components/new-proposal-add-voter-dialog";
 import { MembershipAcceptanceDialog } from "../../components/membership-acceptance-dialog";
@@ -35,6 +35,7 @@ import {
   WalletInfoSkeleton,
 } from "@/components/loadingSkeletons/loadingSkeletons";
 import { useUserService } from "@/hooks/use-userservice";
+import { useQuorum } from "@/hooks/use-quorum";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
@@ -143,6 +144,7 @@ export default function Dashboard() {
 
   const { loading: walletLoading } = useWallet();
   const { currentUser: user } = useUserService();
+  const quorum = useQuorum();
   const {
     proposals,
     proposalService,
@@ -235,13 +237,15 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold text-foreground">
                   Предлози за гласање
                 </h2>
-                <Badge variant="outline" className="text-sm px-3 py-1">
-                  <Users className="h-4 w-4 mr-1.5" />
-                  Кворум: {QUORUM} {getQuorumVotesText()}
-                </Badge>
+                {quorum && (
+                  <Badge variant="outline" className="text-sm px-3 py-1">
+                    <Users className="h-4 w-4 mr-1.5" />
+                    Кворум: {quorum} {getQuorumVotesText(quorum)}
+                  </Badge>
+                )}
               </div>
 
-              {proposalsLoading ? (
+              {proposalsLoading || !quorum ? (
                 <CardsSkeleton />
               ) : (
                 <>
@@ -252,6 +256,10 @@ export default function Dashboard() {
                           key={proposal.id}
                           proposal={proposal}
                           isUrgent={false}
+                          // FIXME: This assumes the quorum is the same as the current Governor quorum,
+                          // which may not be the case if the quorum changed since the proposal was created.
+                          // Should use the quorum at the timestamp of the proposal creation.
+                          quorum={quorum}
                         />
                       ))}
                     </div>

@@ -71,30 +71,28 @@ export function convertVoteOptionToString(vote: VoteOption): string {
   return voteOptionMap[vote];
 }
 
-export const QUORUM = 2;
-
 export function getVoteResult(
   votesFor: number,
   votesAgainst: number,
-  votesAbstain: number
+  votesAbstain: number,
+  quorum: number
 ): VoteResult {
   const totalVotes = votesFor + votesAgainst + votesAbstain;
-  if (totalVotes >= QUORUM) {
-    if (votesFor > votesAgainst) {
-      return "passed";
-    } else {
-      return "failed";
-    }
-  } else {
+
+  if (totalVotes < quorum) {
     return "no-quorum";
+  } else if (votesFor > votesAgainst) {
+    return "passed";
+  } else {
+    return "failed";
   }
 }
 
-export function getVoteResultForItem(voteItem: VotableItem) {
+export function getVoteResultForItem(voteItem: VotableItem, quorum: number) {
   const votesFor = countVoteForOption(voteItem, "for");
   const votesAgainst = countVoteForOption(voteItem, "against");
   const votesAbstain = countVoteForOption(voteItem, "abstain");
-  return getVoteResult(votesFor, votesAgainst, votesAbstain);
+  return getVoteResult(votesFor, votesAgainst, votesAbstain, quorum);
 }
 
 // Formatiranje datuma
@@ -138,12 +136,15 @@ export const isVotingComplete = (proposal: Proposal) => {
   return proposal.status != "open";
 };
 
-export function isQuorumReached(voteItem: VotableItem) {
-  return countTotalVotes(voteItem) > QUORUM;
+export function isQuorumReached(voteItem: VotableItem, quorum: number) {
+  return countTotalVotes(voteItem) > quorum;
 }
 
-export function isQuorumReachedForAllPoints(proposal: Proposal) {
-  return proposal.voteItems.every((item) => isQuorumReached(item));
+export function isQuorumReachedForAllPoints(
+  proposal: Proposal,
+  quorum: number
+) {
+  return proposal.voteItems.every((item) => isQuorumReached(item, quorum));
 }
 
 export function countTotalVotes(voteItem: VotableItem) {
@@ -283,15 +284,15 @@ export function usersFromAddressNameMapRecord(
   }));
 }
 
-export function getQuorumVotesText(): string {
+export function getQuorumVotesText(quorum: number): string {
   let quorumText = "глас";
 
-  if (QUORUM % 10 === 1) {
-    if (QUORUM % 100 === 11) {
+  if (quorum % 10 === 1) {
+    if (quorum % 100 === 11) {
       quorumText += "ова";
     }
-  } else if (QUORUM % 10 >= 2 && QUORUM % 10 <= 4) {
-    if (QUORUM % 100 === 12 || QUORUM % 100 === 13 || QUORUM % 100 === 14) {
+  } else if (quorum % 10 >= 2 && quorum % 10 <= 4) {
+    if (quorum % 100 === 12 || quorum % 100 === 13 || quorum % 100 === 14) {
       quorumText += "ова";
     } else {
       quorumText += "а";

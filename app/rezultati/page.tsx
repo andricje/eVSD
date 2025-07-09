@@ -41,6 +41,7 @@ import { useWallet } from "@/context/wallet-context";
 import { Proposal, User } from "@/types/proposal";
 import { CardsSkeleton } from "@/components/loadingSkeletons/loadingSkeletons";
 import { useUserService } from "@/hooks/use-userservice";
+import { useQuorum } from "@/hooks/use-quorum";
 
 function FilterResults({
   filteredProposals,
@@ -49,9 +50,10 @@ function FilterResults({
   filteredProposals: Proposal[];
   usersToFollow: User[];
 }) {
+  const quorum = useQuorum();
   return (
     <>
-      {filteredProposals.length > 0 ? (
+      {filteredProposals.length > 0 && quorum ? (
         filteredProposals.map((proposal) => (
           <Card key={proposal.id}>
             <CardHeader className="pb-3">
@@ -89,7 +91,14 @@ function FilterResults({
                 </div>
               </div>
 
-              <ProposalInfo proposal={proposal} usersToFollow={usersToFollow} />
+              <ProposalInfo
+                proposal={proposal}
+                usersToFollow={usersToFollow}
+                // FIXME: This assumes the quorum is the same as the current Governor quorum,
+                // which may not be the case if the quorum changed since the proposal was created.
+                // Should use the quorum at the timestamp of the proposal creation.
+                quorum={quorum}
+              />
             </CardContent>
           </Card>
         ))

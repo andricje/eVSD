@@ -14,12 +14,14 @@ import { ThumbsDown, ThumbsUp, UserCheck } from "lucide-react";
 
 interface ProposalInfoProps {
   proposal: Proposal;
-  usersToFollow?: User[];
+  usersToFollow: User[];
+  quorum: number;
 }
 
 export function ProposalInfo({
   proposal,
   usersToFollow = [],
+  quorum,
 }: ProposalInfoProps) {
   return (
     <>
@@ -40,7 +42,11 @@ export function ProposalInfo({
                       {index + 1}. {voteItem.title}
                     </p>
                   </div>
-                  <VoteItemInfo voteItem={voteItem} proposal={proposal} />
+                  <VoteItemInfo
+                    voteItem={voteItem}
+                    proposalState={proposal.status}
+                    quorum={quorum}
+                  />
                 </div>
                 {usersToFollow?.length > 0 && (
                   <div>
