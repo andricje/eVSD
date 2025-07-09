@@ -1,22 +1,12 @@
 import "@testing-library/jest-dom";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  cleanup,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RezultatiPage from "../app/rezultati/page";
 import { useProposals } from "../hooks/use-proposals";
-import { useWallet, WalletProvider } from "../context/wallet-context";
+import { useWallet } from "../context/wallet-context";
 import { useRouter } from "next/navigation";
 import { Proposal, User } from "../types/proposal";
-import {
-  UserServiceContextType,
-  UserServiceProvider,
-} from "@/context/user-context";
+import { UserServiceContextType } from "@/context/user-context";
 import { useUserService } from "@/hooks/use-userservice";
-import { InMemoryUserService } from "@/lib/user-services/in-memory-user-service";
 
 beforeAll(() => {
   global.ResizeObserver = class {

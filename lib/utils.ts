@@ -118,7 +118,7 @@ export const getRemainingTime = (expiresAt: Date) => {
   const diffMs = expiresAt.getTime() - now.getTime();
 
   if (diffMs <= 0) {
-    return "Isteklo";
+    return null;
   }
 
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));

@@ -7,7 +7,7 @@ import { getTestProposal } from "../test/dummy-objects";
 
 global.ResizeObserver = require("resize-observer-polyfill");
 
-describe("NewProposalDialog", () => {
+describe("ProposalCard", () => {
   it("Doesn't show the vote button if proposal state is cancelled", async () => {
     render(
       <ProposalCard proposal={getTestProposal("cancelled")} isUrgent={false} />

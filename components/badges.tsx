@@ -43,6 +43,11 @@ export const StatusBadge = ({
   status: ProposalState;
   expiresAt?: Date;
 }) => {
+  // If expiresAt date is provided and the voting time has expired override the status with 'closed'
+  const remainingTime = expiresAt ? getRemainingTime(expiresAt) : null;
+  if (expiresAt && !remainingTime) {
+    status = "closed";
+  }
   switch (status) {
     case "open":
       return (
@@ -54,7 +59,7 @@ export const StatusBadge = ({
             {expiresAt ? (
               <Badge className="bg-amber-500">
                 <Timer className="h-3 w-3 mr-1" />
-                {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+                {STRINGS.proposal.expiresAt} {remainingTime}
               </Badge>
             ) : (
               <></>

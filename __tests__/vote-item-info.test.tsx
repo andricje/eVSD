@@ -5,11 +5,7 @@ import { User, VotableItem, VoteEvent, VoteOption } from "@/types/proposal";
 import { STRINGS } from "@/constants/strings";
 import { VoteItemInfo } from "@/components/VoteItemInfo/vote-item-info";
 import { v4 as uuidv4 } from "uuid";
-import {
-  getTranslatedVoteOptionWithCount,
-  isVotingComplete,
-  QUORUM,
-} from "@/lib/utils";
+import { getTranslatedVoteOptionWithCount, QUORUM } from "@/lib/utils";
 
 global.ResizeObserver = require("resize-observer-polyfill");
 
@@ -53,7 +49,7 @@ function getVoteItem(
   return voteItem;
 }
 
-describe("NewProposalDialog", () => {
+describe("VoteItemInfo", () => {
   it("Shows the correct number of votes", async () => {
     const voteItem = getVoteItem(10, 3, 5);
     render(<VoteItemInfo voteItem={voteItem} />);

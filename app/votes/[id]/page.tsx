@@ -333,6 +333,7 @@ export default function ProposalDetails() {
     null
   );
   const [selectedSubItemTitle, setSelectedVoteItemTitle] = useState<string>("");
+  // List of subItem ids that the user has just voted for and the vote is waiting to be processed (event to be fired and the proposal and vote items updated)
   const [subItemsWithProcessingVotes, setSubItemsWithProcessingVotes] =
     useState<bigint[]>([]);
   const proposal = proposals.find((p) => p.id.toString() === params.id);

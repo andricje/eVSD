@@ -20,7 +20,7 @@ const getByTextContent = (text: string) => {
   });
 };
 
-describe("NewProposalDialog", () => {
+describe("PerFacultyVotes", () => {
   let dummyVoters: User[];
   beforeAll(() => {
     dummyVoters = getDummyVoters(10);
