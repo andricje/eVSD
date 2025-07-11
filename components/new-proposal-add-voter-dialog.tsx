@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect, ReactElement } from "react";
 import { useProposals } from "@/hooks/use-proposals";
 import { UIAddVoterVotableItem } from "@/types/proposal";
+import { useUserService } from "@/hooks/use-userservice";
 
 interface NewVoterDialogProps {
   customClassName?: string;
@@ -24,6 +25,10 @@ export function NewVoterDialog({
   customClassName,
   customText,
 }: NewVoterDialogProps) {
+  const { isCurrentUserEligibleVoter } = useUserService();
+  if (!isCurrentUserEligibleVoter) {
+    return <></>;
+  }
   const {
     proposalService,
     loading: proposalLoading,
