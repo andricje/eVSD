@@ -38,6 +38,7 @@ import {
 import { useProposals } from "@/hooks/use-proposals";
 import { STRINGS } from "@/constants/strings";
 import { v4 as uuidv4 } from "uuid";
+import { useUserService } from "@/hooks/use-userservice";
 
 interface NewProposalDialogProps {
   customClassName?: string;
@@ -48,6 +49,11 @@ export function NewProposalDialog({
   customClassName,
   customText,
 }: NewProposalDialogProps) {
+  const { isCurrentUserEligibleVoter } = useUserService();
+  if (!isCurrentUserEligibleVoter) {
+    return <></>;
+  }
+
   const { proposalService } = useProposals();
   const [open, setOpen] = useState(false);
   const [newProposal, setNewProposal] = useState<UIProposal>({

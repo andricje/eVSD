@@ -7,6 +7,7 @@ import { StatusBadge } from "../badges";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { STRINGS } from "@/constants/strings";
+import { useUserService } from "@/hooks/use-userservice";
 
 interface ProposalCardProps {
   proposal: Proposal;
@@ -32,6 +33,7 @@ export function ProposalCard({
   const percentPointsWithQuorum = (pointsWithQuorum / totalVotingPoints) * 100;
 
   const authorName = proposal.author.name;
+  const { isCurrentUserEligibleVoter } = useUserService();
 
   return (
     <Card
@@ -98,7 +100,7 @@ export function ProposalCard({
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-sm">
             <span className="text-muted-foreground">
-              Број тачака са &quot;кворумом&quot;: {pointsWithQuorum}
+              {`${STRINGS.proposalCard.pointsWithQuorum}:${pointsWithQuorum}`}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-medium">
@@ -108,7 +110,7 @@ export function ProposalCard({
           </div>
           <Progress value={percentPointsWithQuorum} className="h-2" />
         </div>
-        {proposal.status === "open" ? (
+        {proposal.status === "open" && isCurrentUserEligibleVoter ? (
           <Button
             size="sm"
             className="text-sm px-4 py-2 h-auto font-medium"

@@ -74,6 +74,7 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
   const userService = new BlockchainUserService(
     [],
     governor,
+    token,
     owner as unknown as ethers.Signer
   );
   const registeredVoterProposalServices = voters.map(

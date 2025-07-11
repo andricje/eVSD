@@ -9,6 +9,9 @@ export class InMemoryUserService implements UserService {
       this.addressUserMap.set(user.address, user);
     }
   }
+  async isEligibleVoter(address: string): Promise<boolean> {
+    return this.addressUserMap.has(address);
+  }
   async getAddressUserMap(): Promise<Map<string, User>> {
     return this.addressUserMap;
   }

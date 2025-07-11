@@ -36,6 +36,7 @@ import {
 } from "@/components/loadingSkeletons/loadingSkeletons";
 import { useUserService } from "@/hooks/use-userservice";
 import { useQuorum } from "@/hooks/use-quorum";
+import { STRINGS } from "@/constants/strings";
 
 // Action Buttons
 const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
@@ -50,7 +51,7 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
         customText={
           <>
             <FileText className="h-4 w-4 mr-2" />
-            Нови предлог
+            {STRINGS.newProposal.dialog.addNew}
           </>
         }
       />

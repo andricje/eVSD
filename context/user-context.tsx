@@ -13,9 +13,14 @@ import { Provider, Signer } from "ethers";
 import { UserService } from "@/lib/user-services/user-service";
 import { BlockchainUserService } from "@/lib/user-services/blockchain-user-service";
 import { InMemoryUserService } from "@/lib/user-services/in-memory-user-service";
-import { getBlockchainConfig, getEvsdGovernor } from "@/lib/contract-provider";
+import {
+  getBlockchainConfig,
+  getEvsdGovernor,
+  getEvsdToken,
+} from "@/lib/contract-provider";
 
 export interface UserServiceContextType {
+  isCurrentUserEligibleVoter: boolean | null;
   currentUser: User | null;
   allUsers: User[] | null;
   getUserForAddress: (address: string) => User | undefined;
@@ -42,6 +47,7 @@ function AbstractUserServiceProvider({
     string,
     User
   > | null>(null);
+  const [isEligibleVoter, setIsEligibleVoter] = useState<boolean | null>(null);
   const { provider, signer } = useWallet();
 
   useEffect(() => {
@@ -60,8 +66,10 @@ function AbstractUserServiceProvider({
             (await userService.getUserForAddress(currentAddress)) ?? null
           );
           setAllUsers(await userService.getAllUsers());
+          setIsEligibleVoter(await userService.isEligibleVoter(currentAddress));
         } else {
           setUser(null);
+          setIsEligibleVoter(false);
         }
       } catch (error) {
         setUserError(error instanceof Error ? error.message : "Unknown error");
@@ -85,6 +93,7 @@ function AbstractUserServiceProvider({
         userService,
         allUsers,
         userError,
+        isCurrentUserEligibleVoter: isEligibleVoter,
       }}
     >
       {children}
@@ -98,10 +107,12 @@ async function blockchainUserServiceFactory(
   const { ethereum } = window;
   if (ethereum) {
     const governor = getEvsdGovernor();
+    const token = getEvsdToken();
     const blockchainConfig = getBlockchainConfig();
     return new BlockchainUserService(
       blockchainConfig.initialUserList,
       governor,
+      token,
       signer
     );
   } else {

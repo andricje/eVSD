@@ -1,6 +1,6 @@
 import { User } from "@/types/proposal";
 import { UserService } from "./user-service";
-import { EvsdGovernor } from "@/typechain-types";
+import { EvsdGovernor, EvsdToken } from "@/typechain-types";
 import { AddVoterVotableItemChainData } from "../proposal-services/blockchain/blockchain-proposal-parser";
 import { STRINGS } from "../../constants/strings";
 import { Signer } from "ethers";
@@ -17,6 +17,7 @@ type GovernorProposalState =
 
 export class BlockchainUserService implements UserService {
   private readonly governor: EvsdGovernor;
+  private readonly token: EvsdToken;
   private addressUserMap: Promise<Map<string, User>>;
   private readonly proposalExecutedListenerReady: Promise<EvsdGovernor> | null;
   private readonly initialUsers: User[];
@@ -24,9 +25,11 @@ export class BlockchainUserService implements UserService {
   constructor(
     initialUsers: User[],
     governor: EvsdGovernor,
+    token: EvsdToken,
     signer: Signer | null
   ) {
     this.governor = signer ? governor.connect(signer) : governor;
+    this.token = signer ? token.connect(signer) : token;
     this.initialUsers = initialUsers;
     this.addressUserMap = this.getAddressUserMap();
     if (signer) {
@@ -41,6 +44,10 @@ export class BlockchainUserService implements UserService {
       this.eventsEnabled = false;
       this.proposalExecutedListenerReady = null;
     }
+  }
+  async isEligibleVoter(address: string): Promise<boolean> {
+    const currentVotingPower = await this.token.getVotes(address);
+    return currentVotingPower > 0n;
   }
   private readonly proposalStates: GovernorProposalState[] = [
     "Pending", // Proposal is created but not yet started
