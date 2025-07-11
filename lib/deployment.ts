@@ -36,16 +36,32 @@ export async function deployEvsd(
     deployer as unknown as ethers.Signer,
     evsdToken
   );
+  console.log(
+    `Deployed contracts, token: ${await evsdToken.getAddress()}, governor: ${await evsdGovernor.getAddress()}`
+  );
 
   for (const address of initialVoters) {
-    const tx = await evsdToken.mint(address, 1);
-    await tx.wait();
+    let success = false;
+    while (!success) {
+      try {
+        const tx = await evsdToken.mint(address, 1);
+        await tx.wait();
+        console.log(`Minted tokens to address: ${address}`);
+        success = true;
+      } catch (ex) {
+        console.log(`Failed to mint tokens to address: ${address} retrying...`);
+      }
+    }
   }
   if (transferOwnership) {
-    const tx = await evsdToken.transferOwnership(
-      await evsdGovernor.getAddress()
-    );
-    await tx.wait();
+    try {
+      const tx = await evsdToken.transferOwnership(
+        await evsdGovernor.getAddress()
+      );
+      await tx.wait();
+    } catch (ex) {
+      console.log(`Failed to transfer ownership exception: ${ex}`);
+    }
   }
   return {
     governor: evsdGovernor,
