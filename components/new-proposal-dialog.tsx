@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
-  FileUp,
   PlusCircle,
   AlertCircle,
   Info,
@@ -24,7 +23,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useEffect, ReactElement } from "react";
-import { UIProposal, UIVotableItem } from "@/types/proposal";
+import {
+  IsUIAddVoterVotableItem,
+  UIProposal,
+  UIVotableItem,
+} from "@/types/proposal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Accordion,
@@ -171,7 +174,7 @@ export function NewProposalDialog({
     const originalItem = newProposal.voteItems.find(
       (item) => item === itemToDuplicate
     );
-    if (!originalItem) {
+    if (!originalItem || IsUIAddVoterVotableItem(originalItem)) {
       return;
     }
 
@@ -205,6 +208,9 @@ export function NewProposalDialog({
     }
 
     for (const item of newProposal.voteItems) {
+      if (IsUIAddVoterVotableItem(item)) {
+        throw new Error("Unexpected vote item type");
+      }
       if (!item.title.trim() || !item.description.trim()) {
         setError(STRINGS.newProposal.error.subitemsIncomplete);
         return;

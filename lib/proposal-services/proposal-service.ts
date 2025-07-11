@@ -1,5 +1,6 @@
 import {
   Proposal,
+  UIAddVoterVotableItem,
   UIProposal,
   User,
   UserActivityEventProposal,
@@ -26,6 +27,9 @@ export interface UserActivityTracker {
 }
 
 export interface ProposalWriter {
+  uploadAddVoterProposal: (
+    addVoterItem: UIAddVoterVotableItem
+  ) => Promise<bigint>;
   uploadProposal: (proposal: UIProposal) => Promise<bigint>;
   voteForItem: (item: VotableItem, vote: VoteOption) => Promise<void>;
   cancelProposal(proposal: Proposal): Promise<boolean>;

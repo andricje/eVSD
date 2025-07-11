@@ -11,19 +11,23 @@ import { STRINGS } from "@/constants/strings";
 interface ProposalCardProps {
   proposal: Proposal;
   isUrgent: boolean;
+  quorum: number;
 }
 // ProposalCard Component - Proširena sa dodatnim informacijama
-export function ProposalCard({ proposal, isUrgent }: ProposalCardProps) {
+export function ProposalCard({
+  proposal,
+  isUrgent,
+  quorum,
+}: ProposalCardProps) {
   const timeLeft = Math.max(
     0,
     proposal.closesAt ? proposal.closesAt.getTime() - new Date().getTime() : 0
   );
   const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
   const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
   const totalVotingPoints = proposal.voteItems.length;
   const pointsWithQuorum = proposal.voteItems.filter((votableItem) =>
-    isQuorumReached(votableItem)
+    isQuorumReached(votableItem, quorum)
   ).length;
   const percentPointsWithQuorum = (pointsWithQuorum / totalVotingPoints) * 100;
 

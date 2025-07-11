@@ -1,17 +1,12 @@
 import { Badge } from "@/components/ui/badge";
 import { STRINGS } from "@/constants/strings";
 import {
+  countTotalVotes,
   getRemainingTime,
   getTranslatedVoteOption,
-  isVotingComplete,
-  QUORUM,
+  getVoteResultForItem,
 } from "@/lib/utils";
-import {
-  Proposal,
-  ProposalState,
-  VoteOption,
-  VoteResult,
-} from "@/types/proposal";
+import { ProposalState, VotableItem, VoteOption } from "@/types/proposal";
 import { CheckCircle2, MinusCircle, Timer, XCircle } from "lucide-react";
 
 export const VoteBadge = ({ vote }: { vote: VoteOption }) => {
@@ -43,6 +38,11 @@ export const StatusBadge = ({
   status: ProposalState;
   expiresAt?: Date;
 }) => {
+  // If expiresAt date is provided and the voting time has expired override the status with 'closed'
+  const remainingTime = expiresAt ? getRemainingTime(expiresAt) : null;
+  if (expiresAt && !remainingTime) {
+    status = "closed";
+  }
   switch (status) {
     case "open":
       return (
@@ -54,7 +54,7 @@ export const StatusBadge = ({
             {expiresAt ? (
               <Badge className="bg-amber-500">
                 <Timer className="h-3 w-3 mr-1" />
-                {STRINGS.proposal.expiresAt} {getRemainingTime(expiresAt)}
+                {STRINGS.proposal.expiresAt} {remainingTime}
               </Badge>
             ) : (
               <></>
@@ -74,39 +74,42 @@ export const StatusBadge = ({
 };
 
 export const VoteResultBadge = ({
-  status,
-  totalVotes,
-  proposal,
+  voteItem,
+  proposalState,
+  quorum,
 }: {
-  status: VoteResult;
-  totalVotes?: number;
-  proposal?: Proposal;
+  voteItem: VotableItem;
+  proposalState: ProposalState;
+  quorum: number;
 }) => {
-  if (proposal && proposal.status === "cancelled") {
-    return (
-      <Badge className="bg-red-500">{STRINGS.proposal.statusCancelled}</Badge>
-    );
-  } else if (proposal && !isVotingComplete(proposal)) {
-    return (
-      <Badge className="bg-blue-500">{STRINGS.proposal.statusActive}</Badge>
-    );
+  const voteResult = getVoteResultForItem(voteItem, quorum);
+  const totalVotes = countTotalVotes(voteItem);
+
+  const renderBadge = (text: string, color: string) => (
+    <Badge className={`bg-${color}-500`}>{text}</Badge>
+  );
+
+  if (proposalState === "open") {
+    return renderBadge(STRINGS.proposal.statusActive, "blue");
   }
 
-  switch (status) {
-    case "passed":
-      return (
-        <Badge className="bg-green-500">{STRINGS.voting.results.passed}</Badge>
-      );
-    case "failed":
-      return (
-        <Badge className="bg-red-500">{STRINGS.voting.results.failed}</Badge>
-      );
-    case "no-quorum":
-      return (
-        <Badge className="bg-red-500">
-          {STRINGS.voting.results.noQuorum}
-          {` ${totalVotes}/${QUORUM}`}
-        </Badge>
-      );
+  if (proposalState === "cancelled") {
+    return renderBadge(STRINGS.proposal.statusCancelled, "red");
   }
+
+  if (proposalState === "closed") {
+    switch (voteResult) {
+      case "passed":
+        return renderBadge(STRINGS.voting.results.passed, "green");
+      case "failed":
+        return renderBadge(STRINGS.voting.results.failed, "red");
+      case "no-quorum":
+        return renderBadge(
+          `${STRINGS.voting.results.noQuorum} ${totalVotes}/${quorum}`,
+          "red"
+        );
+    }
+  }
+
+  return null;
 };

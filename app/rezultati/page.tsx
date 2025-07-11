@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Search, User as UserIcon } from "lucide-react";
 import {
@@ -33,19 +33,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 import { Header } from "@/components/header";
-import {
-  clipAddress,
-  formatDate,
-  isVotingComplete,
-  usersFromAddressNameMapRecord,
-} from "@/lib/utils";
+import { clipAddress, formatDate, isVotingComplete } from "@/lib/utils";
 import { useProposals } from "@/hooks/use-proposals";
 import { StatusBadge } from "@/components/badges";
 import { ProposalInfo } from "@/components/ProposalInfo/proposal-info";
 import { useWallet } from "@/context/wallet-context";
 import { Proposal, User } from "@/types/proposal";
-import { addressNameMap } from "@/constants/address-name-map";
 import { CardsSkeleton } from "@/components/loadingSkeletons/loadingSkeletons";
+import { useUserService } from "@/hooks/use-userservice";
+import { useQuorum } from "@/hooks/use-quorum";
 
 function FilterResults({
   filteredProposals,
@@ -54,9 +50,10 @@ function FilterResults({
   filteredProposals: Proposal[];
   usersToFollow: User[];
 }) {
+  const quorum = useQuorum();
   return (
     <>
-      {filteredProposals.length > 0 ? (
+      {filteredProposals.length > 0 && quorum ? (
         filteredProposals.map((proposal) => (
           <Card key={proposal.id}>
             <CardHeader className="pb-3">
@@ -94,7 +91,14 @@ function FilterResults({
                 </div>
               </div>
 
-              <ProposalInfo proposal={proposal} usersToFollow={usersToFollow} />
+              <ProposalInfo
+                proposal={proposal}
+                usersToFollow={usersToFollow}
+                // FIXME: This assumes the quorum is the same as the current Governor quorum,
+                // which may not be the case if the quorum changed since the proposal was created.
+                // Should use the quorum at the timestamp of the proposal creation.
+                quorum={quorum}
+              />
             </CardContent>
           </Card>
         ))
@@ -122,6 +126,7 @@ function UsersCombobox({
   onAddUserToFollow?: (user: User) => void;
   isAuthorComboBox?: boolean;
 }) {
+  const { allUsers } = useUserService();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<User | null>(null);
 
@@ -136,11 +141,6 @@ function UsersCombobox({
     }
     setOpen(false);
   };
-
-  const users = useMemo(
-    () => usersFromAddressNameMapRecord(addressNameMap),
-    []
-  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -178,7 +178,7 @@ function UsersCombobox({
                 <span className="font-semibold">Сви</span>
               </CommandItem>
             )}
-            {users?.map((user) => (
+            {allUsers?.map((user) => (
               <CommandItem
                 key={user.address}
                 value={user.name}
@@ -198,11 +198,16 @@ function UsersCombobox({
 
 export default function RezultatiPage() {
   const { proposals, loading: proposalsLoading } = useProposals();
-  const { user, loading: walletLoading } = useWallet();
+  const { loading: walletLoading } = useWallet();
+  const { currentUser } = useUserService();
   const router = useRouter();
-  if (!user) {
-    router.push("/login");
-  }
+
+  useEffect(() => {
+    if (!currentUser) {
+      router.push("/login");
+    }
+  }, [currentUser, router]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("all");
   const [filterAuthor, setFilterAuthor] = useState<User | null>(null);

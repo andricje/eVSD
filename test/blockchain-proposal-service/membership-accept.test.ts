@@ -18,7 +18,7 @@ describe("BlockchainProposalService integration", function () {
       registeredVoterProposalServices = initData.eligibleVoterProposalServices;
       ineligibleVoterProposalServices =
         initData.ineligibleVoterProposalServices;
-      addVoterVoteItem = initData.addVoterVoteItem;
+      addVoterVoteItem = initData.addVoterVoteItem1;
       ineligibleVoter = {
         address: initData.ineligibleVoterAddress,
         name: "Ineligible voter",

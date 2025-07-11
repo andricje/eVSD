@@ -12,9 +12,7 @@ import {
   VoteOption,
   VoteResult,
 } from "../types/proposal";
-import { addressNameMap } from "../constants/address-name-map";
 import { STRINGS } from "../constants/strings";
-import { ethers } from "ethers";
 import { EvsdToken } from "@/typechain-types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -64,12 +62,6 @@ export function convertGovernorToVoteOption(vote: bigint): VoteOption {
   throw new Error("Invalid vote option");
 }
 
-export function convertAddressToName(address: string): string {
-  return address in addressNameMap
-    ? (addressNameMap[address] as string)
-    : "Nepoznato";
-}
-
 export function convertVoteOptionToString(vote: VoteOption): string {
   const voteOptionMap: Record<VoteOption, string> = {
     for: "за",
@@ -79,30 +71,28 @@ export function convertVoteOptionToString(vote: VoteOption): string {
   return voteOptionMap[vote];
 }
 
-export const QUORUM = 2;
-
 export function getVoteResult(
   votesFor: number,
   votesAgainst: number,
-  votesAbstain: number
+  votesAbstain: number,
+  quorum: number
 ): VoteResult {
   const totalVotes = votesFor + votesAgainst + votesAbstain;
-  if (totalVotes >= QUORUM) {
-    if (votesFor > votesAgainst) {
-      return "passed";
-    } else {
-      return "failed";
-    }
-  } else {
+
+  if (totalVotes < quorum) {
     return "no-quorum";
+  } else if (votesFor > votesAgainst) {
+    return "passed";
+  } else {
+    return "failed";
   }
 }
 
-export function getVoteResultForItem(voteItem: VotableItem) {
+export function getVoteResultForItem(voteItem: VotableItem, quorum: number) {
   const votesFor = countVoteForOption(voteItem, "for");
   const votesAgainst = countVoteForOption(voteItem, "against");
   const votesAbstain = countVoteForOption(voteItem, "abstain");
-  return getVoteResult(votesFor, votesAgainst, votesAbstain);
+  return getVoteResult(votesFor, votesAgainst, votesAbstain, quorum);
 }
 
 // Formatiranje datuma
@@ -126,7 +116,7 @@ export const getRemainingTime = (expiresAt: Date) => {
   const diffMs = expiresAt.getTime() - now.getTime();
 
   if (diffMs <= 0) {
-    return "Isteklo";
+    return null;
   }
 
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
@@ -146,12 +136,15 @@ export const isVotingComplete = (proposal: Proposal) => {
   return proposal.status != "open";
 };
 
-export function isQuorumReached(voteItem: VotableItem) {
-  return countTotalVotes(voteItem) > QUORUM;
+export function isQuorumReached(voteItem: VotableItem, quorum: number) {
+  return countTotalVotes(voteItem) > quorum;
 }
 
-export function isQuorumReachedForAllPoints(proposal: Proposal) {
-  return proposal.voteItems.every((item) => isQuorumReached(item));
+export function isQuorumReachedForAllPoints(
+  proposal: Proposal,
+  quorum: number
+) {
+  return proposal.voteItems.every((item) => isQuorumReached(item, quorum));
 }
 
 export function countTotalVotes(voteItem: VotableItem) {
@@ -194,10 +187,13 @@ export function countUserRemainingItemsToVote(proposal: Proposal, user: User) {
 
 // Returns the hardcoded description for proposals that actually move tokens on chain and add new voters
 // Always ignore the description on chain as it may be deceptive instead always use this one and read the address from the proposal calldata!
-export function getNewVoterProposalDescription(newVoterAddress: string) {
+export function getNewVoterProposalDescription(
+  newVoterAddress: string,
+  newVoterName: string
+) {
   return {
-    title: `Додавање ${convertAddressToName(newVoterAddress)} као новог члана Е-ВСД`,
-    description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress} (${convertAddressToName(newVoterAddress)})`,
+    title: `Додавање ${newVoterName} као новог члана Е-ВСД`,
+    description: `Ово је предлог за додавање новог члана у састав Е-ВСД. Адреса члана је: ${newVoterAddress}. Члан ће бити додат под именом: ${newVoterName}`,
   };
 }
 
@@ -261,17 +257,15 @@ export async function areProposalsEqual(
   );
 }
 
-export async function getTransferTokenCalldata(
+export async function getMintTokenCalldata(
   token: EvsdToken,
   newVoterAddress: string
 ) {
-  const decimals = await token.decimals();
-  const oneToken = ethers.parseUnits("1", decimals);
-  const transferCalldata = token.interface.encodeFunctionData("transfer", [
+  const mintCalldata = token.interface.encodeFunctionData("mint", [
     newVoterAddress,
-    oneToken,
+    1,
   ]);
-  return transferCalldata;
+  return mintCalldata;
 }
 
 export function clipAddress(address: string): string {
@@ -290,15 +284,15 @@ export function usersFromAddressNameMapRecord(
   }));
 }
 
-export function getQuorumVotesText(): string {
+export function getQuorumVotesText(quorum: number): string {
   let quorumText = "глас";
 
-  if (QUORUM % 10 === 1) {
-    if (QUORUM % 100 === 11) {
+  if (quorum % 10 === 1) {
+    if (quorum % 100 === 11) {
       quorumText += "ова";
     }
-  } else if (QUORUM % 10 >= 2 && QUORUM % 10 <= 4) {
-    if (QUORUM % 100 === 12 || QUORUM % 100 === 13 || QUORUM % 100 === 14) {
+  } else if (quorum % 10 >= 2 && quorum % 10 <= 4) {
+    if (quorum % 100 === 12 || quorum % 100 === 13 || quorum % 100 === 14) {
       quorumText += "ова";
     } else {
       quorumText += "а";

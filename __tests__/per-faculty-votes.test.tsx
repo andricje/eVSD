@@ -2,17 +2,9 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-jest.mock("../lib/utils", () => {
-  const actualUtils = jest.requireActual("../lib/utils");
-  return {
-    ...actualUtils,
-    convertAddressToName: jest.fn(),
-  };
-});
-
 import { PerFacultyVotes } from "@/components/VoteItemInfo/vote-item-info";
 import { getDummyVoters, getVoteItem } from "../test/dummy-objects";
-import { getTranslatedVoteOption, convertAddressToName } from "@/lib/utils";
+import { getTranslatedVoteOption } from "@/lib/utils";
 import { User } from "@/types/proposal";
 
 global.ResizeObserver = require("resize-observer-polyfill");
@@ -28,21 +20,10 @@ const getByTextContent = (text: string) => {
   });
 };
 
-describe("NewProposalDialog", () => {
+describe("PerFacultyVotes", () => {
   let dummyVoters: User[];
   beforeAll(() => {
     dummyVoters = getDummyVoters(10);
-    const mockAddrMap = dummyVoters.reduce(
-      (acc, item) => {
-        acc[item.address] = item.name;
-        return acc;
-      },
-      {} as Record<string, string>
-    );
-
-    (convertAddressToName as jest.Mock).mockImplementation((addr: string) => {
-      return mockAddrMap[addr];
-    });
   });
   it("Shows all faculties that did cast a vote", async () => {
     const voteItem = getVoteItem(["for", "against", "abstain"], dummyVoters);

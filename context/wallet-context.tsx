@@ -4,8 +4,6 @@ import { ProposalServiceType } from "@/types/evsd-config";
 import { MetaMaskInpageProvider } from "@metamask/providers";
 import { ethers, Provider, Signer } from "ethers";
 import { createContext, useContext, useState, type ReactNode } from "react";
-import { User } from "@/types/proposal";
-import { convertAddressToName } from "@/lib/utils";
 
 declare global {
   interface Window {
@@ -16,7 +14,6 @@ declare global {
 interface WalletContextType {
   provider: Provider | null;
   signer: Signer | null;
-  user: User | null;
   connect: () => Promise<void>;
   disconnect: () => void;
   connectionStatus: "connected" | "connecting" | "disconnected";
@@ -34,12 +31,10 @@ function AbstractWalletProvider({
   walletFactory: () => Promise<{
     provider: Provider | null;
     signer: Signer | null;
-    user: User | null;
   }>;
 }) {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [signer, setSigner] = useState<Signer | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     "connected" | "connecting" | "disconnected"
   >("disconnected");
@@ -55,7 +50,6 @@ function AbstractWalletProvider({
 
       setProvider(result.provider);
       setSigner(result.signer);
-      setUser(result.user);
       setConnectionStatus("connected");
     } catch (error) {
       setWalletError(error instanceof Error ? error.message : "Unknown error");
@@ -70,7 +64,6 @@ function AbstractWalletProvider({
   const disconnect = () => {
     setProvider(null);
     setSigner(null);
-    setUser(null);
     setConnectionStatus("disconnected");
     setWalletError(null);
   };
@@ -80,7 +73,6 @@ function AbstractWalletProvider({
       value={{
         provider,
         signer,
-        user,
         connect,
         disconnect,
         connectionStatus,
@@ -109,35 +101,18 @@ async function getProviderAndSigner() {
 async function blockchainWalletFactory(): Promise<{
   provider: Provider | null;
   signer: Signer | null;
-  user: User | null;
 }> {
   const { provider, signer } = await getProviderAndSigner();
-  const address = await signer.getAddress();
-
-  const user = {
-    address,
-    name: convertAddressToName(address),
-  };
-
-  return { provider, signer, user };
+  return { provider, signer };
 }
 
 async function mockWalletFactory(): Promise<{
   provider: Provider | null;
   signer: Signer | null;
-  user: User | null;
 }> {
-  const address = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
-
-  const user = {
-    address,
-    name: convertAddressToName(address),
-  };
-
   return {
     provider: null,
     signer: null,
-    user,
   };
 }
 

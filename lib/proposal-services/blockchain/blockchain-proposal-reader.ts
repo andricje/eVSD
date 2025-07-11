@@ -15,7 +15,8 @@ import {
 } from "../../../types/proposal";
 import {
   areProposalsEqual,
-  getTransferTokenCalldata,
+  getMintTokenCalldata,
+  getNewVoterProposalDescription,
   getVoteResultForItem,
 } from "../../utils";
 import {
@@ -29,6 +30,7 @@ import { InMemoryProposalFileService } from "../../file-upload";
 import { BlockchainEventProvider } from "./blockchain-event-provider";
 import { EvsdGovernor, EvsdToken } from "../../../typechain-types";
 import { ProposalCreatedEvent } from "../../../typechain-types/contracts/EvsdGovernor";
+import { UserService } from "@/lib/user-services/user-service";
 
 export class BlockchainProposalReader implements ProposalReader {
   private readonly governor: EvsdGovernor;
@@ -39,21 +41,33 @@ export class BlockchainProposalReader implements ProposalReader {
   constructor(
     governor: EvsdGovernor,
     token: EvsdToken,
-    provider: ethers.Provider
+    provider: ethers.Provider,
+    userService: UserService
   ) {
     this.governor = governor;
     this.token = token;
     this.parser = new BlockchainProposalParser(
       this.governor,
-      new InMemoryProposalFileService()
+      new InMemoryProposalFileService(),
+      userService
     );
-    this.eventProvider = new BlockchainEventProvider(governor, provider);
+    this.eventProvider = new BlockchainEventProvider(
+      governor,
+      provider,
+      userService
+    );
   }
   async getUserVotingStatus(user: User): Promise<UserVotingStatus> {
     const currentVotingPower = await this.token.getVotes(user.address);
+    const tokenBalance = await this.token.balanceOf(user.address);
+    // User already has some voting power so we assume there is nothing to accept or delegate
     if (currentVotingPower > 0n) {
       return "Eligible";
-    } else if (await this.getProposalToAddUser(user.address)) {
+    }
+    const proposalToAddUser = await this.getProposalToAddUser(user.address);
+    // Either there is a proposal to add the user (the user has 0 tokens and 0 voting power but will obtain tokens when the proposal is executed)
+    // or the user has some tokens but failed to delegate the tokens to themselves (or is one of the users that had tokens minted to them on contract deployment)
+    if (proposalToAddUser || (tokenBalance > 0n && currentVotingPower === 0n)) {
       return "CanAcceptVotingRights";
     }
     return "NotEligible";
@@ -109,7 +123,7 @@ export class BlockchainProposalReader implements ProposalReader {
       proposals.push(proposal);
     } else if (isAddVoterVotableItemChainData(deserializedData)) {
       // TODO: Verify args[3] is values or even better unpack the event in a better way
-      this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
+      await this.isProposalAddVoter(args.calldatas, args.targets, args[3]);
       const addVoterItem = await this.parser.parseAddVoterVotableItem(
         deserializedData,
         proposalCreatedArgs,
@@ -202,6 +216,20 @@ export class BlockchainProposalReader implements ProposalReader {
         proposal.voteItems = voteItemsCorrectOrder.map((x) => x.item);
       }
     }
+    // Override proposal title and description for proposals that add new voters
+    for (const proposal of proposals) {
+      if (
+        proposal.voteItems.length > 0 &&
+        IsAddVoterVotableItem(proposal.voteItems[0])
+      ) {
+        const { title } = getNewVoterProposalDescription(
+          proposal.voteItems[0].newVoterAddress,
+          proposal.voteItems[0].newVoterName
+        );
+        proposal.title = title;
+        proposal.description = "";
+      }
+    }
     return proposals;
   }
 
@@ -271,17 +299,14 @@ export class BlockchainProposalReader implements ProposalReader {
       return false;
     }
     // The call data should be the transfer method and have 2 args - the address and amount
-    const args = this.token.interface.decodeFunctionData(
-      "transfer",
-      callDatas[0]
-    );
+    const args = this.token.interface.decodeFunctionData("mint", callDatas[0]);
     const numberOfArgsCorrect = args.length === 2;
     if (!numberOfArgsCorrect) {
       return false;
     }
     const addr = args[0];
     // Use this address to construct the correct calldata and compare
-    const correctCalldata = await getTransferTokenCalldata(this.token, addr);
+    const correctCalldata = await getMintTokenCalldata(this.token, addr);
 
     return callDatas[0] === correctCalldata;
   }

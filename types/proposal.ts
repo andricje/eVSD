@@ -14,6 +14,7 @@ export type UIVotableItem = Pick<VotableItem, "title" | "description"> & {
 
 export type UIAddVoterVotableItem = {
   newVoterAddress: string;
+  newVoterName: string;
 };
 
 export function IsUIAddVoterVotableItem(
@@ -70,6 +71,7 @@ export function countVoteForOption(
 }
 
 export interface AddVoterVotableItem extends VotableItem {
+  newVoterName: string;
   newVoterAddress: string;
 }
 export function IsAddVoterVotableItem(
