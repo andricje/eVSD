@@ -8,8 +8,14 @@ import { User } from "@/types/proposal";
 import { NewProposalDialog } from "@/components/new-proposal-dialog";
 import userEvent from "@testing-library/user-event";
 import { STRINGS } from "@/constants/strings";
+import { useUserService } from "@/hooks/use-userservice";
+import { UserServiceContextType } from "@/context/user-context";
 
 jest.mock("../hooks/use-proposals");
+jest.mock("../hooks/use-userservice", () => ({
+  useUserService: jest.fn(),
+}));
+
 global.ResizeObserver = require("resize-observer-polyfill");
 
 const mockedUseProposals = useProposals as jest.MockedFunction<
@@ -49,6 +55,16 @@ describe("NewProposalDialog", () => {
       proposalService,
     };
     mockedUseProposals.mockReturnValue(mockProposalsReturn);
+
+    const mockUserServiceReturn: UserServiceContextType = {
+      currentUser: mockUser,
+      allUsers: null,
+      getUserForAddress: () => undefined,
+      userService: null,
+      userError: null,
+      isCurrentUserEligibleVoter: true,
+    };
+    (useUserService as jest.Mock).mockReturnValue(mockUserServiceReturn);
   });
   it("Shows an error if proposal description is not filled", async () => {
     render(<NewProposalDialog />);

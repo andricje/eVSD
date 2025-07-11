@@ -12,9 +12,10 @@ import { Shield, Wallet, FileCheck } from "lucide-react";
 import { Header } from "@/components/header";
 // import { DonationsSection } from "@/components/donations/donations-section";
 import { useWallet } from "@/context/wallet-context";
+import { useUserService } from "@/hooks/use-userservice";
 
 export default function Home() {
-  const { user } = useWallet();
+  const { currentUser: user } = useUserService();
   return (
     <div className="flex flex-col min-h-screen">
       <Header />

@@ -1,11 +1,7 @@
 import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { User, VotableItem, VoteEvent, VoteOption } from "@/types/proposal";
 import { STRINGS } from "@/constants/strings";
-import { VoteItemInfo } from "@/components/VoteItemInfo/vote-item-info";
-import { v4 as uuidv4 } from "uuid";
-import { getTranslatedVoteOptionWithCount, QUORUM } from "@/lib/utils";
 import { StatusBadge } from "@/components/badges";
 
 global.ResizeObserver = require("resize-observer-polyfill");
