@@ -1,5 +1,6 @@
 import { User } from "@/types/proposal";
 import { UserService } from "./user-service";
+import { Unsubscribe } from "../proposal-services/proposal-service";
 
 export class InMemoryUserService implements UserService {
   private readonly addressUserMap: Map<string, User>;
@@ -8,6 +9,9 @@ export class InMemoryUserService implements UserService {
     for (const user of users) {
       this.addressUserMap.set(user.address, user);
     }
+  }
+  onUsersChanged(_callback: () => void): Unsubscribe {
+    throw new Error("Method not implemented.");
   }
   async isEligibleVoter(address: string): Promise<boolean> {
     return this.addressUserMap.has(address);

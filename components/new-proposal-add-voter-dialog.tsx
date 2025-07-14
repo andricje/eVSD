@@ -25,10 +25,6 @@ export function NewVoterDialog({
   customClassName,
   customText,
 }: NewVoterDialogProps) {
-  const { isCurrentUserEligibleVoter } = useUserService();
-  if (!isCurrentUserEligibleVoter) {
-    return <></>;
-  }
   const {
     proposalService,
     loading: proposalLoading,
@@ -40,6 +36,7 @@ export function NewVoterDialog({
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [infoDots, setInfoDots] = useState<string>("");
+  const { isCurrentUserEligibleVoter } = useUserService();
 
   const handleProposalSubmit = async () => {
     if (newVoterAddress.trim() === "") {
@@ -137,6 +134,9 @@ export function NewVoterDialog({
     return () => clearInterval(interval);
   }, [infoMessage]);
 
+  if (!isCurrentUserEligibleVoter) {
+    return <></>;
+  }
   return (
     <Dialog>
       <DialogTrigger asChild>

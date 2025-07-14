@@ -1,15 +1,8 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import { createContext, useState, ReactNode, useEffect, useMemo } from "react";
 import { User } from "@/types/proposal";
 import { useWallet } from "./wallet-context";
-import { Provider, Signer } from "ethers";
 import { UserService } from "@/lib/user-services/user-service";
 import { BlockchainUserService } from "@/lib/user-services/blockchain-user-service";
 import { InMemoryUserService } from "@/lib/user-services/in-memory-user-service";
@@ -32,40 +25,83 @@ export const UserContext = createContext<UserServiceContextType | undefined>(
   undefined
 );
 
+function useBlockchainUserService(): UserService | null {
+  const { signer } = useWallet();
+  return useMemo(() => {
+    if (signer) {
+      const governor = getEvsdGovernor();
+      const token = getEvsdToken();
+      const blockchainConfig = getBlockchainConfig();
+      return new BlockchainUserService(
+        blockchainConfig.initialUserList,
+        governor,
+        token,
+        signer
+      );
+    }
+    return null;
+  }, [signer]);
+}
+
+function useMemoryUserService(): UserService {
+  return new InMemoryUserService([]);
+}
+
+function BlockchainUserServiceProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const userService = useBlockchainUserService();
+  return (
+    <AbstractUserServiceProvider userService={userService}>
+      {children}
+    </AbstractUserServiceProvider>
+  );
+}
+
+function MockUserServiceProvider({ children }: { children: React.ReactNode }) {
+  const userService = useMemoryUserService();
+  return (
+    <AbstractUserServiceProvider userService={userService}>
+      {children}
+    </AbstractUserServiceProvider>
+  );
+}
+
 function AbstractUserServiceProvider({
   children,
-  userFactory: userServiceFactory,
+  userService,
 }: {
   children: ReactNode;
-  userFactory: (signer: Signer | null) => Promise<UserService>;
+  userService: UserService | null;
 }) {
   const [user, setUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useState<User[] | null>(null);
   const [userError, setUserError] = useState<string | null>(null);
-  const [userService, setUserService] = useState<UserService | null>(null);
   const [addressUserMap, setAddressUserMap] = useState<Map<
     string,
     User
   > | null>(null);
   const [isEligibleVoter, setIsEligibleVoter] = useState<boolean | null>(null);
-  const { provider, signer } = useWallet();
+  const { signer } = useWallet();
 
   useEffect(() => {
-    const getUserAndService = async (
-      provider: Provider,
-      signer: Signer | null
-    ) => {
+    const setUserStates = async () => {
       setUserError(null);
       try {
-        const userService = await userServiceFactory(signer);
-        setUserService(userService);
-        setAddressUserMap(await userService.getAddressUserMap());
         const currentAddress = await signer?.getAddress();
-        if (currentAddress) {
+        if (userService) {
+          setAddressUserMap(await userService.getAddressUserMap());
+          setAllUsers(await userService.getAllUsers());
+        } else {
+          setAddressUserMap(null);
+          setAllUsers(null);
+        }
+        if (currentAddress && userService) {
           setUser(
             (await userService.getUserForAddress(currentAddress)) ?? null
           );
-          setAllUsers(await userService.getAllUsers());
           setIsEligibleVoter(await userService.isEligibleVoter(currentAddress));
         } else {
           setUser(null);
@@ -76,12 +112,12 @@ function AbstractUserServiceProvider({
         console.error("Error fetching user:", error);
       }
     };
-    if (provider) {
-      getUserAndService(provider, signer);
-    } else {
-      setUser(null);
-    }
-  }, [provider, signer, userServiceFactory]);
+    setUserStates();
+    const unsub = userService?.onUsersChanged(() => {
+      setUserStates();
+    });
+    return unsub;
+  }, [signer, userService]);
 
   return (
     <UserContext.Provider
@@ -101,31 +137,6 @@ function AbstractUserServiceProvider({
   );
 }
 
-async function blockchainUserServiceFactory(
-  signer: Signer | null
-): Promise<UserService> {
-  const { ethereum } = window;
-  if (ethereum) {
-    const governor = getEvsdGovernor();
-    const token = getEvsdToken();
-    const blockchainConfig = getBlockchainConfig();
-    return new BlockchainUserService(
-      blockchainConfig.initialUserList,
-      governor,
-      token,
-      signer
-    );
-  } else {
-    throw new Error(
-      "MetaMask is not found. Please ensure the MetaMask extension is installed."
-    );
-  }
-}
-
-async function inMemoryUserServiceFactory(): Promise<UserService> {
-  return new InMemoryUserService([]);
-}
-
 export function UserServiceProvider({
   children,
   type,
@@ -133,13 +144,14 @@ export function UserServiceProvider({
   children: ReactNode;
   type: "blockchain" | "in-memory";
 }) {
-  const userFactory =
-    type === "blockchain"
-      ? blockchainUserServiceFactory
-      : inMemoryUserServiceFactory;
-  return (
-    <AbstractUserServiceProvider userFactory={userFactory}>
-      {children}
-    </AbstractUserServiceProvider>
-  );
+  switch (type) {
+    case "blockchain":
+      return (
+        <BlockchainUserServiceProvider>
+          {children}
+        </BlockchainUserServiceProvider>
+      );
+    case "in-memory":
+      return <MockUserServiceProvider>{children}</MockUserServiceProvider>;
+  }
 }

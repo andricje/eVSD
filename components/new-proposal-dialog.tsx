@@ -50,10 +50,6 @@ export function NewProposalDialog({
   customText,
 }: NewProposalDialogProps) {
   const { isCurrentUserEligibleVoter } = useUserService();
-  if (!isCurrentUserEligibleVoter) {
-    return <></>;
-  }
-
   const { proposalService } = useProposals();
   const [open, setOpen] = useState(false);
   const [newProposal, setNewProposal] = useState<UIProposal>({
@@ -300,6 +296,9 @@ export function NewProposalDialog({
     return () => clearInterval(interval);
   }, [infoMessage]);
 
+  if (!isCurrentUserEligibleVoter) {
+    return <></>;
+  }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

@@ -1,10 +1,7 @@
 import { ethers } from "ethers";
 import { BlockchainProposalReader } from "./blockchain-proposal-reader";
 import { BlockchainProposalWriter } from "./blockchain-proposal-writer";
-import {
-  onProposalsChangedUnsubscribe,
-  ProposalService,
-} from "../proposal-service";
+import { Unsubscribe, ProposalService } from "../proposal-service";
 import { ProposalFileService } from "../../file-upload";
 import {
   Proposal,
@@ -76,7 +73,7 @@ export class BlockchainProposalService implements ProposalService {
   }
   public onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
-  ): onProposalsChangedUnsubscribe {
+  ): Unsubscribe {
     return this.reader.onProposalsChanged(callback);
   }
   public async uploadProposal(proposal: UIProposal): Promise<bigint> {

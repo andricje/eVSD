@@ -4,6 +4,7 @@ import { EvsdGovernor, EvsdToken } from "@/typechain-types";
 import { AddVoterVotableItemChainData } from "../proposal-services/blockchain/blockchain-proposal-parser";
 import { STRINGS } from "../../constants/strings";
 import { Signer } from "ethers";
+import { Unsubscribe } from "../proposal-services/proposal-service";
 
 type GovernorProposalState =
   | "Pending"
@@ -123,5 +124,23 @@ export class BlockchainUserService implements UserService {
         name: STRINGS.user.unknownUser,
       }
     );
+  }
+  public onUsersChanged(callback: () => void): Unsubscribe {
+    if (this.eventsEnabled) {
+      const onTokenDelegateListener = () => {
+        callback();
+      };
+      this.token.on(
+        this.token.filters.DelegateChanged,
+        onTokenDelegateListener
+      );
+      return () =>
+        this.token.removeListener(
+          this.token.filters.DelegateChanged,
+          onTokenDelegateListener
+        );
+    } else {
+      return () => {};
+    }
   }
 }

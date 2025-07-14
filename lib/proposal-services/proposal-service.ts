@@ -9,13 +9,11 @@ import {
   VotableItem,
   VoteOption,
 } from "@/types/proposal";
-export type onProposalsChangedUnsubscribe = () => void;
+export type Unsubscribe = () => void;
 
 export interface ProposalReader {
   getProposals: () => Promise<Proposal[]>;
-  onProposalsChanged(
-    callback: (newProposals: Proposal[]) => void
-  ): onProposalsChangedUnsubscribe;
+  onProposalsChanged(callback: (newProposals: Proposal[]) => void): Unsubscribe;
   getUserVotingStatus(user: User): Promise<UserVotingStatus>;
 }
 

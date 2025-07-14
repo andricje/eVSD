@@ -1,8 +1,5 @@
 import { ethers } from "ethers";
-import {
-  onProposalsChangedUnsubscribe,
-  ProposalReader,
-} from "../proposal-service";
+import { Unsubscribe, ProposalReader } from "../proposal-service";
 import {
   AddVoterVotableItem,
   IsAddVoterVotableItem,
@@ -244,25 +241,25 @@ export class BlockchainProposalReader implements ProposalReader {
 
   public onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
-  ): onProposalsChangedUnsubscribe {
+  ): Unsubscribe {
     const onProposalChangedCallback = async () => {
       const proposals = await this.getProposals();
       callback(proposals);
     };
-    this.governor.on(
+    const events = [
       this.governor.filters.ProposalCreated,
-      onProposalChangedCallback
-    );
-    this.governor.on(this.governor.filters.VoteCast, onProposalChangedCallback);
-    this.governor.on(
+      this.governor.filters.VoteCast,
       this.governor.filters.ProposalCanceled,
-      onProposalChangedCallback
-    );
-    this.governor.on(
       this.governor.filters.ProposalExecuted,
-      onProposalChangedCallback
-    );
-    return () => this.governor.removeAllListeners();
+    ];
+    for (const event of events) {
+      this.governor.on(event, onProposalChangedCallback);
+    }
+    return () => {
+      for (const event of events) {
+        this.governor.removeListener(event, onProposalChangedCallback);
+      }
+    };
   }
 
   public async proposalAlreadyPresent(newProposal: UIProposal) {
