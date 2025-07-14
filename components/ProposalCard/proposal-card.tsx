@@ -7,19 +7,14 @@ import { StatusBadge } from "../badges";
 import { Button } from "../ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { STRINGS } from "@/constants/strings";
-import { useUserService } from "@/hooks/use-userservice";
 
 interface ProposalCardProps {
   proposal: Proposal;
-  isUrgent: boolean;
+  canVote: boolean;
   quorum: number;
 }
 // ProposalCard Component - Proširena sa dodatnim informacijama
-export function ProposalCard({
-  proposal,
-  isUrgent,
-  quorum,
-}: ProposalCardProps) {
+export function ProposalCard({ proposal, canVote, quorum }: ProposalCardProps) {
   const timeLeft = Math.max(
     0,
     proposal.closesAt ? proposal.closesAt.getTime() - new Date().getTime() : 0
@@ -33,11 +28,10 @@ export function ProposalCard({
   const percentPointsWithQuorum = (pointsWithQuorum / totalVotingPoints) * 100;
 
   const authorName = proposal.author.name;
-  const { isCurrentUserEligibleVoter } = useUserService();
 
   return (
     <Card
-      className={`bg-background border ${isUrgent ? "border-destructive/30" : "border-border/40"} rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden`}
+      className={`bg-background border rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden`}
     >
       <CardHeader className="pb-2.5 pt-4 px-5">
         {/* Desktop view BEGIN */}
@@ -110,7 +104,7 @@ export function ProposalCard({
           </div>
           <Progress value={percentPointsWithQuorum} className="h-2" />
         </div>
-        {proposal.status === "open" && isCurrentUserEligibleVoter ? (
+        {proposal.status === "open" && canVote && (
           <Button
             size="sm"
             className="text-sm px-4 py-2 h-auto font-medium"
@@ -121,8 +115,6 @@ export function ProposalCard({
               {STRINGS.proposalCard.voteButton}
             </Link>
           </Button>
-        ) : (
-          <></>
         )}
         <div className="pt-1.5 flex items-center justify-between"></div>
       </CardContent>
