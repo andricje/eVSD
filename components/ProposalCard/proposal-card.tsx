@@ -10,15 +10,11 @@ import { STRINGS } from "@/constants/strings";
 
 interface ProposalCardProps {
   proposal: Proposal;
-  isUrgent: boolean;
+  canVote: boolean;
   quorum: number;
 }
 // ProposalCard Component - Proširena sa dodatnim informacijama
-export function ProposalCard({
-  proposal,
-  isUrgent,
-  quorum,
-}: ProposalCardProps) {
+export function ProposalCard({ proposal, canVote, quorum }: ProposalCardProps) {
   const timeLeft = Math.max(
     0,
     proposal.closesAt ? proposal.closesAt.getTime() - new Date().getTime() : 0
@@ -35,7 +31,7 @@ export function ProposalCard({
 
   return (
     <Card
-      className={`bg-background border ${isUrgent ? "border-destructive/30" : "border-border/40"} rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden`}
+      className={`bg-background border rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden`}
     >
       <CardHeader className="pb-2.5 pt-4 px-5">
         {/* Desktop view BEGIN */}
@@ -98,7 +94,7 @@ export function ProposalCard({
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-sm">
             <span className="text-muted-foreground">
-              Број тачака са &quot;кворумом&quot;: {pointsWithQuorum}
+              {`${STRINGS.proposalCard.pointsWithQuorum}:${pointsWithQuorum}`}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-medium">
@@ -108,7 +104,7 @@ export function ProposalCard({
           </div>
           <Progress value={percentPointsWithQuorum} className="h-2" />
         </div>
-        {proposal.status === "open" ? (
+        {proposal.status === "open" && canVote && (
           <Button
             size="sm"
             className="text-sm px-4 py-2 h-auto font-medium"
@@ -119,8 +115,6 @@ export function ProposalCard({
               {STRINGS.proposalCard.voteButton}
             </Link>
           </Button>
-        ) : (
-          <></>
         )}
         <div className="pt-1.5 flex items-center justify-between"></div>
       </CardContent>

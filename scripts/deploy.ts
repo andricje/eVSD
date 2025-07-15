@@ -16,7 +16,11 @@ async function main() {
   }
   const initialVoterAddresses =
     config.proposalService.network.initialUserList.map((v) => v.address);
-  const { governor, token } = await deployEvsd(initialVoterAddresses);
+  const { governor, token } = await deployEvsd(
+    initialVoterAddresses,
+    true,
+    true
+  );
   console.log("Deployment complete!");
   console.log(`EvsdGovernor address: ${governor.target}`);
   console.log(`EvsdToken address: ${token.target}`);

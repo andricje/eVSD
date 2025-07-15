@@ -82,6 +82,7 @@ export const STRINGS = {
     },
   },
   proposalCard: {
+    pointsWithQuorum: "Број тачака са кворумом",
     voteButton: "Гласај",
   },
   user: {

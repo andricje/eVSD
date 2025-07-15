@@ -12,10 +12,7 @@ import {
   IsUIAddVoterVotableItem,
   User,
 } from "@/types/proposal";
-import {
-  ProposalService,
-  onProposalsChangedUnsubscribe,
-} from "../proposal-service";
+import { ProposalService, Unsubscribe } from "../proposal-service";
 
 export class InMemoryProposalService implements ProposalService {
   private readonly user: User;
@@ -25,6 +22,11 @@ export class InMemoryProposalService implements ProposalService {
 
   constructor(user: User) {
     this.user = user;
+  }
+  async uploadAddVoterProposal(
+    addVoterItem: UIAddVoterVotableItem
+  ): Promise<bigint> {
+    throw new Error("Method not implemented.");
   }
   getUserVotingStatus(): Promise<UserVotingStatus> {
     throw new Error("Method not implemented.");
@@ -101,7 +103,7 @@ export class InMemoryProposalService implements ProposalService {
 
   onProposalsChanged(
     callback: (newProposals: Proposal[]) => void
-  ): onProposalsChangedUnsubscribe {
+  ): Unsubscribe {
     this.onProposalsChangedCallback = callback;
     return () => {
       this.onProposalsChangedCallback = () => {};

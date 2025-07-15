@@ -145,6 +145,7 @@ beforeEach(() => {
     },
     userService: null,
     userError: null,
+    isCurrentUserEligibleVoter: null,
   };
   (useUserService as jest.Mock).mockReturnValue(mockUserServiceReturn);
 

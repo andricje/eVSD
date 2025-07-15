@@ -36,24 +36,27 @@ import {
 } from "@/components/loadingSkeletons/loadingSkeletons";
 import { useUserService } from "@/hooks/use-userservice";
 import { useQuorum } from "@/hooks/use-quorum";
+import { STRINGS } from "@/constants/strings";
 
 // Action Buttons
-const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
+const ActionButtons: React.FC<{ canVote: boolean }> = ({ canVote }) => {
   const { disconnect } = useWallet();
   const { currentUser } = useUserService();
   const router = useRouter();
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
-      <NewProposalDialog
-        customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
-        customText={
-          <>
-            <FileText className="h-4 w-4 mr-2" />
-            Нови предлог
-          </>
-        }
-      />
+      {canVote && (
+        <NewProposalDialog
+          customClassName="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 justify-center h-full py-3 text-sm font-medium"
+          customText={
+            <>
+              <FileText className="h-4 w-4 mr-2" />
+              {STRINGS.newProposal.dialog.addNew}
+            </>
+          }
+        />
+      )}
       <Button
         variant="outline"
         className="flex-1 border border-primary/20 hover:bg-primary/5 text-primary font-medium py-3 text-sm h-full"
@@ -81,11 +84,11 @@ const ActionButtons: React.FC<{ isAdmin: boolean }> = () => {
   );
 };
 
-// SystemAnnouncements Component
-
 // ActiveMembers Component
-const ActiveMembers: React.FC = () => {
-  const { allUsers } = useUserService();
+const ActiveMembers: React.FC<{
+  members: User[] | null;
+  canAddVoter: boolean;
+}> = ({ members, canAddVoter }) => {
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center mb-2">
@@ -93,11 +96,11 @@ const ActiveMembers: React.FC = () => {
           Активни чланови еВСД
         </h2>
 
-        <NewVoterDialog />
+        {canAddVoter && <NewVoterDialog />}
       </div>
       <Card className="p-4 bg-background border border-border/40 rounded-xl shadow-md">
         <div className="space-y-3">
-          {allUsers?.map((user) => (
+          {members?.map((user) => (
             <div
               key={user.address}
               className="flex items-center justify-between py-2 border-b border-border/30 last:border-0"
@@ -143,7 +146,11 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("voting");
 
   const { loading: walletLoading } = useWallet();
-  const { currentUser: user } = useUserService();
+  const {
+    currentUser: user,
+    isCurrentUserEligibleVoter,
+    allUsers,
+  } = useUserService();
   const quorum = useQuorum();
   const {
     proposals,
@@ -206,7 +213,7 @@ export default function Dashboard() {
                 user && <OriginalWalletInfo showName={true} />
               )}
               <div className="flex w-full md:w-auto gap-3">
-                <ActionButtons isAdmin={false} />
+                <ActionButtons canVote={isCurrentUserEligibleVoter ?? false} />
               </div>
             </div>
           </div>
@@ -255,7 +262,7 @@ export default function Dashboard() {
                         <ProposalCard
                           key={proposal.id}
                           proposal={proposal}
-                          isUrgent={false}
+                          canVote={isCurrentUserEligibleVoter ?? false}
                           // FIXME: This assumes the quorum is the same as the current Governor quorum,
                           // which may not be the case if the quorum changed since the proposal was created.
                           // Should use the quorum at the timestamp of the proposal creation.
@@ -274,15 +281,17 @@ export default function Dashboard() {
                         додати нови предлог.
                       </p>
                       <div className="mt-6">
-                        <NewProposalDialog
-                          customClassName="bg-primary text-primary-foreground hover:bg-primary/90 text-base py-2.5 px-5 font-medium"
-                          customText={
-                            <>
-                              <FileText className="h-4.5 w-4.5 mr-2.5" />
-                              Креирај нови предлог
-                            </>
-                          }
-                        />
+                        {isCurrentUserEligibleVoter && (
+                          <NewProposalDialog
+                            customClassName="bg-primary text-primary-foreground hover:bg-primary/90 text-base py-2.5 px-5 font-medium"
+                            customText={
+                              <>
+                                <FileText className="h-4.5 w-4.5 mr-2.5" />
+                                Креирај нови предлог
+                              </>
+                            }
+                          />
+                        )}
                       </div>
                     </div>
                   )}
@@ -305,7 +314,10 @@ export default function Dashboard() {
 
             <TabsContent value="members" className="mt-5">
               <div>
-                <ActiveMembers />
+                <ActiveMembers
+                  members={allUsers}
+                  canAddVoter={isCurrentUserEligibleVoter ?? false}
+                />
               </div>
             </TabsContent>
           </Tabs>

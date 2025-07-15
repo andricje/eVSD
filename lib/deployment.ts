@@ -28,7 +28,8 @@ async function deployGovernor(deployer: ethers.Signer, token: EvsdToken) {
 
 export async function deployEvsd(
   initialVoters: AddressLike[],
-  transferOwnership: boolean = true
+  transferOwnership: boolean = true,
+  verbose: boolean = false
 ) {
   const [deployer] = await hardhat.ethers.getSigners();
   const evsdToken = await deployToken(deployer as unknown as ethers.Signer);
@@ -36,9 +37,11 @@ export async function deployEvsd(
     deployer as unknown as ethers.Signer,
     evsdToken
   );
-  console.log(
-    `Deployed contracts, token: ${await evsdToken.getAddress()}, governor: ${await evsdGovernor.getAddress()}`
-  );
+  if (verbose) {
+    console.log(
+      `Deployed contracts, token: ${await evsdToken.getAddress()}, governor: ${await evsdGovernor.getAddress()}`
+    );
+  }
 
   for (const address of initialVoters) {
     let success = false;
@@ -46,7 +49,9 @@ export async function deployEvsd(
       try {
         const tx = await evsdToken.mint(address, 1);
         await tx.wait();
-        console.log(`Minted tokens to address: ${address}`);
+        if (verbose) {
+          console.log(`Minted tokens to address: ${address}`);
+        }
         success = true;
       } catch (ex) {
         console.log(`Failed to mint tokens to address: ${address} retrying...`);

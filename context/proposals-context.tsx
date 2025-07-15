@@ -59,7 +59,7 @@ const AbstractProposalsProvider = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    proposalService?.onProposalsChanged((proposals) => {
+    const unsub = proposalService?.onProposalsChanged((proposals) => {
       setProposals(proposals);
     });
 
@@ -73,6 +73,7 @@ const AbstractProposalsProvider = ({
     };
 
     fetchInitialProposals();
+    return unsub;
   }, [proposalService]);
 
   return (
