@@ -183,7 +183,7 @@ const arbitrum: NetworkConfig = {
     },
     {
       address: "0x6A06472B887063537463E32247df3667A416e53F",
-      name: "Факултет музичких уметности",
+      name: "Факултет музичке уметности",
     },
     {
       address: "0x8d066629de22ddc5b665f4c73a5ab3616bc96ceb",
