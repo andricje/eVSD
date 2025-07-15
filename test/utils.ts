@@ -37,6 +37,7 @@ export interface TestInitData {
   eligibleSigners: ethers.Signer[];
   eligibleVoters: User[];
   ineligibleVoterAddress: string;
+  unregisteredSigners: ethers.Signer[];
   fileService: ProposalFileService;
   userService: BlockchainUserService;
 }
@@ -119,6 +120,9 @@ export async function deployAndCreateMocks(): Promise<TestInitData> {
     evsdToken: token,
     eligibleSigners: voters.map((voter) => voter as unknown as ethers.Signer),
     ineligibleVoterAddress: unregisteredVoters[0].address,
+    unregisteredSigners: unregisteredVoters.map(
+      (x) => x as unknown as ethers.Signer
+    ),
     eligibleVoters: voters.map((voter) => {
       return { name: voter.address, address: voter.address };
     }),

@@ -4,6 +4,7 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
 import {
+  countVoteForOption,
   UIAddVoterVotableItem,
   UIProposal,
   UIVotableItem,
@@ -11,7 +12,11 @@ import {
   VoteOption,
 } from "../../types/proposal";
 import { IneligibleVoterError } from "../../types/proposal-service-errors";
-import { getVoteResultForItem } from "../../lib/utils";
+import {
+  convertVoteOptionToGovernor,
+  countTotalVotes,
+  getVoteResultForItem,
+} from "../../lib/utils";
 import {
   assertVoterVoteRecordedCorrectly,
   castVotes,
@@ -21,7 +26,8 @@ import {
   getRandomVotes,
   rng,
 } from "../utils";
-import { EvsdToken } from "@/typechain-types";
+import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { ethers } from "ethers";
 
 export const voteItems: UIVotableItem[] = [
   {
@@ -69,7 +75,9 @@ describe("BlockchainProposalService integration", function () {
     let addVoterVoteItem2: UIAddVoterVotableItem;
     let votingPeriod: number;
     let unregisteredVoterAddress: string;
+    let unregisteredSigner: ethers.Signer;
     let token: EvsdToken;
+    let governor: EvsdGovernor;
     beforeEach(async () => {
       const initData = await deployAndCreateMocks();
       registeredVoterProposalServices = initData.eligibleVoterProposalServices;
@@ -79,6 +87,8 @@ describe("BlockchainProposalService integration", function () {
       addVoterVoteItem2 = initData.addVoterVoteItem2;
       votingPeriod = initData.votingPeriod;
       unregisteredVoterAddress = initData.ineligibleVoterAddress;
+      unregisteredSigner = initData.unregisteredSigners[1];
+      governor = initData.evsdGovernor;
       token = initData.evsdToken;
     });
 
@@ -218,8 +228,9 @@ describe("BlockchainProposalService integration", function () {
         await registeredVoterProposalServices[0].getProposal(proposal.id);
       const updatedVoteItem = updatedProposal.voteItems[0];
 
+      const quorum = numVoters / 2;
       expect(updatedProposal.status).to.equal("closed");
-      expect(getVoteResultForItem(updatedVoteItem)).to.equal("passed");
+      expect(getVoteResultForItem(updatedVoteItem, quorum)).to.equal("passed");
     });
     it("should allow a new voter to vote after the proposal to add the voter has passed", async () => {
       const proposal = await deployAndGetProposalAddVoter(addVoterVoteItem1);
@@ -271,6 +282,28 @@ describe("BlockchainProposalService integration", function () {
       await expect(
         proposalService.cancelProposal(proposal)
       ).to.eventually.equal(true);
+    });
+    it("should not count someone's vote if they have zero voting power but managed to call cast vote", async () => {
+      const proposal = await deployAndGetProposalOneVoteItem();
+      const voteItem = proposal.voteItems[0];
+
+      // We manually call .castVote directly on the governor contract to circumvent the check in the proposal service
+      const governorWithSigner = governor.connect(unregisteredSigner);
+      const tx = await governorWithSigner.castVote(
+        voteItem.id,
+        convertVoteOptionToGovernor("for")
+      );
+      await tx.wait();
+      const updatedProposal =
+        await registeredVoterProposalServices[0].getProposal(proposal.id);
+      const updatedVoteItem = updatedProposal.voteItems[0];
+
+      const unregisteredSignerAddress = await unregisteredSigner.getAddress();
+      expect(updatedVoteItem.userVotes.has(unregisteredSignerAddress)).to.equal(
+        false
+      );
+      expect(countVoteForOption(updatedVoteItem, "for")).to.equal(0);
+      expect(countTotalVotes(updatedVoteItem)).to.equal(0);
     });
   });
 });
