@@ -36,6 +36,12 @@ export class BlockchainEventProvider {
       if (!voter) {
         return undefined;
       }
+      const isEligibleVoter = await this.userService.isEligibleVoter(
+        voter.address
+      );
+      if (!isEligibleVoter) {
+        return undefined;
+      }
       const voteEvent = {
         vote: governorVoteMap[vote],
         date: new Date(block ? block.timestamp * 1000 : 0),
