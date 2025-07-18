@@ -12,6 +12,7 @@ import {
 } from "../../../types/proposal";
 import {
   areProposalsEqual,
+  calculateQuorumFromContracts,
   getMintTokenCalldata,
   getNewVoterProposalDescription,
   getVoteResultForItem,
@@ -79,7 +80,11 @@ export class BlockchainProposalReader implements ProposalReader {
       }
       const voteItem = proposal.voteItems[0];
       const isAddVoter = IsAddVoterVotableItem(voteItem);
-      const voteResult = getVoteResultForItem(voteItem);
+      const quorum = await calculateQuorumFromContracts(
+        this.governor,
+        this.token
+      );
+      const voteResult = getVoteResultForItem(voteItem, Number(quorum));
       if (
         isAddVoter &&
         proposal.status === "closed" &&

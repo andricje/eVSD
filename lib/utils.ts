@@ -13,7 +13,7 @@ import {
   VoteResult,
 } from "../types/proposal";
 import { STRINGS } from "../constants/strings";
-import { EvsdToken } from "@/typechain-types";
+import { EvsdGovernor, EvsdToken } from "@/typechain-types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -93,6 +93,21 @@ export function getVoteResultForItem(voteItem: VotableItem, quorum: number) {
   const votesAgainst = countVoteForOption(voteItem, "against");
   const votesAbstain = countVoteForOption(voteItem, "abstain");
   return getVoteResult(votesFor, votesAgainst, votesAbstain, quorum);
+}
+
+function ceil(a: bigint, b: bigint): bigint {
+  return (a + b - 1n) / b;
+}
+
+export async function calculateQuorumFromContracts(
+  governor: EvsdGovernor,
+  token: EvsdToken
+) {
+  const supply = await token.totalSupply();
+  const numerator = await governor["quorumNumerator()"]();
+  const denominator = await governor.quorumDenominator();
+  const quorum = ceil(supply * numerator, denominator);
+  return quorum;
 }
 
 // Formatiranje datuma
