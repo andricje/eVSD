@@ -4,7 +4,9 @@ chai.use(chaiAsPromised);
 const { expect } = chai;
 import { UIAddVoterVotableItem, UIProposal, User } from "../../types/proposal";
 import { deployAndCreateMocks, fastForwardTime } from "../utils";
-import { BlockchainProposalService } from "@/lib/proposal-services/blockchain/blockchain-proposal-service";
+import { BlockchainProposalService } from "../../lib/proposal-services/blockchain/blockchain-proposal-service";
+import { EvsdGovernor, EvsdToken } from "@/typechain-types";
+import { calculateQuorumFromContracts } from "../../lib/utils";
 
 describe("BlockchainProposalService integration", function () {
   describe("canCurrentUserAcceptVotingRights", function () {
@@ -12,6 +14,8 @@ describe("BlockchainProposalService integration", function () {
     let ineligibleVoterProposalServices: BlockchainProposalService[];
     let ineligibleVoter: User;
     let addVoterVoteItem: UIAddVoterVotableItem;
+    let evsdToken: EvsdToken;
+    let evsdGovernor: EvsdGovernor;
 
     beforeEach(async () => {
       const initData = await deployAndCreateMocks();
@@ -23,6 +27,9 @@ describe("BlockchainProposalService integration", function () {
         address: initData.ineligibleVoterAddress,
         name: "Ineligible voter",
       };
+
+      evsdGovernor = initData.evsdGovernor;
+      evsdToken = initData.evsdToken;
     });
     it("should return false if there is no proposal to add the user", async () => {
       const canAccept =
@@ -127,6 +134,39 @@ describe("BlockchainProposalService integration", function () {
           ineligibleVoter
         );
       expect(canAccept).to.equal(true);
+    });
+    it("should return false if quorum was not reached and everyone who voted voted in favor", async () => {
+      const generatedProposal: UIProposal = {
+        title: "Test proposal",
+        description: "Test proposal description",
+        voteItems: [addVoterVoteItem],
+      };
+
+      const proposalId =
+        await registeredVoterProposalServices[0].uploadProposal(
+          generatedProposal
+        );
+
+      const voteItem = (
+        await registeredVoterProposalServices[0].getProposal(proposalId)
+      ).voteItems[0];
+      const quorum = await calculateQuorumFromContracts(
+        evsdGovernor,
+        evsdToken
+      );
+
+      // Everyone votes in favor but there is quorum - 1 votes
+      for (let i = 0; i < quorum - 1n; i++) {
+        await registeredVoterProposalServices[i].voteForItem(voteItem, "for");
+      }
+
+      await fastForwardTime(7, 0, 0);
+
+      const canAccept =
+        await ineligibleVoterProposalServices[0].canUserAcceptVotingRights(
+          ineligibleVoter
+        );
+      expect(canAccept).to.equal(false);
     });
   });
 });
